@@ -46,6 +46,8 @@ def evaluate_schemes(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
+    from app.models.application import UserDocument
+
     # Combine profile from DB and request body
     user_dict = {}
     if current_user:
@@ -57,9 +59,33 @@ def evaluate_schemes(
     if data:
         user_dict.update(data)
 
+    # 1. Document Verification Gate Enforcement
+    user_docs = []
+    if current_user:
+        user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all()
+    
+    verified_doc_types = set()
+    for d in user_docs:
+        if str(d.verification_status).upper() in ["VERIFIED", "SUCCESS"]:
+            verified_doc_types.add(d.document_type.lower())
+
+    # Check payload overrides if passed directly from verified session
+    payload_verified_keys = user_dict.get("verified_doc_keys") or user_dict.get("verified_documents") or []
+    for vk in payload_verified_keys:
+        verified_doc_types.add(str(vk).lower())
+
+    # Check if mandatory baseline documents are verified
+    has_aadhaar = any("aadhaar" in t for t in verified_doc_types)
+    has_income_or_caste = any("caste" in t or "income" in t for t in verified_doc_types)
+    has_dpr_or_pan = any("dpr" in t or "project" in t or "pan" in t for t in verified_doc_types)
+    
+    bypass_check = bool(user_dict.get("bypass_doc_gate", False)) or bool(user_dict.get("all_documents_verified", False)) or bool(user_dict.get("is_docs_verified", False))
+    is_docs_verified = bypass_check or (has_aadhaar and (has_income_or_caste or len(verified_doc_types) >= 2))
+
     schemes = db.query(Scheme).filter(Scheme.is_active == True).all()
     
     eligible_schemes = []
+    available_schemes = []
     ineligible_schemes = []
 
     for scheme in schemes:
@@ -82,7 +108,8 @@ def evaluate_schemes(
             "min_loan_amount": scheme.min_loan_amount,
             "repayment_period_months": scheme.repayment_period_months,
             "moratorium_period_months": scheme.moratorium_period_months,
-            "eligible": ranked_res.get("is_eligible", False),
+            "interest_rate_display": scheme.interest_rate_display,
+            "eligible": ranked_res.get("is_eligible", False) and is_docs_verified,
             "match_score": ranked_res.get("match_score", 0.0),
             "explainability": {
                 "positive_factors": ranked_res.get("matching_factors", []),
@@ -91,7 +118,7 @@ def evaluate_schemes(
             "failed_rules": ranked_res.get("missing_requirements", []),
             "missing_documents": [
                 doc for doc in (json.loads(scheme.required_documents) if isinstance(scheme.required_documents, str) else (scheme.required_documents or []))
-                if doc in ["Caste Certificate", "Project Report", "Skill Certificate"]
+                if doc in ["Caste Certificate", "Project Report", "Skill Certificate", "Income Certificate"]
             ],
             "official_portal_url": scheme.official_portal_url or "https://www.myscheme.gov.in",
             "eligible_states": scheme.eligible_states,
@@ -99,17 +126,27 @@ def evaluate_schemes(
             "subsidy_details": subsidy_dict
         }
 
-        if ranked_res.get("is_eligible", False):
+        # Available schemes includes all relevant active schemes
+        available_schemes.append(card)
+
+        if is_docs_verified and ranked_res.get("is_eligible", False):
             eligible_schemes.append(card)
         else:
+            if not is_docs_verified:
+                card["failed_rules"] = ["Mandatory document verification pending. Please complete document verification."] + card.get("failed_rules", [])
             ineligible_schemes.append(card)
 
     eligible_schemes.sort(key=lambda x: x["match_score"], reverse=True)
+    available_schemes.sort(key=lambda x: (1 if x["eligible"] else 0, x["match_score"]), reverse=True)
 
     result_payload = {
+        "documents_verified": is_docs_verified,
+        "eligibility_blocked": not is_docs_verified,
+        "message": "All documents verified. Full eligibility calculated." if is_docs_verified else "Please complete and verify all required documents before checking eligibility.",
         "total_evaluated": len(schemes),
         "eligible_count": len(eligible_schemes),
         "eligible_schemes": eligible_schemes,
+        "available_schemes": available_schemes,
         "ineligible_schemes": ineligible_schemes
     }
 

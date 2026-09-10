@@ -189,34 +189,36 @@ class EligibilityRuleEngine:
                 })
 
         # Category check
-        user_cat = user_data.get("category", "General")
+        user_cat = user_data.get("category") or user_data.get("social_category") or "SC"
         try:
             allowed_cats = json.loads(scheme.eligible_categories)
         except Exception:
-            allowed_cats = ["General", "SC", "ST", "OBC", "Minority", "Woman", "EWS", "Divyangjan"]
+            allowed_cats = ["SC", "ST", "Minority", "Woman", "Divyangjan"]
         
         allowed_cats_lower = [c.lower() for c in allowed_cats]
-        if "general" not in allowed_cats_lower and "all" not in allowed_cats_lower:
-            if user_cat.lower() not in allowed_cats_lower:
-                failed_rules.append({
-                    "rule_code": "CATEGORY_REQUIREMENT",
-                    "rule_name": "Target Social Category",
-                    "field": "category",
-                    "user_value": user_cat,
-                    "threshold": ", ".join(allowed_cats),
-                    "reason": f"This scheme is targeted specifically for {', '.join(allowed_cats)} applicants. Current profile category is '{user_cat}'."
-                })
-            else:
-                matched_rules.append({
-                    "rule_code": "CATEGORY_REQUIREMENT",
-                    "rule_name": "Target Social Category",
-                    "detail": f"Target category '{user_cat}' qualifies for special allocations/subsidies."
-                })
-        else:
+        user_cat_lower = str(user_cat).lower()
+        is_female = str(user_data.get("gender", "")).lower() == "female" or "woman" in user_cat_lower or "women" in user_cat_lower
+
+        if "all" in allowed_cats_lower or "all india" in allowed_cats_lower or "general" in allowed_cats_lower:
             matched_rules.append({
                 "rule_code": "CATEGORY_REQUIREMENT",
                 "rule_name": "Target Social Category",
-                "detail": f"Category '{user_cat}' is accepted under universal quota."
+                "detail": f"Category '{user_cat}' qualifies for scheme allocation."
+            })
+        elif user_cat_lower in allowed_cats_lower or (is_female and ("woman" in allowed_cats_lower or "women" in allowed_cats_lower)):
+            matched_rules.append({
+                "rule_code": "CATEGORY_REQUIREMENT",
+                "rule_name": "Target Social Category",
+                "detail": f"Target category '{user_cat}' qualifies for special allocations/subsidies."
+            })
+        else:
+            failed_rules.append({
+                "rule_code": "CATEGORY_REQUIREMENT",
+                "rule_name": "Target Social Category",
+                "field": "category",
+                "user_value": user_cat,
+                "threshold": ", ".join([c for c in allowed_cats if c.lower() != 'general']),
+                "reason": f"This scheme is targeted specifically for {', '.join([c for c in allowed_cats if c.lower() != 'general'])} applicants. Current profile category is '{user_cat}'."
             })
 
         # 2. Scheme Custom Database Rules

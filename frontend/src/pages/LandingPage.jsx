@@ -127,11 +127,10 @@ export default function LandingPage() {
                     onChange={(e) => setQuickForm({ ...quickForm, social_category: e.target.value })}
                     className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="SC">{t('optionSC')}</option>
-                    <option value="ST">{t('optionST')}</option>
-                    <option value="OBC">{t('optionOBC')}</option>
-                    <option value="Minority">{t('optionMinority')}</option>
-                    <option value="General">{t('optionGeneral')}</option>
+                    <option value="SC">Scheduled Caste (SC)</option>
+                    <option value="ST">Scheduled Tribe (ST)</option>
+                    <option value="Minority">Minority Community</option>
+                    <option value="Women/Special">Women / Special Category</option>
                   </select>
                 </div>
 

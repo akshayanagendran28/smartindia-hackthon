@@ -56,9 +56,8 @@ export default function RequirementQuestionnairePage() {
               >
                 <option value="SC">Scheduled Caste (SC)</option>
                 <option value="ST">Scheduled Tribe (ST)</option>
-                <option value="OBC">Other Backward Class (OBC)</option>
-                <option value="Minority">Minority Group</option>
-                <option value="General">General</option>
+                <option value="Minority">Minority Community</option>
+                <option value="Women/Special">Women / Special Category</option>
               </select>
             </div>
 

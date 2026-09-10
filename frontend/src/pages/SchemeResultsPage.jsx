@@ -1,91 +1,137 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { 
   Sparkles, CheckCircle2, XCircle, AlertTriangle, ArrowRight, 
   Calculator, MapPin, FileCheck, HelpCircle, Filter, SlidersHorizontal,
   ChevronDown, ChevronUp, Award, Building2, Info, RefreshCw, ExternalLink,
-  Search, ShieldCheck, Landmark, Globe
+  Search, ShieldCheck, Landmark, Globe, Check, Lock
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useApplication } from '../context/ApplicationContext';
+import StepProgressIndicator from '../components/StepProgressIndicator';
 import api from '../services/api';
 
 export default function SchemeResultsPage() {
   const { currentLanguage, t, translateScheme } = useLanguage();
+  const { application, selectScheme, selectedScheme } = useApplication();
   const location = useLocation();
+  const navigate = useNavigate();
+
   const [evaluation, setEvaluation] = useState(location.state?.evaluationResult || null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('eligible'); // 'eligible' or 'available'
   const [sortBy, setSortBy] = useState('score'); // 'score', 'loan_asc', 'loan_desc'
   const [originFilter, setOriginFilter] = useState('all'); // 'all', 'central', 'state'
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedIneligible, setExpandedIneligible] = useState(false);
+  const [expandedIneligible, setExpandedIneligible] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    api.post('/matching/evaluate', {
+    const payload = {
       target_language: currentLanguage,
+      loan_amount: application.loanAmount,
+      required_loan: application.loanAmount,
+      required_loan_amount: application.loanAmount,
+      project_cost: application.project_cost,
+      annual_income: application.annual_income,
+      annual_family_income: application.annual_family_income,
+      category: application.category,
+      social_category: application.category,
+      gender: application.gender,
+      state: application.state,
+      district: application.district,
+      area_type: application.area_type,
+      purpose: application.purpose,
+      business_type: application.business_type,
+      business_stage: application.business_stage,
+      education_qualification: application.education_qualification,
+      has_skill_training: application.has_skill_training,
+      has_udyam_registration: application.has_udyam_registration,
+      is_artisan: application.is_artisan,
+      is_street_vendor: application.is_street_vendor,
+      all_documents_verified: application.allDocumentsVerified,
       ...(location.state?.profileData || {})
-    })
-      .then(res => setEvaluation(res.data))
+    };
+
+    api.post('/matching/evaluate', payload)
+      .then(res => {
+        setEvaluation(res.data);
+      })
       .catch(err => {
-        console.error(err);
-        if (location.state?.evaluationResult) setEvaluation(location.state.evaluationResult);
+        console.error('Scheme evaluation error:', err);
+        if (location.state?.evaluationResult) {
+          setEvaluation(location.state.evaluationResult);
+        }
       })
       .finally(() => setLoading(false));
-  }, [currentLanguage, location.state]);
+  }, [currentLanguage, application]);
 
   const rawEligible = evaluation?.eligible_schemes || [];
-  const ineligibleSchemes = evaluation?.ineligible_schemes || [];
+  const rawAvailable = evaluation?.available_schemes || evaluation?.ineligible_schemes || [];
 
-  const filteredSchemes = rawEligible
-    .filter(scheme => {
-      // Origin filter
-      if (originFilter === 'central' && !scheme.is_central && !scheme.eligible_states?.includes('All India')) return false;
-      if (originFilter === 'state' && (scheme.is_central || scheme.eligible_states?.includes('All India'))) return false;
+  const filterAndSort = (schemesList) => {
+    return schemesList
+      .filter(scheme => {
+        // Origin filter
+        if (originFilter === 'central' && !scheme.is_central && !scheme.eligible_states?.includes('All India')) return false;
+        if (originFilter === 'state' && (scheme.is_central || scheme.eligible_states?.includes('All India'))) return false;
 
-      // Category filter
-      if (categoryFilter !== 'all') {
-        const cat = (scheme.target_category || '').toLowerCase();
-        const desc = (scheme.scheme_description || '').toLowerCase();
-        const name = (scheme.scheme_name || '').toLowerCase();
-        if (!cat.includes(categoryFilter) && !desc.includes(categoryFilter) && !name.includes(categoryFilter)) {
-          return false;
+        // Category filter
+        if (categoryFilter !== 'all') {
+          const cat = (scheme.target_category || '').toLowerCase();
+          const desc = (scheme.scheme_description || '').toLowerCase();
+          const name = (scheme.scheme_name || '').toLowerCase();
+          if (!cat.includes(categoryFilter) && !desc.includes(categoryFilter) && !name.includes(categoryFilter)) {
+            return false;
+          }
         }
-      }
 
-      // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchName = scheme.scheme_name?.toLowerCase().includes(q);
-        const matchCode = scheme.scheme_code?.toLowerCase().includes(q);
-        const matchMinistry = scheme.ministry?.toLowerCase().includes(q);
-        const matchDesc = scheme.scheme_description?.toLowerCase().includes(q);
-        if (!matchName && !matchCode && !matchMinistry && !matchDesc) return false;
-      }
+        // Search query
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchName = scheme.scheme_name?.toLowerCase().includes(q);
+          const matchCode = scheme.scheme_code?.toLowerCase().includes(q);
+          const matchMinistry = scheme.ministry?.toLowerCase().includes(q);
+          const matchDesc = scheme.scheme_description?.toLowerCase().includes(q);
+          if (!matchName && !matchCode && !matchMinistry && !matchDesc) return false;
+        }
 
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'score') return (b.match_score || 0) - (a.match_score || 0);
-      if (sortBy === 'loan_desc') return (b.max_loan_amount || 0) - (a.max_loan_amount || 0);
-      if (sortBy === 'loan_asc') return (a.max_loan_amount || 0) - (b.max_loan_amount || 0);
-      return 0;
-    });
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'score') return (b.match_score || 0) - (a.match_score || 0);
+        if (sortBy === 'loan_desc') return (b.max_loan_amount || 0) - (a.max_loan_amount || 0);
+        if (sortBy === 'loan_asc') return (a.max_loan_amount || 0) - (b.max_loan_amount || 0);
+        return 0;
+      });
+  };
+
+  const filteredEligible = filterAndSort(rawEligible);
+  const filteredAvailable = filterAndSort(rawAvailable);
+
+  const handleSelectScheme = (scheme, nextPath = '/calculator') => {
+    selectScheme(scheme);
+    navigate(nextPath, { state: { selectedScheme: scheme, loanAmount: application.loanAmount } });
+  };
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 space-y-6">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* 7-Step Dynamic Progress Breadcrumb Indicator */}
+      <StepProgressIndicator currentStep={4} />
+
       {/* Top Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{t('sihBadgeText')} • {t('translationBadge')}</span>
+            <span>SIH 2026 Problem Statement SIH26092 &bull; Deterministic Rules Engine</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-            {filteredSchemes.length} {t('resultsTitle')}
+            {filteredEligible.length} Qualified Schemes for ₹{(application.loanAmount / 100000).toLocaleString('en-IN')} Lakhs
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            {t('resultsSubtitle')}
+          <p className="text-xs text-slate-500">
+            Location: <strong className="text-slate-700">{application.district}, {application.state}</strong> &bull; Category: <strong className="text-slate-700">{application.category}</strong> &bull; Target: <strong className="text-slate-700">{application.purpose}</strong>
           </p>
         </div>
 
@@ -96,7 +142,7 @@ export default function SchemeResultsPage() {
             className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>{t('btnRecalculate')}</span>
+            <span>Modify Requirement</span>
           </Link>
           <a
             href="https://www.myscheme.gov.in"
@@ -105,10 +151,42 @@ export default function SchemeResultsPage() {
             className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>{t('mySchemePortal')}</span>
+            <span>myScheme.gov.in</span>
             <ExternalLink className="w-3 h-3 ml-0.5 opacity-80" />
           </a>
         </div>
+      </div>
+
+      {/* Two Distinct Presentation Sections Switcher */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-2xl">
+        <button
+          onClick={() => setActiveTab('eligible')}
+          className={`flex-1 py-3 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'eligible'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          <span>Eligible Schemes ({filteredEligible.length})</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-700/80 text-white">
+            100% Match
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('available')}
+          className={`flex-1 py-3 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'available'
+              ? 'bg-slate-900 text-white shadow-md'
+              : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+        >
+          <Info className="w-4 h-4" />
+          <span>Available & Alternative Schemes ({filteredAvailable.length})</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+            Rule Breakdown
+          </span>
+        </button>
       </div>
 
       {/* Filter & Search Bar */}
@@ -119,7 +197,7 @@ export default function SchemeResultsPage() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder={t('searchPlaceholder')}
+              placeholder={t('searchPlaceholder') || "Search scheme name, ministry, or keyword..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
@@ -134,7 +212,7 @@ export default function SchemeResultsPage() {
                 originFilter === 'all' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {t('filterAll')} ({rawEligible.length})
+              All Types
             </button>
             <button
               onClick={() => setOriginFilter('central')}
@@ -142,7 +220,7 @@ export default function SchemeResultsPage() {
                 originFilter === 'central' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {t('filterCentral')}
+              Central Schemes
             </button>
             <button
               onClick={() => setOriginFilter('state')}
@@ -150,22 +228,22 @@ export default function SchemeResultsPage() {
                 originFilter === 'state' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {t('filterState')}
+              State Schemes
             </button>
           </div>
 
           {/* Sort By */}
           <div className="md:col-span-4 flex items-center justify-end gap-2 text-xs">
             <SlidersHorizontal className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="font-semibold text-slate-600 shrink-0">{t('sortByScore').split(' ')[0]}:</span>
+            <span className="font-semibold text-slate-600 shrink-0">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             >
-              <option value="score">{t('sortByScore')}</option>
-              <option value="loan_desc">{t('sortByLoanDesc')}</option>
-              <option value="loan_asc">{t('sortByLoanAsc')}</option>
+              <option value="score">Highest Match Score</option>
+              <option value="loan_desc">Loan Amount: High to Low</option>
+              <option value="loan_asc">Loan Amount: Low to High</option>
             </select>
           </div>
         </div>
@@ -176,7 +254,7 @@ export default function SchemeResultsPage() {
             <Filter className="w-3 h-3" /> Focus:
           </span>
           {[
-            { id: 'all', label: 'All Sectors' },
+            { id: 'all', label: 'All Focus Areas' },
             { id: 'manufacturing', label: 'Manufacturing' },
             { id: 'service', label: 'Services' },
             { id: 'women', label: 'Women Entrepreneurs' },
@@ -199,226 +277,241 @@ export default function SchemeResultsPage() {
       </div>
 
       {loading && (
-        <div className="p-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200">
+        <div className="p-12 text-center text-slate-500 bg-white rounded-3xl border border-slate-200">
           <Sparkles className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-3" />
-          <p className="font-semibold text-sm">Evaluating gazette rules and generating SHAP-style explainability scores...</p>
+          <p className="font-bold text-sm text-slate-800">Evaluating statutory gazette rules & calculating SHAP match scores...</p>
         </div>
       )}
 
-      {/* Eligible Schemes Grid */}
-      <div className="space-y-4">
-        {filteredSchemes.map((rawScheme, idx) => {
-          const scheme = translateScheme(rawScheme);
-          const matchScore = Math.round(scheme.match_score || 85);
-          const scoreColor = matchScore >= 80 
-            ? 'text-emerald-700 bg-emerald-50 border-emerald-300' 
-            : 'text-teal-700 bg-teal-50 border-teal-300';
-          const isCentral = scheme.is_central || scheme.eligible_states?.includes('All India');
-          const portalUrl = scheme.official_portal_url || 'https://www.myscheme.gov.in';
+      {/* TAB 1: ELIGIBLE SCHEMES */}
+      {activeTab === 'eligible' && (
+        <div className="space-y-4">
+          {filteredEligible.map((rawScheme, idx) => {
+            const scheme = translateScheme(rawScheme);
+            const matchScore = Math.round(scheme.match_score || 95);
+            const isSelected = selectedScheme?.scheme_id === scheme.scheme_id || selectedScheme?.scheme_code === scheme.scheme_code;
+            const isCentral = scheme.is_central || scheme.eligible_states?.includes('All India');
+            const portalUrl = scheme.official_portal_url || 'https://www.myscheme.gov.in';
 
-          return (
-            <div
-              key={scheme.scheme_id || idx}
-              className="bg-white rounded-2xl border border-slate-200 hover:border-emerald-300 shadow-sm hover:shadow-md transition-all p-6 relative overflow-hidden"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                {/* Left Info */}
-                <div className="space-y-3 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-black border ${scoreColor}`}>
-                      {matchScore}% {t('schemeMatchScore')}
-                    </span>
-                    <span className="text-xs font-bold text-slate-700 px-2.5 py-0.5 bg-slate-100 rounded-md font-mono">
-                      {scheme.scheme_code}
-                    </span>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                      isCentral ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-purple-50 text-purple-700 border border-purple-200'
-                    }`}>
-                      {isCentral ? t('filterCentral') : t('filterState')}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      &bull; {scheme.ministry || 'Government of India'}
-                    </span>
+            return (
+              <div
+                key={scheme.scheme_id || idx}
+                className={`bg-white rounded-3xl border transition-all p-6 relative overflow-hidden shadow-sm hover:shadow-md ${
+                  isSelected
+                    ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-emerald-500/10'
+                    : 'border-slate-200 hover:border-emerald-300'
+                }`}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  {/* Left Info */}
+                  <div className="space-y-3 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-3 py-1 rounded-full text-xs font-black border bg-emerald-50 text-emerald-800 border-emerald-300">
+                        {matchScore}% Statutory Match
+                      </span>
+                      <span className="text-xs font-bold text-slate-700 px-2.5 py-0.5 bg-slate-100 rounded-md font-mono">
+                        {scheme.scheme_code}
+                      </span>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                        isCentral ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-purple-50 text-purple-700 border border-purple-200'
+                      }`}>
+                        {isCentral ? 'Central Scheme' : 'State Scheme'}
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">
+                        &bull; {scheme.ministry || 'Government of India'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h2 className="text-xl font-extrabold text-slate-900">{scheme.scheme_name || scheme.name}</h2>
+                      <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">{scheme.scheme_description || scheme.description}</p>
+                    </div>
+
+                    {/* Positive Contributing Factors (Explainability) */}
+                    {scheme.explainability?.positive_factors && scheme.explainability.positive_factors.length > 0 && (
+                      <div className="pt-2">
+                        <span className="text-[11px] font-bold text-slate-500 block mb-1">Passed Eligibility Conditions:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {scheme.explainability.positive_factors.map((factor, fIdx) => (
+                            <span
+                              key={fIdx}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60"
+                            >
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span>{factor}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Official Verification Tag */}
+                    <div className="pt-1 flex items-center gap-3 text-[11px]">
+                      <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded border border-emerald-200/60">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Statutory Verified &bull; myScheme.gov.in</span>
+                      </span>
+                      <a
+                        href={portalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-slate-500 hover:text-emerald-700 font-medium transition-colors"
+                      >
+                        <span>Official Portal</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
 
-                  <div>
-                    <h2 className="text-xl font-extrabold text-slate-900">{scheme.scheme_name || scheme.name}</h2>
-                    <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">{scheme.scheme_description || scheme.description}</p>
-                  </div>
-
-                  {/* Positive Contributing Factors */}
-                  {scheme.explainability?.positive_factors && scheme.explainability.positive_factors.length > 0 && (
-                    <div className="pt-2">
-                      <span className="text-[11px] font-bold text-slate-500 block mb-1">{t('positiveFactors')}:</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {scheme.explainability.positive_factors.map((factor, fIdx) => (
-                          <span
-                            key={fIdx}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60"
-                          >
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                            <span>{factor}</span>
-                          </span>
-                        ))}
+                  {/* Right Financials & Action Buttons */}
+                  <div className="lg:w-80 shrink-0 bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">Maximum Cap:</span>
+                        <span className="font-extrabold text-slate-900 text-sm">
+                          ₹{(scheme.max_loan_amount / 100000).toLocaleString('en-IN')} Lakhs
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">Government Subsidy:</span>
+                        <span className="font-bold text-emerald-700">
+                          {scheme.scheme_code === 'PMEGP' ? 'Up to 35% Special Rural' : (scheme.subsidy_details?.special_rural || scheme.subsidy_details?.special || 'Interest Subvention')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">Repayment Period:</span>
+                        <span className="font-medium text-slate-700">{scheme.repayment_period_months || 60} Months</span>
                       </div>
                     </div>
-                  )}
 
-                  {/* Missing Documents Alert if any */}
-                  {scheme.missing_documents && scheme.missing_documents.length > 0 && (
-                    <div className="flex items-center gap-2 text-[11px] text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200/60">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{t('limitingFactors')}: <strong>{scheme.missing_documents.join(', ')}</strong></span>
-                      <Link to="/documents" className="font-bold underline ml-auto text-amber-900">{t('navDocAssistant')}</Link>
-                    </div>
-                  )}
-
-                  {/* myScheme Verification badge with direct external link */}
-                  <div className="pt-1 flex items-center gap-3 text-[11px]">
-                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded border border-emerald-200/60">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>{t('sihBadgeText')} • myScheme.gov.in</span>
-                    </span>
-                    <a
-                      href={portalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-slate-500 hover:text-emerald-700 font-medium transition-colors"
-                    >
-                      <span>{t('mySchemePortal')}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* Right Financials & Action Buttons */}
-                <div className="lg:w-72 shrink-0 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500">{t('maxLoan')}:</span>
-                      <span className="font-extrabold text-slate-900 text-sm">
-                        ₹{(scheme.max_loan_amount / 100000).toLocaleString('en-IN')} {t('unitLakh')}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500">{t('subsidyRate')}:</span>
-                      <span className="font-bold text-emerald-700">
-                        {scheme.scheme_code === 'PMEGP' ? t('specialRural') : (scheme.subsidy_details?.special_rural || scheme.subsidy_details?.special || t('lowInterest'))}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500">{t('tenor')}:</span>
-                      <span className="font-medium text-slate-700">{scheme.repayment_period_months || 60} {t('unitMonths')}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 pt-2 border-t border-slate-200">
-                    <Link
-                      to={`/scheme/${scheme.scheme_id}`}
-                      className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-sm transition-colors text-center block"
-                    >
-                      {t('btnViewDetails')}
-                    </Link>
-
-                    <div className="flex gap-1.5">
-                      <Link
-                        to={`/explanation/${scheme.scheme_id}`}
-                        state={{ schemeData: scheme, evaluationResult: evaluation }}
-                        className="flex-1 py-1.5 px-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px] rounded-lg text-center flex items-center justify-center gap-1"
-                        title="Explainable SHAP breakdown"
+                    <div className="space-y-2 pt-3 border-t border-slate-200">
+                      {/* Select Scheme Primary CTA */}
+                      <button
+                        onClick={() => handleSelectScheme(scheme, '/calculator')}
+                        className={`w-full py-2.5 px-4 font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 ${
+                          isSelected
+                            ? 'bg-emerald-700 text-white ring-2 ring-emerald-500'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:scale-[1.01]'
+                        }`}
                       >
-                        <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
-                        <span>{t('btnWhyEligible')}</span>
-                      </Link>
+                        {isSelected ? (
+                          <>
+                            <Check className="w-4 h-4" />
+                            <span>Selected Scheme (Active)</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Select Scheme & Calculate EMI (Step 5)</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
 
-                      <Link
-                        to="/calculator"
-                        state={{ loanAmount: scheme.max_loan_amount, interestRate: 8.5 }}
-                        className="flex-1 py-1.5 px-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px] rounded-lg text-center flex items-center justify-center gap-1"
-                      >
-                        <Calculator className="w-3.5 h-3.5 text-amber-600" />
-                        <span>{t('navEmi')}</span>
-                      </Link>
-
-                      <Link
-                        to="/partners"
-                        state={{ schemeCode: scheme.scheme_code }}
-                        className="flex-1 py-1.5 px-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-[11px] rounded-lg text-center flex items-center justify-center gap-1"
-                      >
-                        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>{t('navPartners')}</span>
-                      </Link>
+                      <div className="flex gap-2">
+                        <Link
+                          to={`/scheme/${scheme.scheme_id}`}
+                          className="flex-1 py-2 px-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-[11px] rounded-xl text-center"
+                        >
+                          Full Details
+                        </Link>
+                        <button
+                          onClick={() => handleSelectScheme(scheme, '/partners')}
+                          className="flex-1 py-2 px-2 bg-white border border-slate-300 hover:bg-emerald-50 text-emerald-800 font-bold text-[11px] rounded-xl text-center flex items-center justify-center gap-1"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Find Branch</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        {filteredSchemes.length === 0 && !loading && (
-          <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
-            <Info className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <h3 className="font-bold text-slate-800 text-base">No Matching Schemes Found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              Try changing your filter criteria or search keyword to view other Central and State schemes.
-            </p>
-            <div className="mt-4 flex justify-center gap-3">
-              <button
-                onClick={() => { setOriginFilter('all'); setCategoryFilter('all'); setSearchQuery(''); }}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg"
-              >
-                Reset Filters
-              </button>
-              <Link
-                to="/find-scheme"
-                className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg"
-              >
-                Modify Questionnaire
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {ineligibleSchemes.length > 0 && (
-        <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden">
-          <button
-            onClick={() => setExpandedIneligible(!expandedIneligible)}
-            className="w-full p-5 flex items-center justify-between text-left hover:bg-slate-100/80 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <XCircle className="w-5 h-5 text-red-500" />
+          {filteredEligible.length === 0 && !loading && (
+            <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-4">
+              <Info className="w-10 h-10 text-slate-400 mx-auto" />
               <div>
-                <h3 className="font-bold text-slate-900 text-sm">
-                  {ineligibleSchemes.length} Schemes Ineligible for Current Profile
-                </h3>
-                <p className="text-xs text-slate-500">Transparently view gazette rules that caused exclusion</p>
+                <h3 className="font-extrabold text-slate-800 text-base">No Matching Eligible Schemes Found</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                  Click on the "Available & Alternative Schemes" tab above to see all gazette schemes and reasons for exclusion.
+                </p>
+              </div>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={() => setActiveTab('available')}
+                  className="px-5 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl"
+                >
+                  View Available Schemes
+                </button>
+                <Link
+                  to="/find-scheme"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl"
+                >
+                  Modify Questionnaire
+                </Link>
               </div>
             </div>
-            {expandedIneligible ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
-          </button>
+          )}
+        </div>
+      )}
 
-          {expandedIneligible && (
-            <div className="p-5 pt-0 space-y-3 border-t border-slate-200 bg-white">
-              {ineligibleSchemes.map((scheme, idx) => (
-                <div key={idx} className="p-4 rounded-xl border border-red-100 bg-red-50/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                  <div>
-                    <span className="font-bold text-slate-800">{scheme.scheme_name}</span>
-                    <span className="text-slate-500 ml-2 font-mono">({scheme.scheme_code})</span>
-                    <div className="text-red-700 mt-1 font-medium">
-                      <strong>Failed Gazette Rules:</strong> {scheme.failed_rules?.join('; ') || 'Criteria mismatch with profile'}
-                    </div>
-                  </div>
-                  <Link
-                    to={`/explanation/${scheme.scheme_id}`}
-                    state={{ schemeData: scheme }}
-                    className="shrink-0 px-3 py-1.5 bg-white border border-red-200 text-red-700 rounded-lg font-semibold hover:bg-red-50"
-                  >
-                    View Rule Breakdown
-                  </Link>
+      {/* TAB 2: AVAILABLE & INELIGIBLE SCHEMES (RULE EXPLAINABILITY) */}
+      {activeTab === 'available' && (
+        <div className="space-y-4">
+          <div className="p-4 bg-slate-100 rounded-2xl border border-slate-200 text-xs text-slate-600 flex items-center gap-2">
+            <Info className="w-4 h-4 text-slate-500 shrink-0" />
+            <span>These schemes are currently operating under Central / State mandates. Transparent gazette reasons for exclusion are displayed below.</span>
+          </div>
+
+          {filteredAvailable.map((scheme, idx) => (
+            <div
+              key={idx}
+              className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+            >
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-700 px-2 py-0.5 bg-slate-100 rounded font-mono">
+                    {scheme.scheme_code}
+                  </span>
+                  <span className="text-xs font-extrabold text-slate-900">{scheme.scheme_name}</span>
                 </div>
-              ))}
+                <p className="text-xs text-slate-600 line-clamp-2">{scheme.scheme_description || scheme.description}</p>
+
+                {/* Failed Rules Box */}
+                <div className="p-3 bg-red-50/70 border border-red-200 rounded-xl text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 text-red-800 font-bold">
+                    <XCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                    <span>Failed Gazette Condition(s):</span>
+                  </div>
+                  <p className="text-red-700 text-[11px]">
+                    {scheme.failed_rules?.join('; ') || 'Criteria mismatch with applicant profile or required loan ceiling exceeded.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="lg:w-60 shrink-0 flex flex-col justify-between space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div className="text-xs space-y-1">
+                  <span className="text-slate-500 block">Max Limit:</span>
+                  <span className="font-extrabold text-slate-900">
+                    ₹{(scheme.max_loan_amount / 100000).toLocaleString('en-IN')} Lakhs
+                  </span>
+                </div>
+
+                <Link
+                  to={`/scheme/${scheme.scheme_id}`}
+                  className="w-full py-2 px-3 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl text-center block"
+                >
+                  View Scheme Guidelines
+                </Link>
+              </div>
+            </div>
+          ))}
+
+          {filteredAvailable.length === 0 && (
+            <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 text-slate-500 text-xs">
+              No additional available schemes found matching your search.
             </div>
           )}
         </div>
@@ -426,3 +519,4 @@ export default function SchemeResultsPage() {
     </div>
   );
 }
+

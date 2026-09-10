@@ -43,12 +43,19 @@ export const financeAPI = {
   calculateEmi: (data) => api.post('/finance/emi', data),
 };
 
+export const locationsAPI = {
+  getStates: () => api.get('/locations/states'),
+  getDistricts: (state) => api.get('/locations/districts', { params: { state } }),
+};
+
 export const documentsAPI = {
   upload: (formData) => api.post('/documents/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   getUserDocuments: () => api.get('/documents'),
   getStatus: (id) => api.get(`/documents/${id}/status`),
+  getRequiredChecklist: (params) => api.get('/documents/required-checklist', { params }),
+  getVerificationSummary: () => api.get('/documents/verification-summary'),
   rerunOcr: (id) => api.post(`/documents/${id}/ocr`),
   rerunValidate: (id) => api.post(`/documents/${id}/validate`),
   triggerVerify: (id) => api.post(`/documents/${id}/verify`),

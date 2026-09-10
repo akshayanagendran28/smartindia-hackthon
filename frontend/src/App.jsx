@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { ApplicationProvider } from './context/ApplicationContext';
 
 // Layouts
 import Navbar from './layouts/Navbar';
@@ -63,7 +64,8 @@ export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <BrowserRouter>
+        <ApplicationProvider>
+          <BrowserRouter>
           <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans selection:bg-emerald-500 selection:text-white">
             <Navbar />
             <main className="flex-grow">
@@ -183,7 +185,8 @@ export default function App() {
             <Footer />
           </div>
         </BrowserRouter>
-      </AuthProvider>
-    </LanguageProvider>
-  );
+      </ApplicationProvider>
+    </AuthProvider>
+  </LanguageProvider>
+);
 }

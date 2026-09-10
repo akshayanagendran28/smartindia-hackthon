@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { 
   MapPin, Phone, Building2, Navigation, CheckCircle2, 
   Search, Sliders, ShieldCheck, Sparkles, Clock, Calendar,
   Wifi, WifiOff, CreditCard, Landmark, Check, AlertCircle, 
-  ExternalLink, RefreshCw, Layers, Volume2, Share2, Compass, ArrowRight, Eye
+  ExternalLink, RefreshCw, Layers, Volume2, Share2, Compass, ArrowRight, Eye, Lock
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useLanguage } from '../context/LanguageContext';
+import { useApplication } from '../context/ApplicationContext';
+import StepProgressIndicator from '../components/StepProgressIndicator';
 import api from '../services/api';
 import OfflineVectorMap from '../components/OfflineVectorMap';
 
@@ -66,16 +68,20 @@ function ChangeMapView({ coords, zoomLevel = 16 }) {
 export default function PartnerMapPage() {
   const { t } = useLanguage();
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const { application, selectedScheme } = useApplication();
+
+  const activeScheme = location.state?.scheme || selectedScheme || (location.state?.schemeCode ? { scheme_code: location.state.schemeCode, scheme_name: location.state.schemeCode } : null);
+
   // Map Layer Engine: 'carto' (Default Crystal Clear Streets), 'satellite' (Real Satellite Imagery), 'vector' (100% Offline)
   const [mapLayer, setMapLayer] = useState('carto');
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [ifscSearch, setIfscSearch] = useState('');
-  const [stateFilter, setStateFilter] = useState('all');
+  const [stateFilter, setStateFilter] = useState(application.state || 'all');
   const [bankFilter, setBankFilter] = useState('all');
-  const [schemeFilter, setSchemeFilter] = useState(location.state?.schemeCode || 'all');
+  const [schemeFilter, setSchemeFilter] = useState(activeScheme?.scheme_code || location.state?.schemeCode || 'all');
   const [selectedBranch, setSelectedBranch] = useState(null);
   
   // Modals & Tools
@@ -205,27 +211,84 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
     return `https://api.whatsapp.com/send?text=${text}`;
   }, [selectedBranch]);
 
+  // Gated: If no scheme selected, render lock screen
+  if (!activeScheme) {
+    return (
+      <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6 space-y-8">
+        <StepProgressIndicator currentStep={7} />
+        
+        <div className="bg-white p-12 rounded-3xl border border-slate-200 shadow-xl text-center space-y-6">
+          <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner border border-amber-200/60">
+            <Lock className="w-10 h-10" />
+          </div>
+
+          <div className="space-y-2 max-w-lg mx-auto">
+            <h2 className="text-2xl font-black text-slate-900">
+              Channel Partner & Nodal Bank Locator Locked
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              In the Scheme Sathi workflow, processing agencies and partner bank branches vary strictly by government mandate (e.g., KVIC / DIC for PMEGP, SIDBI for Stand-Up India, Municipal ULBs for SVANidhi).
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl max-w-md mx-auto text-xs text-slate-600 space-y-2 text-left">
+            <div className="font-bold text-slate-800 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Current Beneficiary Context:</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-200 pb-1">
+              <span>District & State:</span>
+              <span className="font-bold text-slate-900">{application.district}, {application.state}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Required Loan:</span>
+              <span className="font-bold text-slate-900">₹{(application.loanAmount / 100000).toLocaleString('en-IN')} Lakhs</span>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
+            <button
+              onClick={() => navigate('/results')}
+              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+            >
+              <span>Go to Step 4: Select an Eligible Scheme</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => navigate('/calculator')}
+              className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
+            >
+              Go to Step 6: EMI Calculator
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 space-y-6">
-      
+      {/* 7-Step Dynamic Progress Breadcrumb Indicator */}
+      <StepProgressIndicator currentStep={7} />
+
       {/* Header Banner & Easy Visual Mode Selector */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
               <Landmark className="w-3.5 h-3.5" />
-              <span>Razorpay IFSC • Exact Street Locations & Nodal Desks</span>
+              <span>Razorpay IFSC Dataset &bull; {activeScheme?.scheme_code} Processing Centers</span>
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-200">
               <Navigation className="w-3.5 h-3.5 text-blue-700" />
-              <span>1-Click GPS Navigation Ready</span>
+              <span>{application.district}, {application.state}</span>
             </span>
           </div>
           <h1 className="text-2xl font-black text-slate-900">
-            Bank Branch & Channel Partner Locator
+            Processing Bank & Channel Partner Locator
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Find the exact street location, landmark directions, and nodal officer for your scheme loan application.
+            Exact street locations, GPS navigation, and nodal desk contacts for <strong className="text-slate-800">{activeScheme?.scheme_name || activeScheme?.scheme_code}</strong>.
           </p>
         </div>
 

@@ -3,7 +3,7 @@ import json
 import uuid
 import shutil
 import datetime
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
@@ -755,4 +755,145 @@ def get_scheme_checklist(
         "readiness_percentage": readiness,
         "documents": checklist
     }
+
+
+@router.get("/required-checklist")
+def get_dynamic_required_checklist(
+    category: Optional[str] = Query(None),
+    purpose: Optional[str] = Query(None),
+    loan_amount: Optional[float] = Query(None),
+    business_type: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user_flexible),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    eff_category = category or (profile.category if profile else "SC") or "SC"
+    eff_purpose = purpose or (profile.purpose if profile else "Start a Business") or "Start a Business"
+    eff_loan = loan_amount or (profile.required_loan_amount if profile else 1200000.0) or 1200000.0
+    eff_biz = business_type or (profile.business_type if profile else "manufacturing") or "manufacturing"
+
+    req_docs = [
+        {
+            "doc_key": "docAadhaar",
+            "document_name": "Aadhaar Card",
+            "document_type": "Aadhaar",
+            "is_mandatory": True,
+            "reason": "Mandatory identity proof & UIDAI Verhoeff checksum verification for direct DBT benefit linkage."
+        }
+    ]
+
+    if eff_loan >= 50000 or "business" in eff_purpose.lower():
+        req_docs.append({
+            "doc_key": "docPan",
+            "document_name": "PAN Card",
+            "document_type": "PAN",
+            "is_mandatory": True,
+            "reason": "Required for credit sanction, tax compliance, and entity identification."
+        })
+
+    if eff_category.upper() in ["SC", "ST", "MINORITY"]:
+        req_docs.append({
+            "doc_key": "docCaste",
+            "document_name": f"{eff_category.upper()} Community / Caste Certificate",
+            "document_type": "Caste Certificate",
+            "is_mandatory": True,
+            "reason": f"Required to unlock 25%-35% special capital subsidy and concessional terms under {eff_category.upper()} quota."
+        })
+
+    req_docs.append({
+        "doc_key": "docIncome",
+        "document_name": "Annual Income Certificate",
+        "document_type": "Income Certificate",
+        "is_mandatory": True,
+        "reason": "Required to verify family income compliance with statutory subsidy caps."
+    })
+
+    if "business" in eff_purpose.lower() or eff_loan > 50000:
+        req_docs.append({
+            "doc_key": "docDpr",
+            "document_name": "Detailed Project Report (DPR)",
+            "document_type": "Detailed Project Report",
+            "is_mandatory": True,
+            "reason": "Project financial summary verifying Project Cost, Promoter Margin (5%-10%), and Bank Loan."
+        })
+
+    if eff_biz.lower() in ["manufacturing", "service", "trading"] or "expand" in eff_purpose.lower():
+        req_docs.append({
+            "doc_key": "docUdyam",
+            "document_name": "Udyam MSME Registration Certificate",
+            "document_type": "Udyam Registration",
+            "is_mandatory": False,
+            "reason": "Provides priority lending status and exemption from processing fees under MSME Act."
+        })
+
+    user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all()
+    user_doc_map = {}
+    for d in user_docs:
+        norm = DocumentValidationPipeline.normalize_doc_type(d.document_type).lower()
+        user_doc_map[norm] = d
+
+    checklist_out = []
+    total_mandatory = 0
+    verified_mandatory = 0
+
+    for item in req_docs:
+        norm_type = DocumentValidationPipeline.normalize_doc_type(item["document_type"]).lower()
+        matched = user_doc_map.get(norm_type) or user_doc_map.get(item["doc_key"].lower())
+
+        is_verified = matched is not None and str(matched.verification_status).upper() in ["VERIFIED", "SUCCESS"]
+        if item["is_mandatory"]:
+            total_mandatory += 1
+            if is_verified:
+                verified_mandatory += 1
+
+        checklist_out.append({
+            "doc_key": item["doc_key"],
+            "document_name": item["document_name"],
+            "document_type": item["document_type"],
+            "is_mandatory": item["is_mandatory"],
+            "reason": item["reason"],
+            "is_uploaded": matched is not None,
+            "verification_status": matched.verification_status if matched else "pending",
+            "masked_identifier": getattr(matched, "masked_identifier", None) if matched else None,
+            "confidence": getattr(matched, "confidence_score", 0.0) if matched else 0.0,
+            "document_id": matched.id if matched else None
+        })
+
+    all_verified = (total_mandatory > 0) and (verified_mandatory == total_mandatory)
+
+    return {
+        "all_mandatory_verified": all_verified,
+        "total_mandatory": total_mandatory,
+        "verified_mandatory": verified_mandatory,
+        "eligibility_unlocked": all_verified,
+        "checklist": checklist_out
+    }
+
+
+@router.get("/verification-summary")
+def get_verification_summary(
+    current_user: User = Depends(get_current_user_flexible),
+    db: Session = Depends(get_db)
+):
+    user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all()
+    verified_types = set()
+    for d in user_docs:
+        if str(d.verification_status).upper() in ["VERIFIED", "SUCCESS"]:
+            verified_types.add(DocumentValidationPipeline.normalize_doc_type(d.document_type).lower())
+            verified_types.add(d.document_type.lower())
+
+    has_aadhaar = any("aadhaar" in t for t in verified_types)
+    has_pan = any("pan" in t for t in verified_types)
+    has_income_or_caste = any("caste" in t or "income" in t for t in verified_types)
+
+    all_verified = has_aadhaar and (has_pan or len(verified_types) >= 3) and has_income_or_caste
+
+    return {
+        "user_id": current_user.id,
+        "total_uploaded": len(user_docs),
+        "total_verified": len(verified_types),
+        "all_mandatory_verified": all_verified,
+        "verified_document_types": list(verified_types)
+    }
+
 

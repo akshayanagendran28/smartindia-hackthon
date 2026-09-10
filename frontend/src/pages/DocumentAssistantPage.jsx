@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   FileCheck, UploadCloud, AlertTriangle, CheckCircle2, ShieldCheck, 
   FileText, ArrowRight, Eye, RefreshCw, Sparkles, Shield, Check, X,
@@ -6,7 +7,9 @@ import {
   ChevronRight, Trash2, Cpu, HelpCircle, Activity, Info
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useApplication } from '../context/ApplicationContext';
 import { documentsAPI, authAPI } from '../services/api';
+import StepProgressIndicator from '../components/StepProgressIndicator';
 
 const DOC_TYPES = [
   { key: 'docAadhaar', name: 'Aadhaar Card', label: 'docAadhaar', icon: Shield, tag: 'UIDAI Verhoeff Checksum' },
@@ -19,6 +22,9 @@ const DOC_TYPES = [
 
 export default function DocumentAssistantPage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { application, recordDocumentVerified, setAllDocumentsVerified, allDocumentsVerified } = useApplication();
+
   const [selectedDocKey, setSelectedDocKey] = useState('docAadhaar');
   const [activeTab, setActiveTab] = useState('upload'); // 'upload', 'synthetic', 'stream', 'vault'
   const [file, setFile] = useState(null);
@@ -31,6 +37,7 @@ export default function DocumentAssistantPage() {
   const [error, setError] = useState('');
   const [syntheticSamples, setSyntheticSamples] = useState([]);
   const [userDocs, setUserDocs] = useState([]);
+  const [checklistData, setChecklistData] = useState(null);
   const [loadingVault, setLoadingVault] = useState(false);
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [auditDocId, setAuditDocId] = useState(null);
@@ -39,7 +46,25 @@ export default function DocumentAssistantPage() {
   useEffect(() => {
     fetchSyntheticSamples();
     fetchUserDocuments();
-  }, []);
+    fetchRequiredChecklist();
+  }, [application.purpose, application.category]);
+
+  const fetchRequiredChecklist = async () => {
+    try {
+      const res = await documentsAPI.getRequiredChecklist({
+        purpose: application.purpose || 'Business',
+        category: application.category || 'SC'
+      });
+      if (res.data) {
+        setChecklistData(res.data);
+        if (res.data.all_mandatory_verified) {
+          setAllDocumentsVerified(true);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load required document checklist:', err);
+    }
+  };
 
   const fetchSyntheticSamples = async () => {
     try {
@@ -54,7 +79,14 @@ export default function DocumentAssistantPage() {
     setLoadingVault(true);
     try {
       const res = await documentsAPI.getUserDocuments();
-      setUserDocs(res.data || []);
+      const docs = res.data || [];
+      setUserDocs(docs);
+      // Sync any verified docs to ApplicationContext
+      docs.forEach(d => {
+        if (d.verification_status === 'VERIFIED' || d.verification_status === 'SUCCESS') {
+          recordDocumentVerified(d.document_type);
+        }
+      });
     } catch (err) {
       console.error('Failed to load user docs:', err);
     } finally {
@@ -123,7 +155,9 @@ export default function DocumentAssistantPage() {
       }
 
       setResult(apiRes.data);
+      recordDocumentVerified(selectedDocKey);
       fetchUserDocuments();
+      fetchRequiredChecklist();
     } catch (err) {
       console.error('Upload validation error:', err);
       setError(err.response?.data?.detail || 'Document validation failed. Please check file format.');
@@ -163,13 +197,39 @@ export default function DocumentAssistantPage() {
       }
 
       setResult(apiRes.data);
+      recordDocumentVerified(docKey);
       fetchUserDocuments();
+      fetchRequiredChecklist();
     } catch (err) {
       console.error('Synthetic test error:', err);
       setError('Failed to execute synthetic sample pipeline.');
     } finally {
       setValidating(false);
       setValidationStep(0);
+    }
+  };
+
+  const handleVerifyAllMandatoryDemo = async () => {
+    setValidating(true);
+    setError('');
+    try {
+      const keysToVerify = ['docAadhaar', 'docCaste', 'docIncome', 'docDpr', 'docPan'];
+      for (const key of keysToVerify) {
+        try {
+          await documentsAPI.loadSyntheticSample(key, targetScheme);
+          recordDocumentVerified(key);
+        } catch (e) {
+          console.warn(`Synthetic auto-load for ${key}:`, e);
+        }
+      }
+      setAllDocumentsVerified(true);
+      await fetchUserDocuments();
+      await fetchRequiredChecklist();
+      setSelectedDocKey('docAadhaar');
+    } catch (err) {
+      console.error('Batch verification error:', err);
+    } finally {
+      setValidating(false);
     }
   };
 
@@ -231,6 +291,9 @@ export default function DocumentAssistantPage() {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* 7-Step Dynamic Progress Breadcrumb Indicator */}
+      <StepProgressIndicator currentStep={3} />
+
       {/* Top Banner & SIH Context */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden border border-indigo-900/50">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -255,16 +318,127 @@ export default function DocumentAssistantPage() {
           </p>
         </div>
 
-        <div className="relative z-10 shrink-0 flex items-center gap-3">
+        <div className="relative z-10 shrink-0 flex flex-col sm:flex-row items-center gap-3">
           <button
-            onClick={() => setActiveTab('synthetic')}
-            className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            onClick={handleVerifyAllMandatoryDemo}
+            disabled={validating}
+            className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>1-Click Jury Demo</span>
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>⚡ Verify All Mandatory (1-Click Jury)</span>
           </button>
         </div>
       </div>
+
+      {/* Dynamic Required Documents Verification Gate */}
+      {checklistData && (
+        <div className={`p-5 rounded-3xl border transition-all ${
+          checklistData.all_mandatory_verified || allDocumentsVerified
+            ? 'bg-emerald-50/80 border-emerald-300 shadow-sm'
+            : 'bg-amber-50/60 border-amber-300 shadow-sm'
+        }`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200/60">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-2xl ${
+                checklistData.all_mandatory_verified || allDocumentsVerified
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-amber-500 text-white'
+              }`}>
+                {checklistData.all_mandatory_verified || allDocumentsVerified ? (
+                  <ShieldCheck className="w-6 h-6" />
+                ) : (
+                  <Lock className="w-6 h-6" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-black text-slate-900">
+                    Mandatory Document Verification Gate (Step 3 / 7)
+                  </h2>
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                    checklistData.all_mandatory_verified || allDocumentsVerified
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {checklistData.verified_mandatory} of {checklistData.total_mandatory} Mandatory Verified
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Based on target requirement: <strong className="text-slate-800">{application.purpose}</strong> ({application.category} Category). All mandatory proofs must be validated to unlock scheme matching.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              {checklistData.all_mandatory_verified || allDocumentsVerified ? (
+                <button
+                  onClick={() => navigate('/results')}
+                  className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-2xl shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+                >
+                  <span>Check Eligible Schemes</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full md:w-auto px-6 py-3 bg-slate-200 text-slate-400 font-bold text-xs rounded-2xl cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300"
+                  title="Complete verification of all mandatory documents below to unlock"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Scheme Matching Locked</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Checklist items grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
+            {checklistData.checklist?.map((item) => {
+              const isVerified = item.verification_status === 'VERIFIED' || item.verification_status === 'SUCCESS';
+              const isCurrent = selectedDocKey === item.doc_key;
+              return (
+                <div
+                  key={item.doc_key}
+                  onClick={() => {
+                    setSelectedDocKey(item.doc_key);
+                    setResult(null);
+                    setError('');
+                  }}
+                  className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                    isVerified
+                      ? 'bg-white border-emerald-300 ring-1 ring-emerald-500/20'
+                      : isCurrent
+                      ? 'bg-white border-amber-500 ring-2 ring-amber-500/20 shadow-sm'
+                      : 'bg-white/80 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                      item.is_mandatory ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {item.is_mandatory ? 'Mandatory' : 'Optional'}
+                    </span>
+
+                    {isVerified ? (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>VERIFIED</span>
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                        PENDING
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="text-xs font-bold text-slate-900 truncate">{item.document_name}</h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{item.reason}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 6 Supported Document Category Selector */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -861,6 +1035,51 @@ export default function DocumentAssistantPage() {
                 ))}
               </div>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Stage Gate Navigation Banner */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-3 rounded-2xl ${allDocumentsVerified || checklistData?.all_mandatory_verified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+            {allDocumentsVerified || checklistData?.all_mandatory_verified ? (
+              <CheckCircle2 className="w-6 h-6" />
+            ) : (
+              <Lock className="w-6 h-6" />
+            )}
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-slate-900">
+              {allDocumentsVerified || checklistData?.all_mandatory_verified
+                ? 'All Mandatory Documents Successfully Verified'
+                : 'Document Verification In Progress'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {allDocumentsVerified || checklistData?.all_mandatory_verified
+                ? 'Statutory eligibility matching is now fully unlocked. Proceed to view evaluated schemes.'
+                : 'Please verify the required mandatory documents above or click "⚡ Verify All Mandatory" for SIH testing.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {allDocumentsVerified || checklistData?.all_mandatory_verified ? (
+            <button
+              onClick={() => navigate('/results')}
+              className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+            >
+              <span>Check Eligible Schemes (Step 4)</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              disabled
+              className="w-full sm:w-auto px-6 py-3 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl cursor-not-allowed flex items-center justify-center gap-2 border border-slate-200"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Verify Docs to Unlock Results</span>
+            </button>
           )}
         </div>
       </div>

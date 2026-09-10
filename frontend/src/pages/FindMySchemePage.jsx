@@ -1,116 +1,177 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Sparkles, ArrowRight, ArrowLeft, CheckCircle2, User, MapPin, 
-  Briefcase, DollarSign, FileCheck, ShieldCheck 
+  Briefcase, DollarSign, FileCheck, ShieldCheck, GraduationCap, Hammer, Store, Info 
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import api from '../services/api';
+import { useApplication } from '../context/ApplicationContext';
+import { locationsAPI } from '../services/api';
+import StepProgressIndicator from '../components/StepProgressIndicator';
 
 export default function FindMySchemePage() {
   const { t, currentLanguage } = useLanguage();
+  const { 
+    application, 
+    updateApplication, 
+    updateLoanAmount, 
+    submitRequirements 
+  } = useApplication();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Dynamic States & Districts
+  const [statesList, setStatesList] = useState([]);
+  const [districtsList, setDistrictsList] = useState([]);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+
+  // Form State initialized directly from single Application source of truth
   const [formData, setFormData] = useState({
-    // Step 1: Demographics
-    full_name: 'Beneficiary Candidate',
-    age: 29,
-    gender: 'female',
-    social_category: location.state?.initialForm?.social_category || 'SC',
-    religion: 'hindu',
-    is_differently_abled: false,
+    // Step 1: Category & Demographics
+    full_name: application.full_name || 'Beneficiary Candidate',
+    age: application.age || 28,
+    gender: application.gender || 'female',
+    social_category: (application.category && application.category !== 'General' && application.category !== 'OBC') ? application.category : 'SC',
+    religion: application.religion || 'hindu',
+    is_differently_abled: application.is_differently_abled || false,
 
-    // Step 2: Location
-    state: 'Maharashtra',
-    district: 'Mumbai',
-    area_type: 'rural',
-    pincode: '400001',
+    // Step 2: Location (Dynamic Country -> State -> District)
+    country: 'India',
+    state: application.state || 'Tamil Nadu',
+    district: application.district || 'Tiruvallur',
+    area_type: application.area_type || 'rural',
+    pincode: application.pincode || '602001',
 
-    // Step 3: Enterprise & Craft
-    business_type: location.state?.initialForm?.business_type || 'manufacturing',
-    business_stage: 'new',
-    is_artisan: false,
-    is_street_vendor: false,
-    has_skill_training: true,
-    education_qualification: 'graduate',
+    // Step 3: Purpose & Conditional Sector
+    purpose: application.purpose || 'Start a Business',
+    business_type: application.business_type || 'manufacturing',
+    business_stage: application.business_stage || 'new',
+    industry_sector: application.industry_sector || 'food_processing',
+    education_qualification: application.education_qualification || 'graduate',
+    course: application.course || '',
+    institution: application.institution || '',
+    education_cost: application.education_cost || 0,
+    artisan_trade: 'Carpenter / Wood Craft',
+    is_artisan: application.is_artisan || false,
+    is_street_vendor: application.is_street_vendor || false,
+    has_skill_training: application.has_skill_training !== undefined ? application.has_skill_training : true,
+    has_udyam_registration: application.has_udyam_registration !== undefined ? application.has_udyam_registration : true,
+    gstin: application.gstin || '',
 
-    // Step 4: Loan & Financials
-    project_cost: 1500000,
-    required_loan: location.state?.initialForm?.required_loan || 1200000,
-    own_contribution: 150000,
-    annual_income: 180000,
-
-    // Step 5: Document Readiness
-    has_aadhaar: true,
-    has_pan: true,
-    has_caste_certificate: true,
-    has_project_report: true,
-    has_bank_account: true,
-    has_udyam_registration: true
+    // Step 4: Single Loan Amount & Project Financials
+    required_loan: application.loanAmount || 1200000,
+    project_cost: application.project_cost || 1500000,
+    own_contribution: application.own_contribution || 300000,
+    annual_income: application.annual_income || 180000,
+    annual_family_income: application.annual_family_income || 180000,
   });
+
+  // Load States list on mount
+  useEffect(() => {
+    locationsAPI.getStates()
+      .then(res => {
+        if (res.data && res.data.length > 0) {
+          setStatesList(res.data);
+        }
+      })
+      .catch(err => console.warn('Could not load states', err));
+  }, []);
+
+  // Fetch dynamic districts when state changes
+  useEffect(() => {
+    if (formData.state) {
+      setLoadingDistricts(true);
+      locationsAPI.getDistricts(formData.state)
+        .then(res => {
+          const list = res.data?.districts || [];
+          setDistrictsList(list);
+          if (list.length > 0 && (!formData.district || !list.includes(formData.district))) {
+            setFormData(prev => ({ ...prev, district: list[0] }));
+            updateApplication({ state: formData.state, district: list[0] });
+          }
+        })
+        .catch(err => {
+          console.warn('Could not load districts for state', formData.state, err);
+          setDistrictsList([]);
+        })
+        .finally(() => setLoadingDistricts(false));
+    }
+  }, [formData.state]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value)
-    }));
+    const newVal = type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value);
+    
+    setFormData(prev => {
+      const updated = { ...prev, [name]: newVal };
+      
+      // Keep loan amounts synchronized
+      if (name === 'required_loan') {
+        updateLoanAmount(Number(value));
+      }
+      return updated;
+    });
   };
 
   const handleNext = () => {
-    if (step < 5) setStep(step + 1);
+    if (step < 4) setStep(step + 1);
   };
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = async (e) => {
+  /**
+   * Final submission of requirements:
+   * Redirects strictly to DOCUMENT VERIFICATION before eligibility is evaluated!
+   */
+  const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    try {
-      await api.put('/profile/me', formData).catch(() => {});
 
-      // Call deterministic rule matcher with language
-      const res = await api.post('/matching/evaluate', {
+    try {
+      // 1. Synchronize requirements with application context
+      updateApplication({
         ...formData,
-        target_language: currentLanguage
+        loanAmount: formData.required_loan,
+        category: formData.social_category,
       });
-      navigate('/results', { state: { evaluationResult: res.data, profileData: formData } });
+      submitRequirements(formData);
+
+      // 2. Strict Workflow Order: Redirect to Document Verification first!
+      navigate('/documents');
     } catch (err) {
       console.error(err);
-      setError('Evaluation failed. Running fallback matching...');
-      navigate('/results', { state: { profileData: formData } });
+      setError('Failed to save requirements. Please retry.');
     } finally {
       setLoading(false);
     }
   };
 
   const steps = [
-    { num: 1, title: t('step1Title'), icon: <User className="w-4 h-4" /> },
-    { num: 2, title: t('step2Title'), icon: <MapPin className="w-4 h-4" /> },
-    { num: 3, title: t('step3Title'), icon: <Briefcase className="w-4 h-4" /> },
-    { num: 4, title: t('step4Title'), icon: <DollarSign className="w-4 h-4" /> },
-    { num: 5, title: t('step5Title'), icon: <FileCheck className="w-4 h-4" /> }
+    { num: 1, title: '1. Demographics', icon: <User className="w-4 h-4" /> },
+    { num: 2, title: '2. Dynamic Location', icon: <MapPin className="w-4 h-4" /> },
+    { num: 3, title: '3. Purpose & Sector', icon: <Briefcase className="w-4 h-4" /> },
+    { num: 4, title: '4. Loan & Financials', icon: <DollarSign className="w-4 h-4" /> },
   ];
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 sm:px-6">
+      <StepProgressIndicator currentStep={2} />
+
       {/* Wizard Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>{t('sihBadgeText')} • {t('translationBadge')}</span>
+          <span>Intelligent Scheme Requirement Intake</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{t('wizardTitle')}</h1>
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900">Find My Scheme</h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          {t('wizardSubtitle')}
+          Answer tailored dynamic questions to identify eligible Central and State initiatives.
         </p>
       </div>
 
@@ -120,7 +181,7 @@ export default function FindMySchemePage() {
           <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 -translate-y-1/2 z-0"></div>
           <div 
             className="absolute top-1/2 left-0 h-1 bg-emerald-500 -translate-y-1/2 z-0 transition-all duration-300"
-            style={{ width: `${((step - 1) / 4) * 100}%` }}
+            style={{ width: `${((step - 1) / 3) * 100}%` }}
           ></div>
 
           {steps.map((s) => (
@@ -151,48 +212,53 @@ export default function FindMySchemePage() {
       )}
 
       {/* Step Content Container */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        {/* Step 1: Category & Demographics */}
         {step === 1 && (
           <div className="space-y-5 animate-fadeIn">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <User className="w-5 h-5 text-emerald-600" />
-              <span>Step 1: {t('step1Title')}</span>
+              <span>Step 1: Target Category & Demographics</span>
             </h2>
-            <p className="text-xs text-slate-500">{t('step1Desc')}</p>
+            <p className="text-xs text-slate-500">
+              Only supported marginalized beneficiary categories are presented for affirmative subsidy calculation.
+            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('socialCategoryLabel')}</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Target Marginalized Category
+                </label>
                 <select
                   name="social_category"
                   value={formData.social_category}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 font-medium"
                 >
-                  <option value="SC">{t('optionSC')}</option>
-                  <option value="ST">{t('optionST')}</option>
-                  <option value="OBC">{t('optionOBC')}</option>
-                  <option value="Minority">{t('optionMinority')}</option>
-                  <option value="General">{t('optionGeneral')}</option>
+                  <option value="SC">Scheduled Caste (SC)</option>
+                  <option value="ST">Scheduled Tribe (ST)</option>
+                  <option value="Minority">Minority (Muslim/Christian/Sikh/Buddhist/Jain/Parsi)</option>
+                  <option value="Woman">Women / Special Category</option>
+                  <option value="Divyangjan">Specially Abled / Divyangjan</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('genderLabel')}</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Gender</label>
                 <select
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50"
                 >
-                  <option value="female">{t('optionFemale')}</option>
-                  <option value="male">{t('optionMale')}</option>
-                  <option value="transgender">{t('optionTransgender')}</option>
+                  <option value="female">Female / Woman</option>
+                  <option value="male">Male</option>
+                  <option value="transgender">Transgender</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('ageLabel')}</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Age (Years)</label>
                 <input
                   type="number"
                   name="age"
@@ -200,22 +266,22 @@ export default function FindMySchemePage() {
                   max="80"
                   value={formData.age}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('educationLabel')}</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Educational Qualification</label>
                 <select
                   name="education_qualification"
                   value={formData.education_qualification}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50"
                 >
-                  <option value="graduate">{t('optionGraduate')}</option>
-                  <option value="12th">{t('option12th')}</option>
-                  <option value="8th">{t('option8th')}</option>
-                  <option value="below_8th">{t('optionBelow8th')}</option>
+                  <option value="graduate">Graduate / Post-Graduate</option>
+                  <option value="12th">12th Standard Passed</option>
+                  <option value="8th">8th Standard Passed</option>
+                  <option value="below_8th">Below 8th Standard / Literate</option>
                 </select>
               </div>
             </div>
@@ -229,234 +295,340 @@ export default function FindMySchemePage() {
                   onChange={handleChange}
                   className="w-4 h-4 text-emerald-600 rounded"
                 />
-                <span>{t('differentlyAbledLabel')}</span>
+                <span>Specially Abled Person (PwD / Divyangjan &gt; 40%)</span>
               </label>
             </div>
           </div>
         )}
 
+        {/* Step 2: Dynamic Location (Country -> State -> District) */}
         {step === 2 && (
           <div className="space-y-5 animate-fadeIn">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-emerald-600" />
-              <span>Step 2: {t('step2Title')}</span>
+              <span>Step 2: Dynamic Dependent Location</span>
             </h2>
-            <p className="text-xs text-slate-500">{t('step2Desc')}</p>
+            <p className="text-xs text-slate-500">
+              Districts update dynamically from the verified government registry based on your selected state.
+            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('stateLabel')}</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Country</label>
                 <input
                   type="text"
+                  disabled
+                  value="India"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-200 bg-slate-100 text-slate-600 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">State / Union Territory</label>
+                <select
                   name="state"
                   value={formData.state}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium"
+                >
+                  {statesList.length > 0 ? (
+                    statesList.map(st => (
+                      <option key={st} value={st}>{st}</option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Tamil Nadu">Tamil Nadu</option>
+                      <option value="Maharashtra">Maharashtra</option>
+                      <option value="Karnataka">Karnataka</option>
+                      <option value="Kerala">Kerala</option>
+                      <option value="Delhi">Delhi</option>
+                      <option value="Gujarat">Gujarat</option>
+                    </>
+                  )}
+                </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('districtLabel')}</label>
-                <input
-                  type="text"
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  District {loadingDistricts && <span className="text-[10px] text-emerald-600">(Loading...)</span>}
+                </label>
+                <select
                   name="district"
                   value={formData.district}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
+                  disabled={loadingDistricts || districtsList.length === 0}
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white disabled:opacity-50 font-medium"
+                >
+                  {districtsList.length > 0 ? (
+                    districtsList.map(dist => (
+                      <option key={dist} value={dist}>{dist}</option>
+                    ))
+                  ) : (
+                    <option value="">No districts available</option>
+                  )}
+                </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('areaTypeLabel')}</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Area Classification</label>
                 <select
                   name="area_type"
                   value={formData.area_type}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
                 >
-                  <option value="rural">{t('ruralOption')}</option>
-                  <option value="urban">{t('urbanOption')}</option>
+                  <option value="rural">Rural (Eligible for 35% PMEGP Subsidy Quota)</option>
+                  <option value="urban">Urban (Eligible for 25% PMEGP Subsidy Quota)</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('pincodeLabel')}</label>
-                <input
-                  type="text"
-                  name="pincode"
-                  value={formData.pincode}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
               </div>
             </div>
           </div>
         )}
 
+        {/* Step 3: Purpose & Conditional Sector Questions */}
         {step === 3 && (
           <div className="space-y-5 animate-fadeIn">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Briefcase className="w-5 h-5 text-emerald-600" />
-              <span>Step 3: {t('step3Title')}</span>
+              <span>Step 3: Purpose & Tailored Sector Questions</span>
             </h2>
-            <p className="text-xs text-slate-500">{t('step3Desc')}</p>
+            <p className="text-xs text-slate-500">
+              Questions adapt dynamically based on whether you are launching a business, studying, or practicing a traditional craft.
+            </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('businessType')}</label>
-                <select
-                  name="business_type"
-                  value={formData.business_type}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                >
-                  <option value="manufacturing">{t('manufacturingOption')}</option>
-                  <option value="service">{t('serviceOption')}</option>
-                  <option value="trading">{t('tradingOption')}</option>
-                  <option value="street_vendor">{t('streetVendorOption')}</option>
-                  <option value="artisan">{t('artisanOption')}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('businessStageLabel')}</label>
-                <select
-                  name="business_stage"
-                  value={formData.business_stage}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                >
-                  <option value="new">{t('optionNewStage')}</option>
-                  <option value="expansion">{t('optionExpansionStage')}</option>
-                </select>
-              </div>
+            {/* Purpose Selector */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">What is your primary purpose?</label>
+              <select
+                name="purpose"
+                value={formData.purpose}
+                onChange={handleChange}
+                className="w-full px-3 py-2.5 text-sm font-bold border border-emerald-500 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-emerald-50/40 text-emerald-950"
+              >
+                <option value="Start a Business">Start a New Business / Enterprise (Greenfield)</option>
+                <option value="Expand Existing Business">Expand / Modernize Existing Business</option>
+                <option value="Higher Education">Higher Education Loan / Student Venture (ASIIM)</option>
+                <option value="Traditional Craft">Traditional Artisan / PM Vishwakarma</option>
+                <option value="Street Vending">Street Vending / PM SVANidhi Microcredit</option>
+              </select>
             </div>
 
-            <div className="space-y-2 pt-2">
-              <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="has_skill_training"
-                  checked={formData.has_skill_training}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-emerald-600 rounded"
-                />
-                <span>{t('hasTrainingLabel')}</span>
-              </label>
+            {/* CONDITIONAL SUB-FORM: Business & Micro-Enterprise */}
+            {(formData.purpose === 'Start a Business' || formData.purpose === 'Expand Existing Business') && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                  <Briefcase className="w-4 h-4 text-emerald-600" />
+                  <span>Business Enterprise Details</span>
+                </div>
 
-              <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer block">
-                <input
-                  type="checkbox"
-                  name="is_artisan"
-                  checked={formData.is_artisan}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-emerald-600 rounded"
-                />
-                <span>{t('isArtisanLabel')}</span>
-              </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Business Nature</label>
+                    <select
+                      name="business_type"
+                      value={formData.business_type}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                    >
+                      <option value="manufacturing">Manufacturing (Limit up to ₹50 Lakh)</option>
+                      <option value="service">Service Unit (Limit up to ₹20 Lakh)</option>
+                      <option value="trading">Trading / Retail</option>
+                    </select>
+                  </div>
 
-              <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer block">
-                <input
-                  type="checkbox"
-                  name="is_street_vendor"
-                  checked={formData.is_street_vendor}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-emerald-600 rounded"
-                />
-                <span>{t('isVendorLabel')}</span>
-              </label>
-            </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Business Stage</label>
+                    <select
+                      name="business_stage"
+                      value={formData.business_stage}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                    >
+                      <option value="new">New Enterprise (Greenfield)</option>
+                      <option value="expansion">Existing Unit (Modernization/Expansion)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="has_skill_training"
+                      checked={formData.has_skill_training}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-emerald-600 rounded"
+                    />
+                    <span>Has 2-Week EDP / Skill Training Certificate</span>
+                  </label>
+
+                  <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer block">
+                    <input
+                      type="checkbox"
+                      name="has_udyam_registration"
+                      checked={formData.has_udyam_registration}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-emerald-600 rounded"
+                    />
+                    <span>Has Udyam MSME Registration Certificate</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* CONDITIONAL SUB-FORM: Higher Education / Student Venture */}
+            {formData.purpose === 'Higher Education' && (
+              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-blue-900">
+                  <GraduationCap className="w-4 h-4 text-blue-600" />
+                  <span>Education & Student Innovation Parameters</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Target Course / Degree</label>
+                    <input
+                      type="text"
+                      name="course"
+                      placeholder="e.g. B.Tech / M.Tech / MBA / Startup Innovation"
+                      value={formData.course}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Institution Name</label>
+                    <input
+                      type="text"
+                      name="institution"
+                      placeholder="e.g. National Institute of Technology"
+                      value={formData.institution}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CONDITIONAL SUB-FORM: Traditional Craft / Artisan */}
+            {formData.purpose === 'Traditional Craft' && (
+              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                  <Hammer className="w-4 h-4 text-amber-600" />
+                  <span>PM Vishwakarma Traditional Craft Details</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Recognized Traditional Trade</label>
+                  <select
+                    name="artisan_trade"
+                    value={formData.artisan_trade}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl bg-white font-medium"
+                  >
+                    <option value="Carpenter / Wood Craft">Carpenter (Suthar)</option>
+                    <option value="Blacksmith / Iron Work">Blacksmith (Lohar)</option>
+                    <option value="Potter / Terracotta">Potter (Kumhaar)</option>
+                    <option value="Sculptor / Stone Carver">Sculptor (Moortikar)</option>
+                    <option value="Cobbler / Leather Artisan">Cobbler (Charmakar)</option>
+                    <option value="Mason / Building Construction">Mason (Raajmistri)</option>
+                    <option value="Tailor / Garments">Tailor (Darzi)</option>
+                    <option value="Basket / Mat / Broom Maker">Basket / Mat Maker</option>
+                  </select>
+                  <p className="text-[10px] text-amber-800 mt-1">Eligible for ₹15,000 modern toolkit voucher + ₹3 Lakh credit at 5% interest.</p>
+                </div>
+              </div>
+            )}
+
+            {/* CONDITIONAL SUB-FORM: Street Vending */}
+            {formData.purpose === 'Street Vending' && (
+              <div className="p-4 bg-teal-50 rounded-2xl border border-teal-200 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-teal-900">
+                  <Store className="w-4 h-4 text-teal-600" />
+                  <span>PM SVANidhi Street Vending Micro-Credit</span>
+                </div>
+                <p className="text-xs text-teal-800">
+                  Offers collateral-free working capital loan of ₹10k, ₹20k, and ₹50k with 7% interest subsidy and cashback for UPI transactions.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
+        {/* Step 4: Single Loan Amount & Project Financials */}
         {step === 4 && (
           <div className="space-y-5 animate-fadeIn">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-emerald-600" />
-              <span>Step 4: {t('step4Title')}</span>
+              <span>Step 4: Single Loan Amount & Financial Parameters</span>
             </h2>
-            <p className="text-xs text-slate-500">{t('step4Desc')}</p>
+            <p className="text-xs text-slate-500">
+              The loan amount below is the single source of truth across all matching, EMI calculation, and partner assignment stages.
+            </p>
 
             <div className="space-y-4 pt-2">
-              <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                  <span>{t('requiredLoanLabel')}</span>
-                  <span className="text-emerald-700 font-extrabold text-sm">₹{formData.required_loan.toLocaleString('en-IN')}</span>
+              <div className="p-4 bg-emerald-50 rounded-2xl border-2 border-emerald-300 space-y-2">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-800">
+                  <span>Required Loan Amount</span>
+                  <span className="text-emerald-800 font-black text-lg font-mono">
+                    ₹{Number(formData.required_loan).toLocaleString('en-IN')}
+                  </span>
                 </div>
                 <input
-                  type="range"
+                  type="number"
                   name="required_loan"
                   min="10000"
-                  max="10000000"
+                  max="50000000"
                   step="25000"
                   value={formData.required_loan}
                   onChange={handleChange}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                  className="w-full px-3 py-2 text-sm border border-emerald-500 rounded-xl focus:ring-2 focus:ring-emerald-500 bg-white font-mono font-bold text-emerald-900"
                 />
-                <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-                  <span>{t('sliderMinSVANidhi')}</span>
-                  <span>{t('sliderMidMudra')}</span>
-                  <span>{t('sliderMidPMEGP')}</span>
-                  <span>{t('sliderMaxStandUp')}</span>
-                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('projectCostLabel')}</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Total Project Cost (₹)</label>
                   <input
                     type="number"
                     name="project_cost"
                     value={formData.project_cost}
                     onChange={handleChange}
-                    className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('ownContributionLabel')}</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Promoter Margin / Own Contribution (₹)</label>
                   <input
                     type="number"
                     name="own_contribution"
                     value={formData.own_contribution}
                     onChange={handleChange}
-                    className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">{t('pmegpMarginNote')}</p>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
 
-        {step === 5 && (
-          <div className="space-y-5 animate-fadeIn">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <FileCheck className="w-5 h-5 text-emerald-600" />
-              <span>Step 5: {t('step5Title')}</span>
-            </h2>
-            <p className="text-xs text-slate-500">{t('step5Desc')}</p>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Annual Family Income (₹)</label>
+                <input
+                  type="number"
+                  name="annual_family_income"
+                  value={formData.annual_family_income}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
+                />
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {[
-                { name: 'has_aadhaar', label: t('hasAadhaarLabel') },
-                { name: 'has_pan', label: t('hasPanLabel') },
-                { name: 'has_caste_certificate', label: t('hasCasteLabel') },
-                { name: 'has_project_report', label: t('hasDprLabel') },
-                { name: 'has_bank_account', label: t('hasBankLabel') },
-                { name: 'has_udyam_registration', label: t('hasUdyamLabel') }
-              ].map((doc, idx) => (
-                <label key={idx} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-emerald-300 cursor-pointer bg-slate-50/50">
-                  <input
-                    type="checkbox"
-                    name={doc.name}
-                    checked={formData[doc.name]}
-                    onChange={handleChange}
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                  <span className="text-xs font-medium text-slate-700">{doc.label}</span>
-                </label>
-              ))}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2 text-xs text-slate-600">
+                <Info className="w-4 h-4 text-slate-400 shrink-0" />
+                <span>
+                  Next Step: You will be redirected to <strong>Document Verification</strong> to verify required certificates before calculating statutory scheme eligibility.
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -470,19 +642,19 @@ export default function FindMySchemePage() {
               className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>{t('btnPrevious')}</span>
+              <span>Previous</span>
             </button>
           ) : (
-            <div></div>
+            <div />
           )}
 
-          {step < 5 ? (
+          {step < 4 ? (
             <button
               type="button"
               onClick={handleNext}
               className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all"
             >
-              <span>{t('btnNext')}</span>
+              <span>Next Step</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
@@ -490,10 +662,11 @@ export default function FindMySchemePage() {
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/25 transition-all"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-sm font-black shadow-lg shadow-emerald-600/25 transition-all disabled:opacity-50"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>{loading ? t('evaluatingText') : t('btnEvaluateSchemes')}</span>
+              <FileCheck className="w-4 h-4" />
+              <span>{loading ? 'Saving Requirements...' : 'Confirm & Proceed to Document Verification'}</span>
+              <ArrowRight className="w-4 h-4 ml-1" />
             </button>
           )}
         </div>
