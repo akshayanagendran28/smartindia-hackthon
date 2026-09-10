@@ -21,7 +21,9 @@ from app.routers import (
     admin,
     readiness,
     translate,
-    locations
+    locations,
+    questions,
+    applications
 )
 
 # Initialize database schema
@@ -68,6 +70,8 @@ app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(readiness.router, prefix=settings.API_V1_STR)
 app.include_router(translate.router, prefix=settings.API_V1_STR)
 app.include_router(locations.router, prefix=settings.API_V1_STR)
+app.include_router(questions.router, prefix=settings.API_V1_STR)
+app.include_router(applications.router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():

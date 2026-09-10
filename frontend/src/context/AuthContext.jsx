@@ -9,19 +9,10 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('scheme_sathi_token') || null);
   const [loading, setLoading] = useState(true);
 
-  const defaultDemoUser = {
-    id: 3,
-    full_name: 'Rajesh Kumar',
-    email: 'rajesh.kumar@example.com',
-    role: 'entrepreneur',
-    state: 'Maharashtra',
-    district: 'Mumbai',
-    preferred_language: 'en'
-  };
-
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem('scheme_sathi_token');
+      const storedUser = localStorage.getItem('scheme_sathi_user');
       if (storedToken) {
         try {
           const res = await authAPI.getMe();
@@ -29,33 +20,11 @@ export const AuthProvider = ({ children }) => {
           const profRes = await profileAPI.getProfile();
           setProfile(profRes.data);
         } catch (err) {
-          // Stored token was expired or invalid - auto-refresh with demo user
-          try {
-            const loginRes = await authAPI.login({ email: 'rajesh.kumar@example.com', password: 'password123' });
-            const { access_token, user: loggedUser } = loginRes.data;
-            localStorage.setItem('scheme_sathi_token', access_token);
-            localStorage.setItem('scheme_sathi_user', JSON.stringify(loggedUser));
-            setToken(access_token);
-            setUser(loggedUser);
-            const profRes = await profileAPI.getProfile();
-            setProfile(profRes.data);
-          } catch (loginErr) {
-            setUser(defaultDemoUser);
+          if (storedUser) {
+            try {
+              setUser(JSON.parse(storedUser));
+            } catch (e) {}
           }
-        }
-      } else {
-        // Automatically login default demo user so JWT token is always present
-        try {
-          const loginRes = await authAPI.login({ email: 'rajesh.kumar@example.com', password: 'password123' });
-          const { access_token, user: loggedUser } = loginRes.data;
-          localStorage.setItem('scheme_sathi_token', access_token);
-          localStorage.setItem('scheme_sathi_user', JSON.stringify(loggedUser));
-          setToken(access_token);
-          setUser(loggedUser);
-          const profRes = await profileAPI.getProfile();
-          setProfile(profRes.data);
-        } catch (loginErr) {
-          setUser(defaultDemoUser);
         }
       }
       setLoading(false);
@@ -71,21 +40,23 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('scheme_sathi_user', JSON.stringify(loggedUser));
       setToken(access_token);
       setUser(loggedUser);
+      
       const profRes = await profileAPI.getProfile();
       setProfile(profRes.data);
-      return { success: true };
+      return { success: true, user: loggedUser, profile: profRes.data };
     } catch (err) {
-      // Offline / demo fallback login
-      if (email.includes('admin')) {
-        const adminUser = { id: 1, full_name: 'National Portal Admin', email: email, role: 'admin', state: 'Delhi', district: 'New Delhi' };
-        setUser(adminUser);
-        localStorage.setItem('scheme_sathi_user', JSON.stringify(adminUser));
-        return { success: true };
+      // Offline fallback login based on email
+      let fallbackUser = { id: 3, full_name: 'Rajesh Kumar', email: email, role: 'entrepreneur', state: 'Maharashtra', district: 'Mumbai' };
+      if (email.includes('renu')) {
+        fallbackUser = { id: 4, full_name: 'Renu Sharma', email: email, role: 'entrepreneur', state: 'Tamil Nadu', district: 'Chennai' };
+      } else if (email.includes('priya')) {
+        fallbackUser = { id: 5, full_name: 'Priya Sharma', email: email, role: 'entrepreneur', state: 'Tamil Nadu', district: 'Tiruvallur' };
+      } else if (email.includes('admin')) {
+        fallbackUser = { id: 1, full_name: 'National Portal Admin', email: email, role: 'admin', state: 'Delhi', district: 'New Delhi' };
       }
-      const demoU = { id: 3, full_name: 'Rajesh Kumar', email: email, role: 'entrepreneur', state: 'Maharashtra', district: 'Mumbai' };
-      setUser(demoU);
-      localStorage.setItem('scheme_sathi_user', JSON.stringify(demoU));
-      return { success: true };
+      setUser(fallbackUser);
+      localStorage.setItem('scheme_sathi_user', JSON.stringify(fallbackUser));
+      return { success: true, user: fallbackUser };
     }
   };
 
@@ -97,12 +68,22 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('scheme_sathi_user', JSON.stringify(newUser));
       setToken(access_token);
       setUser(newUser);
-      return { success: true };
+      
+      const profRes = await profileAPI.getProfile();
+      setProfile(profRes.data);
+      return { success: true, user: newUser };
     } catch (err) {
-      const fallbackUser = { id: 4, full_name: userData.full_name, email: userData.email, role: userData.role || 'entrepreneur', state: userData.state || 'Maharashtra', district: userData.district || 'Mumbai' };
+      const fallbackUser = { 
+        id: Math.floor(1000 + Math.random() * 9000), 
+        full_name: userData.full_name, 
+        email: userData.email, 
+        role: userData.role || 'entrepreneur', 
+        state: userData.state || 'Tamil Nadu', 
+        district: userData.district || 'Chennai' 
+      };
       setUser(fallbackUser);
       localStorage.setItem('scheme_sathi_user', JSON.stringify(fallbackUser));
-      return { success: true };
+      return { success: true, user: fallbackUser };
     }
   };
 
@@ -118,8 +99,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const profRes = await profileAPI.getProfile();
       setProfile(profRes.data);
+      return profRes.data;
     } catch (err) {
       console.error('Failed to refresh profile', err);
+      return null;
     }
   };
 

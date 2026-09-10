@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { 
   ShieldCheck, AlertTriangle, CheckCircle2, XCircle, ArrowLeft,
@@ -10,12 +10,11 @@ import api from '../services/api';
 export default function EligibilityExplanationPage() {
   const { id } = useParams();
   const location = useLocation();
-  const { currentLanguage, t } = useLanguage();
+  const { currentLanguage, t, translateScheme } = useLanguage();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If passed via navigation state and language is en, use that; otherwise fetch translated
     if (location.state?.schemeData && currentLanguage === 'en') {
       setData(location.state.schemeData);
       setLoading(false);
@@ -39,24 +38,25 @@ export default function EligibilityExplanationPage() {
     return (
       <div className="p-12 text-center text-slate-500 font-semibold flex items-center justify-center gap-2">
         <Sparkles className="w-5 h-5 text-emerald-600 animate-spin" />
-        <span>Generating AI4Bharat Samanantar explainability breakdown...</span>
+        <span>{t('Loading statutory gazette scheme details from myscheme.gov.in records...')}</span>
       </div>
     );
   }
 
   const isEligible = data?.eligible !== false;
   const score = Math.round(data?.match_score || 88);
+  const localizedScheme = translateScheme(data || {});
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-6">
       <div className="flex items-center justify-between">
         <Link to="/results" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800">
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Matching Results</span>
+          <span>{t('back to matching results')}</span>
         </Link>
         <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
           <Languages className="w-3.5 h-3.5 text-emerald-700" />
-          <span>AI4Bharat Samanantar Translation</span>
+          <span>{t('translationBadge')}</span>
         </span>
       </div>
 
@@ -67,18 +67,18 @@ export default function EligibilityExplanationPage() {
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white shadow-sm">
               {isEligible ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
               <span className={isEligible ? 'text-emerald-800' : 'text-red-800'}>
-                {isEligible ? 'Deterministically Eligible (100% Gazette Matched)' : 'Ineligible based on Gazette Rules'}
+                {isEligible ? t('100% rule verified') : t('ineligible')}
               </span>
             </div>
-            <h1 className="text-2xl font-black text-slate-900">{data?.scheme_name || 'Government Assistance Scheme'}</h1>
-            <p className="text-xs text-slate-600">Scheme Code: <span className="font-mono font-bold">{data?.scheme_code || 'PMEGP'}</span></p>
+            <h1 className="text-2xl font-black text-slate-900">{localizedScheme.name || localizedScheme.scheme_name || 'Government Scheme'}</h1>
+            <p className="text-xs text-slate-600">{t('scheme_code', 'Scheme Code')}: <span className="font-mono font-bold">{data?.scheme_code || 'PMEGP'}</span></p>
           </div>
 
           {isEligible && (
             <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-emerald-200 shrink-0">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">AI Compatibility</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">{t('AI Compatibility', 'AI Compatibility')}</span>
               <span className="text-3xl font-black text-emerald-700">{score}%</span>
-              <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5">High Suitability</span>
+              <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5">{t('High Suitability', 'High Suitability')}</span>
             </div>
           )}
         </div>
@@ -89,10 +89,10 @@ export default function EligibilityExplanationPage() {
         <div>
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-emerald-600" />
-            <span>SHAP-Style Factor Attribution & Rule Compliance</span>
+            <span>{t('shap-style factor attribution & rule compliance')}</span>
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Transparently view every legal criteria, demographic quota, and financial parameter evaluated by the deterministic engine.
+            {t('these core parameters determine statutory quotas, interest subventions, and eligibility bands.')}
           </p>
         </div>
 
@@ -100,18 +100,18 @@ export default function EligibilityExplanationPage() {
         <div className="space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4" />
-            <span>Positive Contributing Factors (+ Impact)</span>
+            <span>{t('positive contributing factors (+ impact)')}</span>
           </h3>
 
           <div className="space-y-2">
             {(data?.explainability?.positive_factors || [
-              'Target demographic quota matched (SC/ST / Woman Entrepreneur privilege)',
-              'Project cost is well within the ceiling limit of ₹50 Lakh',
-              'Rural area classification grants maximum 35% capital subsidy',
-              'EDP Training certification adds +15% suitability bonus'
+              t('target demographic quota matched (SC/ST / Woman Entrepreneur privilege)'),
+              t('Project cost is well within the ceiling limit of ₹50 Lakh'),
+              t('Rural area classification grants maximum 35% capital subsidy'),
+              t('EDP Training certification adds +15% suitability bonus')
             ]).map((factor, idx) => (
               <div key={idx} className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-100 flex items-center justify-between text-xs text-slate-800">
-                <span className="font-medium leading-relaxed">{factor}</span>
+                <span className="font-medium leading-relaxed">{t(factor, factor)}</span>
                 <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px] shrink-0 ml-3">+High Match</span>
               </div>
             ))}
@@ -123,13 +123,13 @@ export default function EligibilityExplanationPage() {
           <div className="space-y-3 pt-4 border-t border-slate-100">
             <h3 className="text-xs font-bold uppercase tracking-wider text-red-700 flex items-center gap-1.5">
               <XCircle className="w-4 h-4" />
-              <span>Limiting / Disqualifying Factors (- Impact)</span>
+              <span>{t('limiting / disqualifying factors (- impact)')}</span>
             </h3>
 
             <div className="space-y-2">
               {data?.failed_rules?.map((rule, idx) => (
                 <div key={idx} className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center justify-between text-xs text-red-800">
-                  <span className="font-medium leading-relaxed">{rule}</span>
+                  <span className="font-medium leading-relaxed">{t(rule, rule)}</span>
                   <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 font-bold text-[11px] shrink-0 ml-3">Failed Rule</span>
                 </div>
               ))}
@@ -141,25 +141,25 @@ export default function EligibilityExplanationPage() {
       {/* Next Step Guidance */}
       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h4 className="font-bold text-slate-900 text-sm">Ready to Proceed with Application?</h4>
-          <p className="text-xs text-slate-500">Calculate exact monthly EMIs after 35% subsidy or locate your nearest nodal bank.</p>
+          <h4 className="font-bold text-slate-900 text-sm">{t('ready to proceed with application?')}</h4>
+          <p className="text-xs text-slate-500">{t('calculate exact monthly emis after 35% subsidy or locate your nearest nodal bank.')}</p>
         </div>
         <div className="flex gap-2 shrink-0">
           <Link
             to="/calculator"
             state={{ loanAmount: data?.max_loan_amount }}
-            className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 flex items-center gap-1.5"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5"
           >
-            <Calculator className="w-4 h-4 text-amber-600" />
-            <span>Simulate EMI</span>
+            <Calculator className="w-4 h-4" />
+            <span>{t('navEmi')}</span>
           </Link>
           <Link
             to="/partners"
             state={{ schemeCode: data?.scheme_code }}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 flex items-center gap-1.5"
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5"
           >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Find Partner Bank</span>
+            <MapPin className="w-4 h-4" />
+            <span>{t('navPartners')}</span>
           </Link>
         </div>
       </div>

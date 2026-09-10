@@ -66,14 +66,16 @@ def seed_database(db: Session):
     # 2. Seed All Verified Schemes from myScheme.gov.in
     for item in MYSCHEME_DATASET:
         existing = db.query(Scheme).filter(Scheme.code == item["code"]).first()
+        subsidy_str = json.dumps(item.get("subsidy_details", {})) if isinstance(item.get("subsidy_details"), dict) else str(item.get("subsidy_details", ""))
+        purpose_type = item.get("purpose_type", "BUSINESS")
+        
         if not existing:
-            subsidy_str = json.dumps(item.get("subsidy_details", {})) if isinstance(item.get("subsidy_details"), dict) else str(item.get("subsidy_details", ""))
-            
             scheme = Scheme(
                 code=item["code"],
                 name=item["name"],
                 department=item["department"],
                 category=item.get("category", "Business & Entrepreneurship"),
+                purpose_type=purpose_type,
                 description=item["description"],
                 loan_type=item.get("loan_type", "Term Loan"),
                 min_loan_amount=item.get("min_loan_amount", 10000.0),
@@ -154,10 +156,27 @@ def seed_database(db: Session):
                     document_type=doc.get("type", "identity_proof"),
                     is_mandatory=doc.get("mandatory", True)
                 ))
+        else:
+            existing.purpose_type = purpose_type
+            existing.loan_type = item.get("loan_type", existing.loan_type)
+            existing.description = item["description"]
+            existing.subsidy_details = subsidy_str
+            existing.eligible_purposes = json.dumps(item.get("eligible_purposes", ["Start a Business"]))
+            if db.query(SchemeDocument).filter(SchemeDocument.scheme_id == existing.id).count() == 0:
+                for doc in item.get("required_documents", []):
+                    db.add(SchemeDocument(
+                        scheme_id=existing.id,
+                        document_name=doc["name"],
+                        document_type=doc.get("type", "identity_proof"),
+                        is_mandatory=doc.get("mandatory", True)
+                    ))
 
     db.commit()
 
     # 3. Seed Channel Partners
+    all_schemes = [item["code"] for item in MYSCHEME_DATASET]
+    supported_json = json.dumps(all_schemes)
+    
     if db.query(ChannelPartner).count() == 0:
         partners_data = [
             {"name": "Bank of India - Mumbai Lead District Office", "partner_type": "bank", "address": "Fort, Mumbai", "city": "Mumbai", "district": "Mumbai", "state": "Maharashtra", "pincode": "400001", "latitude": 18.9322, "longitude": 72.8347, "phone": "022-22661000", "nodal_officer": "R. K. Verma", "rating": 4.8},
@@ -189,11 +208,16 @@ def seed_database(db: Session):
                 contact_phone=p["phone"],
                 contact_email="helpdesk@" + p["name"].lower().replace(" ", "")[:10] + ".gov.in",
                 average_rating=p["rating"],
-                supported_schemes=json.dumps(["PMEGP", "STANDUP-IND", "MUDRA-SHISHU", "MUDRA-KISHORE", "SVANIDHI", "VISHWAKARMA", "TN-NEEDS", "MH-CMEGP", "KA-UDYOGINI", "KL-ESS", "UP-MMYSY", "WB-KARMA-SATHI"]),
+                supported_schemes=supported_json,
                 is_active=True
             )
             db.add(partner)
 
+        db.commit()
+    else:
+        # Update existing partners' supported_schemes
+        for p in db.query(ChannelPartner).all():
+            p.supported_schemes = supported_json
         db.commit()
 
     print("myScheme.gov.in dataset seeding successfully completed!")

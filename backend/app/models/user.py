@@ -50,6 +50,7 @@ class UserProfile(Base):
     own_contribution = Column(Float, default=150000.0)
     
     # Business & Project
+    purpose_type = Column(String(50), default="BUSINESS") # BUSINESS, EDUCATION, SELF_EMPLOYMENT
     is_new_business = Column(Boolean, default=True)
     business_stage = Column(String(50), default="new") # new, expansion
     business_type = Column(String(100), default="manufacturing") # manufacturing, service, trading, street_vendor, artisan
@@ -63,12 +64,19 @@ class UserProfile(Base):
     required_loan_amount = Column(Float, default=1200000.0)
     required_loan = Column(Float, default=1200000.0)
     purpose = Column(String(100), default="Start a Business")
+    existing_turnover = Column(Float, default=0.0)
     
-    # Education & Vocational
+    # Education & Academic Details
     is_student = Column(Boolean, default=False)
     education_qualification = Column(String(50), default="graduate")
+    current_education_level = Column(String(50), default="12th")
     course = Column(String(200), nullable=True)
+    course_type = Column(String(100), default="Engineering / Technology")
     institution = Column(String(200), nullable=True)
+    institution_type = Column(String(100), default="State Govt University")
+    admission_status = Column(String(50), default="Confirmed / Admitted")
+    annual_course_fee = Column(Float, default=150000.0)
+    course_duration_years = Column(Integer, default=4)
     education_cost = Column(Float, default=0.0)
     has_training = Column(Boolean, default=True)
     has_skill_training = Column(Boolean, default=True)

@@ -11,19 +11,42 @@ import { useApplication } from '../context/ApplicationContext';
 import { documentsAPI, authAPI } from '../services/api';
 import StepProgressIndicator from '../components/StepProgressIndicator';
 
-const DOC_TYPES = [
-  { key: 'docAadhaar', name: 'Aadhaar Card', label: 'docAadhaar', icon: Shield, tag: 'UIDAI Verhoeff Checksum' },
-  { key: 'docPan', name: 'PAN Card', label: 'docPan', icon: FileText, tag: 'ITD Entity & Surname Check' },
-  { key: 'docCaste', name: 'Caste Certificate', label: 'docCaste', icon: Award, tag: 'State e-District Gateway' },
-  { key: 'docIncome', name: 'Income Certificate', label: 'docIncome', icon: Database, tag: 'Scheme Income Ceiling' },
-  { key: 'docDpr', name: 'Detailed Project Report (DPR)', label: 'docDpr', icon: FileCode, tag: 'Loan + Margin = Cost Eq' },
-  { key: 'docUdyam', name: 'Udyam Registration', label: 'docUdyam', icon: Cpu, tag: 'MSME National Portal' },
-];
+const getDocTypes = (pType) => {
+  const norm = (pType || 'EDUCATION').toUpperCase();
+  if (norm === 'EDUCATION') {
+    return [
+      { key: 'docAadhaar', name: 'Aadhaar Card', label: 'docAadhaar', icon: Shield, tag: 'UIDAI Verhoeff Checksum' },
+      { key: 'doc10th', name: '10th Marksheet', label: 'doc10th', icon: FileCheck, tag: 'Age & Foundational Merit' },
+      { key: 'doc12th', name: '12th Marksheet', label: 'doc12th', icon: Award, tag: 'Higher Secondary Credential' },
+      { key: 'docAdmission', name: 'Admission Offer Letter', label: 'docAdmission', icon: FileText, tag: 'Accredited Institution Proof' },
+      { key: 'docFeeStructure', name: 'Institutional Fee Schedule', label: 'docFeeStructure', icon: FileCode, tag: 'Tuition & Hostel Breakdown' },
+      { key: 'docIncome', name: 'Income Certificate', label: 'docIncome', icon: Database, tag: 'CSIS <= Rs. 4.5L Subsidy Cap' },
+      { key: 'docCaste', name: 'Caste Certificate', label: 'docCaste', icon: Award, tag: 'NSFDC/NBCFDC/NMDFC Quota' },
+    ];
+  } else if (norm === 'SELF_EMPLOYMENT') {
+    return [
+      { key: 'docAadhaar', name: 'Aadhaar Card', label: 'docAadhaar', icon: Shield, tag: 'UIDAI Verhoeff Checksum' },
+      { key: 'docIncome', name: 'Income Certificate / Ration Card', label: 'docIncome', icon: Database, tag: 'Income Band Assessment' },
+      { key: 'docCaste', name: 'Caste Certificate', label: 'docCaste', icon: Award, tag: 'Special Category Concession' },
+      { key: 'docPan', name: 'PAN Card', label: 'docPan', icon: FileText, tag: 'Financial Identification' },
+    ];
+  } else {
+    return [
+      { key: 'docAadhaar', name: 'Aadhaar Card', label: 'docAadhaar', icon: Shield, tag: 'UIDAI Verhoeff Checksum' },
+      { key: 'docPan', name: 'PAN Card', label: 'docPan', icon: FileText, tag: 'ITD Entity & Surname Check' },
+      { key: 'docCaste', name: 'Caste Certificate', label: 'docCaste', icon: Award, tag: 'State e-District Gateway' },
+      { key: 'docIncome', name: 'Income Certificate', label: 'docIncome', icon: Database, tag: 'Scheme Income Ceiling' },
+      { key: 'docDpr', name: 'Detailed Project Report (DPR)', label: 'docDpr', icon: FileCode, tag: 'Loan + Margin = Cost Eq' },
+      { key: 'docUdyam', name: 'Udyam Registration', label: 'docUdyam', icon: Cpu, tag: 'MSME National Portal' },
+    ];
+  }
+};
 
 export default function DocumentAssistantPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { application, recordDocumentVerified, setAllDocumentsVerified, allDocumentsVerified } = useApplication();
+  const { application, purposeType, recordDocumentVerified, setAllDocumentsVerified, allDocumentsVerified } = useApplication();
+  const DOC_TYPES = getDocTypes(purposeType || application.purpose_type);
 
   const [selectedDocKey, setSelectedDocKey] = useState('docAadhaar');
   const [activeTab, setActiveTab] = useState('upload'); // 'upload', 'synthetic', 'stream', 'vault'
@@ -47,11 +70,12 @@ export default function DocumentAssistantPage() {
     fetchSyntheticSamples();
     fetchUserDocuments();
     fetchRequiredChecklist();
-  }, [application.purpose, application.category]);
+  }, [purposeType, application.purpose_type, application.purpose, application.category]);
 
   const fetchRequiredChecklist = async () => {
     try {
       const res = await documentsAPI.getRequiredChecklist({
+        purpose_type: purposeType || application.purpose_type || 'EDUCATION',
         purpose: application.purpose || 'Business',
         category: application.category || 'SC'
       });
@@ -68,7 +92,9 @@ export default function DocumentAssistantPage() {
 
   const fetchSyntheticSamples = async () => {
     try {
-      const res = await documentsAPI.getSyntheticSamples();
+      const res = await documentsAPI.getSyntheticSamples({
+        purpose_type: purposeType || application.purpose_type || 'EDUCATION'
+      });
       setSyntheticSamples(res.data || []);
     } catch (err) {
       console.error('Failed to load synthetic samples:', err);
@@ -213,7 +239,15 @@ export default function DocumentAssistantPage() {
     setValidating(true);
     setError('');
     try {
-      const keysToVerify = ['docAadhaar', 'docCaste', 'docIncome', 'docDpr', 'docPan'];
+      const normPurpose = (purposeType || application.purpose_type || 'EDUCATION').toUpperCase();
+      let keysToVerify = [];
+      if (normPurpose === 'EDUCATION') {
+        keysToVerify = ['docAadhaar', 'doc10th', 'doc12th', 'docAdmission', 'docFeeStructure', 'docIncome', 'docCaste'];
+      } else if (normPurpose === 'SELF_EMPLOYMENT') {
+        keysToVerify = ['docAadhaar', 'docIncome', 'docCaste', 'docPan'];
+      } else {
+        keysToVerify = ['docAadhaar', 'docPan', 'docCaste', 'docIncome', 'docDpr', 'docUdyam'];
+      }
       for (const key of keysToVerify) {
         try {
           await documentsAPI.loadSyntheticSample(key, targetScheme);

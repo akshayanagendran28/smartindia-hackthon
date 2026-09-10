@@ -17,16 +17,17 @@ class EligibilityRuleEngine:
         
         val = user_data.get(field)
         
-        # Handle missing field
+        # Handle missing or alternate fields
         if val is None:
-            # Check if default is acceptable or fail
-            if field == "age": val = 25
-            elif field == "annual_family_income": val = 0.0
-            elif field == "project_cost": val = 0.0
+            if field == "age": val = 22
+            elif field == "annual_family_income": val = user_data.get("annual_income", 0.0)
+            elif field == "project_cost":
+                # For education, project cost can be derived from course fees
+                val = float(user_data.get("annual_course_fee", 0.0)) * int(user_data.get("course_duration_years", 1)) or float(user_data.get("required_loan_amount", 0.0))
             elif field == "required_loan_amount": val = 0.0
-            elif field == "category": val = "General"
-            elif field == "purpose": val = "Start a Business"
-            elif field == "business_type": val = "Micro Retail"
+            elif field == "category": val = user_data.get("social_category", "General")
+            elif field == "purpose": val = user_data.get("course_type", "Higher Education")
+            elif field == "business_type": val = "Education"
             else:
                 return True, "Field not provided, skipped"
 
@@ -71,11 +72,10 @@ class EligibilityRuleEngine:
                 valid_items_lower = [str(x).strip().lower() for x in valid_items]
                 user_val_str = str(val).strip().lower()
                 
-                # Check for All India or All
                 if "all" in valid_items_lower or "all india" in valid_items_lower:
                     return True, f"{field.replace('_', ' ').title()} is universally eligible."
                 
-                if user_val_str in valid_items_lower or any(user_val_str in item for item in valid_items_lower):
+                if user_val_str in valid_items_lower or any(user_val_str in item or item in user_val_str for item in valid_items_lower):
                     return True, f"{field.replace('_', ' ').title()} ({val}) is listed as eligible."
                 else:
                     reason = rule.failure_reason_template or f"{field.replace('_', ' ').title()} ({val}) is not supported for this scheme."
@@ -105,11 +105,12 @@ class EligibilityRuleEngine:
     def check_scheme_eligibility(cls, scheme: Scheme, user_data: Dict[str, Any]) -> Dict[str, Any]:
         matched_rules = []
         failed_rules = []
+        is_edu_scheme = getattr(scheme, "purpose_type", "BUSINESS") == "EDUCATION"
         
         # 1. Base Scheme Model Hard Limits Checks
         # Max income limit
         if scheme.max_income_limit and scheme.max_income_limit > 0:
-            user_inc = float(user_data.get("annual_family_income", 0))
+            user_inc = float(user_data.get("annual_family_income", 0) or user_data.get("annual_income", 0))
             if user_inc > scheme.max_income_limit:
                 failed_rules.append({
                     "rule_code": "MAX_INCOME",
@@ -117,36 +118,42 @@ class EligibilityRuleEngine:
                     "field": "annual_family_income",
                     "user_value": f"₹{user_inc:,.0f}",
                     "threshold": f"₹{scheme.max_income_limit:,.0f}",
-                    "reason": f"Annual family income of ₹{user_inc:,.0f} exceeds the maximum allowed ceiling of ₹{scheme.max_income_limit:,.0f} for this scheme."
+                    "reason": f"Annual family income of ₹{user_inc:,.0f} exceeds the maximum allowed ceiling of ₹{scheme.max_income_limit:,.0f} for {scheme.name}."
                 })
             else:
                 matched_rules.append({
                     "rule_code": "MAX_INCOME",
                     "rule_name": "Annual Family Income Ceiling",
-                    "detail": f"Family income of ₹{user_inc:,.0f} is within allowable limit."
+                    "detail": f"Family income of ₹{user_inc:,.0f} is within allowable statutory ceiling of ₹{scheme.max_income_limit:,.0f}."
                 })
 
-        # Max project cost
+        # Project Cost / Total Course Cost Check
         if scheme.max_project_cost and scheme.max_project_cost > 0:
-            user_proj = float(user_data.get("project_cost", 0))
-            if user_proj > scheme.max_project_cost:
+            if is_edu_scheme:
+                annual_fee = float(user_data.get("annual_course_fee", 0.0) or 0.0)
+                dur = int(user_data.get("course_duration_years", 1) or 1)
+                user_proj = (annual_fee * dur) if annual_fee > 0 else float(user_data.get("required_loan_amount", 0) or 0)
+            else:
+                user_proj = float(user_data.get("project_cost", 0) or user_data.get("required_loan_amount", 0) or 0)
+                
+            if user_proj > 0 and user_proj > scheme.max_project_cost:
                 failed_rules.append({
                     "rule_code": "MAX_PROJECT_COST",
-                    "rule_name": "Maximum Project Cost Limit",
+                    "rule_name": "Maximum Project / Course Cost Limit",
                     "field": "project_cost",
                     "user_value": f"₹{user_proj:,.0f}",
                     "threshold": f"₹{scheme.max_project_cost:,.0f}",
-                    "reason": f"Project cost of ₹{user_proj:,.0f} exceeds the maximum project cost limit of ₹{scheme.max_project_cost:,.0f} for {scheme.name}."
+                    "reason": f"Cost of ₹{user_proj:,.0f} exceeds the maximum scheme ceiling of ₹{scheme.max_project_cost:,.0f}."
                 })
             else:
                 matched_rules.append({
                     "rule_code": "MAX_PROJECT_COST",
-                    "rule_name": "Maximum Project Cost Limit",
-                    "detail": f"Project cost of ₹{user_proj:,.0f} complies with scheme ceiling."
+                    "rule_name": "Maximum Project / Course Cost Limit",
+                    "detail": f"Cost estimation of ₹{user_proj:,.0f} complies with scheme ceiling."
                 })
 
         # Min / Max Age
-        user_age = int(user_data.get("age", 25))
+        user_age = int(user_data.get("age", 22 if is_edu_scheme else 29))
         if user_age < scheme.min_age or user_age > scheme.max_age:
             failed_rules.append({
                 "rule_code": "AGE_RANGE",
@@ -164,15 +171,43 @@ class EligibilityRuleEngine:
             })
 
         # Purpose check
-        user_purpose = user_data.get("purpose", "")
-        if user_purpose:
+        if is_edu_scheme:
+            # Education schemes match higher education / student course
+            course = user_data.get("course_type", "Technical / Higher Education")
+            matched_rules.append({
+                "rule_code": "ELIGIBLE_PURPOSE",
+                "rule_name": "Education Course Compatibility",
+                "detail": f"Academic track '{course}' is approved under {scheme.name} guidelines."
+            })
+        else:
+            p_type = (user_data.get("purpose_type") or "").upper()
+            is_vendor = bool(user_data.get("is_street_vendor")) or user_data.get("business_type") == "street_vendor"
+            is_craftsman = bool(user_data.get("is_artisan")) or user_data.get("business_type") == "artisan"
+
+            if is_vendor:
+                user_purpose = user_data.get("purpose") or "Street Vending"
+            elif is_craftsman:
+                user_purpose = user_data.get("purpose") or "Traditional Craft"
+            elif p_type == "SELF_EMPLOYMENT":
+                user_purpose = user_data.get("purpose") or "Self Employment"
+            else:
+                user_purpose = user_data.get("purpose") or "Start a Business"
+
             try:
                 allowed_purposes = json.loads(scheme.eligible_purposes)
             except Exception:
-                allowed_purposes = ["Start a Business", "Expand Existing Business"]
+                allowed_purposes = ["Start a Business", "Expand Existing Business", "Self Employment"]
             
             allowed_purposes_lower = [p.lower() for p in allowed_purposes]
-            if allowed_purposes_lower and not any(user_purpose.lower() in p or p in user_purpose.lower() for p in allowed_purposes_lower):
+            user_p_lower = user_purpose.lower()
+
+            matches_purpose = (
+                not allowed_purposes_lower or
+                any(user_p_lower in p or p in user_p_lower for p in allowed_purposes_lower) or
+                (p_type == "SELF_EMPLOYMENT" and any("self" in p or "micro" in p or "street" in p or "craft" in p or "start" in p for p in allowed_purposes_lower))
+            )
+
+            if not matches_purpose:
                 failed_rules.append({
                     "rule_code": "ELIGIBLE_PURPOSE",
                     "rule_name": "Purpose Compatibility",
@@ -189,11 +224,11 @@ class EligibilityRuleEngine:
                 })
 
         # Category check
-        user_cat = user_data.get("category") or user_data.get("social_category") or "SC"
+        user_cat = user_data.get("category") or user_data.get("social_category") or "General"
         try:
             allowed_cats = json.loads(scheme.eligible_categories)
         except Exception:
-            allowed_cats = ["SC", "ST", "Minority", "Woman", "Divyangjan"]
+            allowed_cats = ["General", "SC", "ST", "OBC", "Minority", "Woman"]
         
         allowed_cats_lower = [c.lower() for c in allowed_cats]
         user_cat_lower = str(user_cat).lower()
@@ -242,16 +277,6 @@ class EligibilityRuleEngine:
                     "reason": detail_or_reason
                 })
 
-        # 3. Document Availability Analysis
-        avail_docs = [d.lower() for d in user_data.get("available_documents", [])]
-        missing_docs = []
-        for doc in scheme.documents:
-            if doc.is_mandatory:
-                dt = doc.document_type.lower()
-                dn = doc.document_name.lower()
-                if not any(dt in ad or dn in ad or ad in dt for ad in avail_docs):
-                    missing_docs.append(doc.document_name)
-
         is_eligible = len(failed_rules) == 0
         total_rules = len(matched_rules) + len(failed_rules)
         eligibility_score = round((len(matched_rules) / max(total_rules, 1)) * 100, 1)
@@ -261,5 +286,5 @@ class EligibilityRuleEngine:
             "score": eligibility_score,
             "matched_rules": matched_rules,
             "failed_rules": failed_rules,
-            "missing_documents": missing_docs
+            "missing_documents": [doc.document_name for doc in scheme.documents if doc.is_mandatory]
         }

@@ -21,10 +21,29 @@ from .validators.caste_validator import CasteValidator
 from .validators.income_validator import IncomeValidator
 from .validators.dpr_validator import DprValidator
 from .validators.udyam_validator import UdyamValidator
+from .validators.education_validator import EducationValidator
 
 class DocumentValidationPipeline:
 
     DOC_TYPE_MAP = {
+        "doc10th": "10th Marksheet",
+        "10th": "10th Marksheet",
+        "10th marksheet": "10th Marksheet",
+        "10th standard marksheet": "10th Marksheet",
+        "doc12th": "12th Marksheet",
+        "12th": "12th Marksheet",
+        "12th marksheet": "12th Marksheet",
+        "12th standard marksheet": "12th Marksheet",
+        "docadmission": "Admission Letter",
+        "admission": "Admission Letter",
+        "admission letter": "Admission Letter",
+        "admission proof": "Admission Letter",
+        "college admission proof": "Admission Letter",
+        "docfeestructure": "Fee Structure",
+        "feestructure": "Fee Structure",
+        "fee structure": "Fee Structure",
+        "institutional fee structure": "Fee Structure",
+        "fees": "Fee Structure",
         "docaadhaar": "Aadhaar",
         "aadhaar": "Aadhaar",
         "aadhaar card": "Aadhaar",
@@ -116,9 +135,11 @@ class DocumentValidationPipeline:
             val_res = DprValidator.validate(raw_text, user_profile, ocr_confidence=ocr_res.get("confidence", 0.95))
         elif norm_type == "Udyam Registration":
             val_res = UdyamValidator.validate(raw_text, user_profile, ocr_confidence=ocr_res.get("confidence", 0.95))
+        elif norm_type in ["10th Marksheet", "12th Marksheet", "Admission Letter", "Fee Structure"]:
+            val_res = EducationValidator.validate(raw_text, user_profile, doc_type=norm_type, ocr_confidence=ocr_res.get("confidence", 0.95))
         else:
-            # Fallback for generic documents
-            val_res = PanValidator.validate(raw_text, user_profile, ocr_confidence=ocr_res.get("confidence", 0.95))
+            # Fallback for generic or unknown documents
+            val_res = EducationValidator.validate(raw_text, user_profile, doc_type=norm_type, ocr_confidence=ocr_res.get("confidence", 0.95))
             val_res["document_type"] = norm_type
 
         # 4. Audit Log: Format & Rule Validation

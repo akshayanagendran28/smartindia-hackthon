@@ -1,11 +1,13 @@
 import React from 'react';
 import { Bell, Award, FileCheck, CheckCircle2, Clock } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function NotificationsPage() {
+  const { t } = useLanguage();
   const notifications = [
-    { title: 'New Subsidy Slab Announced for PMEGP', desc: 'Rural special category subsidy increased to 35% with ₹50 Lakh project ceiling.', time: '2 hours ago', type: 'subsidy' },
-    { title: 'Aadhaar OCR Verification Successful', desc: 'UIDAI card cross-verified with 100% name and demographic match.', time: '1 day ago', type: 'doc' },
-    { title: 'State DIC Camp Scheduled in Mumbai', desc: 'Fast-track PMEGP loan sanction camp on Sept 20th at Bandra Kurla Complex.', time: '3 days ago', type: 'event' }
+    { title: t('New Subsidy Slab Announced for PMEGP', 'New Subsidy Slab Announced for PMEGP'), desc: t('Rural special category subsidy increased to 35% with ₹50 Lakh project ceiling.', 'Rural special category subsidy increased to 35% with ₹50 Lakh project ceiling.'), time: '2 hours ago', type: 'subsidy' },
+    { title: t('Aadhaar OCR Verification Successful', 'Aadhaar OCR Verification Successful'), desc: t('UIDAI card cross-verified with 100% name and demographic match.', 'UIDAI card cross-verified with 100% name and demographic match.'), time: '1 day ago', type: 'doc' },
+    { title: t('State DIC Camp Scheduled in Mumbai', 'State DIC Camp Scheduled in Mumbai'), desc: t('Fast-track PMEGP loan sanction camp on Sept 20th at Bandra Kurla Complex.', 'Fast-track PMEGP loan sanction camp on Sept 20th at Bandra Kurla Complex.'), time: '3 days ago', type: 'event' }
   ];
 
   return (
@@ -15,8 +17,8 @@ export default function NotificationsPage() {
           <Bell className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Notifications & Alerts</h1>
-          <p className="text-xs text-slate-500">Gazette policy updates and application reminders</p>
+          <h1 className="text-2xl font-black text-slate-900">{t('notifications & alerts')}</h1>
+          <p className="text-xs text-slate-500">{t('gazette policy updates and application reminders')}</p>
         </div>
       </div>
 

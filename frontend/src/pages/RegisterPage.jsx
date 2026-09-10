@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   UserPlus, Mail, Lock, User, Phone, CheckCircle2, AlertCircle, 
-  MapPin, DollarSign, ArrowRight, ShieldCheck, Check, Edit3, Sparkles 
+  MapPin, DollarSign, ArrowRight, ShieldCheck, Check, Edit3, Sparkles,
+  GraduationCap, Briefcase, Store
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -27,20 +28,30 @@ export default function RegisterPage() {
 
   // Temporary draft state for registration input
   const [draft, setDraft] = useState({
+    purpose_type: application.purpose_type || 'EDUCATION',
     full_name: application.full_name || '',
     email: '',
     phone: '',
     password: '',
     social_category: application.category || 'SC',
     gender: application.gender || 'female',
-    state: application.state || 'Tamil Nadu',
-    district: application.district || 'Tiruvallur',
-    required_loan: application.loanAmount || 1200000,
+    state: application.state || 'Maharashtra',
+    district: application.district || 'Mumbai',
+    required_loan: application.loanAmount || 450000,
     preferred_language: 'en'
   });
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    if (name === 'purpose_type') {
+      const defaultLoan = value === 'EDUCATION' ? 450000 : value === 'SELF_EMPLOYMENT' ? 50000 : 1200000;
+      setDraft(prev => ({
+        ...prev,
+        purpose_type: value,
+        required_loan: defaultLoan
+      }));
+      return;
+    }
     setDraft(prev => ({
       ...prev,
       [name]: type === 'number' ? Number(value) : value
@@ -66,6 +77,8 @@ export default function RegisterPage() {
 
     // Save into temporary application context state (NOT yet permanent profile)
     updateApplication({
+      purpose_type: draft.purpose_type,
+      purposeType: draft.purpose_type,
       full_name: draft.full_name,
       category: draft.social_category,
       social_category: draft.social_category,
@@ -100,6 +113,7 @@ export default function RegisterPage() {
 
       // 2. Permanently save confirmed profile & application state
       await confirmAndSaveProfile({
+        purpose_type: draft.purpose_type,
         full_name: draft.full_name,
         category: draft.social_category,
         social_category: draft.social_category,
@@ -118,6 +132,7 @@ export default function RegisterPage() {
       // If user already exists, still proceed with confirmed profile
       try {
         await confirmAndSaveProfile({
+          purpose_type: draft.purpose_type,
           full_name: draft.full_name,
           category: draft.social_category,
           social_category: draft.social_category,
@@ -165,6 +180,62 @@ export default function RegisterPage() {
         {/* MODE 1: Data Entry Form (Temporary Draft State) */}
         {mode === 'entry' ? (
           <form onSubmit={handleProceedToReview} className="space-y-4">
+            {/* Purpose / Track Selection */}
+            <div>
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                Primary Goal / Scheme Category
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {[
+                  {
+                    id: 'EDUCATION',
+                    label: 'Higher Education',
+                    sub: 'CSIS, NSFDC & Higher Studies',
+                    icon: <GraduationCap className="w-4 h-4" />
+                  },
+                  {
+                    id: 'BUSINESS',
+                    label: 'Business Enterprise',
+                    sub: 'PMEGP, Stand-Up & MSME',
+                    icon: <Briefcase className="w-4 h-4" />
+                  },
+                  {
+                    id: 'SELF_EMPLOYMENT',
+                    label: 'Self-Employment',
+                    sub: 'PM SVANidhi, Mudra & Livelihood',
+                    icon: <Store className="w-4 h-4" />
+                  }
+                ].map(item => {
+                  const active = draft.purpose_type === item.id;
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => {
+                        const defaultLoan = item.id === 'EDUCATION' ? 450000 : item.id === 'SELF_EMPLOYMENT' ? 50000 : 1200000;
+                        setDraft(prev => ({
+                          ...prev,
+                          purpose_type: item.id,
+                          required_loan: defaultLoan
+                        }));
+                      }}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        active
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20 shadow-sm'
+                          : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 font-bold text-xs">
+                        <span className={active ? 'text-emerald-700' : 'text-slate-500'}>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1">{item.sub}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
@@ -313,6 +384,18 @@ export default function RegisterPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 sm:col-span-2 flex items-center justify-between">
+                <div>
+                  <span className="text-emerald-800 text-[10px] font-bold uppercase block">Selected Workflow Track</span>
+                  <span className="font-extrabold text-emerald-950 text-sm">
+                    {draft.purpose_type === 'EDUCATION' ? '🎓 Higher Education' : draft.purpose_type === 'SELF_EMPLOYMENT' ? '🏪 Self-Employment & Micro-Enterprise' : '🏢 Business & MSME Enterprise'}
+                  </span>
+                </div>
+                <span className="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-lg text-[10px]">
+                  {draft.purpose_type}
+                </span>
+              </div>
+
               <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <span className="text-slate-400 text-[10px] font-bold uppercase block">Full Name</span>
                 <span className="font-bold text-slate-800 text-sm">{draft.full_name}</span>

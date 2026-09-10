@@ -94,3 +94,56 @@ class ChatMessage(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     session = relationship("ChatSession", back_populates="messages")
+
+class SchemeApplication(Base):
+    __tablename__ = "scheme_applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    application_number = Column(String(100), unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    scheme_id = Column(Integer, ForeignKey("schemes.id"), nullable=False)
+    partner_id = Column(Integer, ForeignKey("channel_partners.id"), nullable=True)
+
+    purpose_type = Column(String(50), default="BUSINESS", index=True) # BUSINESS, EDUCATION, SELF_EMPLOYMENT
+    loan_amount = Column(Float, nullable=False, default=1200000.0) # Single Source of Truth
+    tenure_months = Column(Integer, default=60)
+    moratorium_months = Column(Integer, default=6)
+    interest_rate = Column(Float, default=8.5)
+    subsidy_amount = Column(Float, default=0.0)
+    calculated_emi = Column(Float, default=0.0)
+
+    # Status: DRAFT, SUBMITTED, INVITATION_SENT, PARTNER_ASSIGNED, UNDER_REVIEW, SANCTIONED, REJECTED
+    status = Column(String(50), default="SUBMITTED", index=True)
+    invitation_status = Column(String(50), default="NONE", index=True) # NONE, PENDING, ACCEPTED, REJECTED
+    
+    applicant_data = Column(Text, default="{}") # JSON: Demographics, Course/Business details
+    verified_documents = Column(Text, default="[]") # JSON array of verified doc keys
+    status_history = Column(Text, default="[]") # JSON array of {status, timestamp, title, description, updated_by}
+    partner_notes = Column(Text, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    user = relationship("User")
+    scheme = relationship("Scheme")
+    partner = relationship("ChannelPartner")
+    invitations = relationship("PartnerInvitation", back_populates="application", cascade="all, delete-orphan")
+
+class PartnerInvitation(Base):
+    __tablename__ = "partner_invitations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invitation_number = Column(String(100), unique=True, index=True, nullable=False)
+    application_id = Column(Integer, ForeignKey("scheme_applications.id"), nullable=False)
+    partner_id = Column(Integer, ForeignKey("channel_partners.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    status = Column(String(50), default="PENDING", index=True) # PENDING, ACCEPTED, REJECTED, EXPIRED
+    response_notes = Column(Text, nullable=True)
+    sent_at = Column(DateTime, default=datetime.datetime.utcnow)
+    responded_at = Column(DateTime, nullable=True)
+
+    application = relationship("SchemeApplication", back_populates="invitations")
+    partner = relationship("ChannelPartner")
+    user = relationship("User")

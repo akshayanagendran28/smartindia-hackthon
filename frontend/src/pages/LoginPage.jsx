@@ -55,8 +55,8 @@ export default function LoginPage() {
           <div className="inline-flex p-3 rounded-2xl bg-emerald-100 text-emerald-800 mb-3">
             <ShieldCheck className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-900">{t('login')} to Scheme Sathi</h2>
-          <p className="text-xs text-slate-500 mt-1">Access your personalized eligibility profile & applications</p>
+          <h2 className="text-2xl font-extrabold text-slate-900">{t('navLogin')} — SCHEME SATHI</h2>
+          <p className="text-xs text-slate-500 mt-1">{t('applicant profile & demographics')}</p>
         </div>
 
         {error && (
@@ -68,35 +68,35 @@ export default function LoginPage() {
 
         {/* Demo Fast-Fill Bar */}
         <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-          <span className="font-semibold text-slate-700 block mb-1.5">Quick Demo Login:</span>
+          <span className="font-semibold text-slate-700 block mb-1.5">{t('quick demo login:')}</span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => fillDemo('entrepreneur')}
-              className="flex-1 py-1 px-2 bg-white border border-slate-300 rounded text-[11px] font-medium text-slate-700 hover:bg-emerald-50 hover:border-emerald-300"
+              className="flex-1 py-1 px-2 bg-white border border-slate-300 rounded text-[11px] font-medium text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 cursor-pointer"
             >
-              Woman Founder
+              {t('woman founder')}
             </button>
             <button
               type="button"
               onClick={() => fillDemo('vendor')}
-              className="flex-1 py-1 px-2 bg-white border border-slate-300 rounded text-[11px] font-medium text-slate-700 hover:bg-emerald-50 hover:border-emerald-300"
+              className="flex-1 py-1 px-2 bg-white border border-slate-300 rounded text-[11px] font-medium text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 cursor-pointer"
             >
-              Street Vendor
+              {t('street vendor')}
             </button>
             <button
               type="button"
               onClick={() => fillDemo('admin')}
-              className="flex-1 py-1 px-2 bg-white border border-slate-300 rounded text-[11px] font-medium text-slate-700 hover:bg-emerald-50 hover:border-emerald-300"
+              className="flex-1 py-1 px-2 bg-white border border-slate-300 rounded text-[11px] font-medium text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 cursor-pointer"
             >
-              Admin Portal
+              {t('admin portal')}
             </button>
           </div>
         </div>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">{t('email address')}</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
@@ -111,7 +111,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">{t('password')}</label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
@@ -128,11 +128,11 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+            className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
           >
-            {loading ? <span>Authenticating...</span> : (
+            {loading ? <span>{t('authenticating...')}</span> : (
               <>
-                <span>Sign In</span>
+                <span>{t('sign in')}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -141,9 +141,9 @@ export default function LoginPage() {
 
         <div className="text-center pt-2">
           <p className="text-xs text-slate-600">
-            Don't have an account?{' '}
+            {t("Don't have an account?")}{' '}
             <Link to="/register" className="font-bold text-emerald-700 hover:underline">
-              Create Entrepreneur Profile
+              {t('create entrepreneur profile')}
             </Link>
           </p>
         </div>

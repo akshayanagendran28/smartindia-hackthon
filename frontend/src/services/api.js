@@ -29,6 +29,11 @@ export const profileAPI = {
   updateProfile: (data) => api.put('/profile', data),
 };
 
+export const questionsAPI = {
+  getPurposes: () => api.get('/questions/purposes'),
+  getQuestions: (purposeType) => api.get('/questions', { params: { purpose_type: purposeType } }),
+};
+
 export const schemesAPI = {
   getAll: (params) => api.get('/schemes', { params }),
   getById: (id) => api.get(`/schemes/${id}`),
@@ -36,6 +41,7 @@ export const schemesAPI = {
 
 export const matchingAPI = {
   analyze: (data) => api.post('/matching/analyze', data),
+  evaluate: (data) => api.post('/matching/evaluate', data),
   checkEligibility: (schemeId, data) => api.post(`/matching/eligibility/check/${schemeId}`, data),
 };
 
@@ -59,7 +65,7 @@ export const documentsAPI = {
   rerunOcr: (id) => api.post(`/documents/${id}/ocr`),
   rerunValidate: (id) => api.post(`/documents/${id}/validate`),
   triggerVerify: (id) => api.post(`/documents/${id}/verify`),
-  getSyntheticSamples: () => api.get('/documents/synthetic-samples'),
+  getSyntheticSamples: (params) => api.get('/documents/synthetic-samples', { params }),
   loadSyntheticSample: (docKey, schemeCode) => 
     api.post(`/documents/load-synthetic/${docKey}${schemeCode ? `?scheme_code=${schemeCode}` : ''}`),
   getAuditLogs: (id) => api.get(`/documents/audit-logs/${id}`),
@@ -82,6 +88,14 @@ export const chatAPI = {
 export const notificationsAPI = {
   getAll: () => api.get('/notifications'),
   markAsRead: (id) => api.put(`/notifications/${id}/read`),
+};
+
+export const applicationsAPI = {
+  submit: (data) => api.post('/applications/submit', data),
+  invitePartner: (appId, data) => api.post(`/applications/${appId}/invite-partner`, data),
+  partnerAction: (appId, data) => api.post(`/applications/${appId}/partner-action`, data),
+  getMyApplications: () => api.get('/applications/my-applications'),
+  getStatus: (appId) => api.get(`/applications/${appId}/status`),
 };
 
 export const adminAPI = {

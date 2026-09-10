@@ -416,14 +416,144 @@ def run_direct_pipeline(
 
 
 @router.get("/synthetic-samples", response_model=List[SyntheticSampleItem])
-def get_synthetic_samples():
+def get_synthetic_samples(
+    purpose_type: Optional[str] = Query(None, description="User track: EDUCATION, BUSINESS, or SELF_EMPLOYMENT")
+):
     """
-    Returns list of 100% synthetic, non-PII test documents for Smart India Hackathon jury testing.
+    Returns list of 100% synthetic, non-PII test documents tailored to the user's purpose track.
     """
     os.makedirs(SYNTHETIC_DIR, exist_ok=True)
     SyntheticDocumentGenerator.generate_all_samples(SYNTHETIC_DIR)
 
-    samples = [
+    p_type = (purpose_type or "").upper()
+
+    if p_type == "EDUCATION":
+        return [
+            {
+                "doc_key": "docAadhaar",
+                "document_name": "Synthetic Aadhaar Card",
+                "document_type": "Aadhaar",
+                "file_name": "sample_synthetic_aadhaar.png",
+                "file_url": "/api/v1/documents/synthetic-file/sample_synthetic_aadhaar.png",
+                "preview_data": {
+                    "name": "Aarav Rajesh Sharma",
+                    "masked_aadhaar": "XXXX-XXXX-1234",
+                    "dob": "15/08/1995",
+                    "gender": "Male",
+                    "verhoeff_checksum": "VALID"
+                },
+                "profile_preset": {
+                    "full_name": "Aarav Rajesh Sharma",
+                    "dob": "1995-08-15",
+                    "gender": "male"
+                }
+            },
+            {
+                "doc_key": "doc10th",
+                "document_name": "Synthetic 10th Standard Marksheet",
+                "document_type": "10th Marksheet",
+                "file_name": "sample_synthetic_10th_marksheet.png",
+                "file_url": "/api/v1/documents/synthetic-file/sample_synthetic_10th_marksheet.png",
+                "preview_data": {
+                    "board": "CBSE",
+                    "roll_no": "12145678",
+                    "candidate_name": "Aarav Rajesh Sharma",
+                    "aggregate_percentage": "88.0%",
+                    "result": "PASS"
+                },
+                "profile_preset": {
+                    "current_education_level": "10th Pass"
+                }
+            },
+            {
+                "doc_key": "doc12th",
+                "document_name": "Synthetic 12th Standard Marksheet",
+                "document_type": "12th Marksheet",
+                "file_name": "sample_synthetic_12th_marksheet.png",
+                "file_url": "/api/v1/documents/synthetic-file/sample_synthetic_12th_marksheet.png",
+                "preview_data": {
+                    "board": "Maharashtra State Board (HSC)",
+                    "seat_no": "M248901",
+                    "stream": "Science (PCM)",
+                    "aggregate_percentage": "90.8%",
+                    "result": "PASS WITH DISTINCTION"
+                },
+                "profile_preset": {
+                    "current_education_level": "12th Pass"
+                }
+            },
+            {
+                "doc_key": "docAdmission",
+                "document_name": "Synthetic Admission Offer Letter",
+                "document_type": "Admission Letter",
+                "file_name": "sample_synthetic_admission_letter.png",
+                "file_url": "/api/v1/documents/synthetic-file/sample_synthetic_admission_letter.png",
+                "preview_data": {
+                    "institution": "VJTI Mumbai (Govt Autonomous)",
+                    "course": "B.Tech Computer Engineering (4 Years)",
+                    "approval": "AICTE / DTE Maharashtra Approved",
+                    "admission_status": "CONFIRMED"
+                },
+                "profile_preset": {
+                    "admission_status": "Confirmed Admission",
+                    "course_type": "Technical / Engineering (B.Tech / B.E / M.Tech)",
+                    "institution_type": "NAAC / AICTE / UGC Approved Govt/Aided College"
+                }
+            },
+            {
+                "doc_key": "docFeeStructure",
+                "document_name": "Synthetic Institutional Fee Breakdown",
+                "document_type": "Fee Structure",
+                "file_name": "sample_synthetic_fee_structure.png",
+                "file_url": "/api/v1/documents/synthetic-file/sample_synthetic_fee_structure.png",
+                "preview_data": {
+                    "annual_tuition_fee": "Rs. 1,20,000",
+                    "total_course_fee": "Rs. 4,80,000",
+                    "eligible_loan_quantum": "Rs. 4,50,000",
+                    "authorized_by": "Finance Officer, VJTI"
+                },
+                "profile_preset": {
+                    "annual_course_fee": 120000.0,
+                    "course_duration_years": 4,
+                    "required_loan_amount": 450000.0
+                }
+            },
+            {
+                "doc_key": "docIncome",
+                "document_name": "Synthetic Income Certificate",
+                "document_type": "Income Certificate",
+                "file_name": "sample_synthetic_income.png",
+                "file_url": "/api/v1/documents/synthetic-file/sample_synthetic_income.png",
+                "preview_data": {
+                    "certificate_no": "INC/MH/2024/54321",
+                    "annual_income": "Rs. 1,80,000",
+                    "csis_subsidy_check": "ELIGIBLE (Family Income <= Rs. 4.5 Lakh)"
+                },
+                "profile_preset": {
+                    "annual_family_income": 180000.0,
+                    "annual_income": 180000.0
+                }
+            },
+            {
+                "doc_key": "docCaste",
+                "document_name": "Synthetic SC Caste Certificate",
+                "document_type": "Caste Certificate",
+                "file_name": "sample_synthetic_caste.png",
+                "file_url": "/api/v1/documents/synthetic-file/sample_synthetic_caste.png",
+                "preview_data": {
+                    "certificate_no": "CC/MH/2024/09876",
+                    "category": "SC",
+                    "nsfdc_education_check": "ELIGIBLE (3.5% - 4.0% Concessional Rate)"
+                },
+                "profile_preset": {
+                    "category": "SC",
+                    "social_category": "SC"
+                }
+            }
+        ]
+
+    # Default Business / Self-Employment Synthetic Samples
+    return [
         {
             "doc_key": "docAadhaar",
             "document_name": "Synthetic Aadhaar Card",
@@ -532,7 +662,6 @@ def get_synthetic_samples():
             }
         }
     ]
-    return samples
 
 
 @router.post("/load-synthetic/{doc_key}", response_model=DocumentUploadResponse)
@@ -550,11 +679,35 @@ def load_synthetic_sample(
 
     key_map = {
         "docaadhaar": ("docAadhaar", "sample_synthetic_aadhaar.png", "Aadhaar"),
+        "aadhaar": ("docAadhaar", "sample_synthetic_aadhaar.png", "Aadhaar"),
+        "aadhaar_card": ("docAadhaar", "sample_synthetic_aadhaar.png", "Aadhaar"),
         "docpan": ("docPan", "sample_synthetic_pan.png", "PAN"),
+        "pan": ("docPan", "sample_synthetic_pan.png", "PAN"),
+        "pan_card": ("docPan", "sample_synthetic_pan.png", "PAN"),
         "doccaste": ("docCaste", "sample_synthetic_caste.png", "Caste Certificate"),
+        "caste": ("docCaste", "sample_synthetic_caste.png", "Caste Certificate"),
+        "caste_certificate": ("docCaste", "sample_synthetic_caste.png", "Caste Certificate"),
         "docincome": ("docIncome", "sample_synthetic_income.png", "Income Certificate"),
+        "income": ("docIncome", "sample_synthetic_income.png", "Income Certificate"),
+        "income_certificate": ("docIncome", "sample_synthetic_income.png", "Income Certificate"),
         "docdpr": ("docDpr", "sample_synthetic_dpr.png", "Detailed Project Report"),
-        "docudyam": ("docUdyam", "sample_synthetic_udyam.png", "Udyam Registration")
+        "dpr": ("docDpr", "sample_synthetic_dpr.png", "Detailed Project Report"),
+        "detailed_project_report": ("docDpr", "sample_synthetic_dpr.png", "Detailed Project Report"),
+        "docudyam": ("docUdyam", "sample_synthetic_udyam.png", "Udyam Registration"),
+        "udyam": ("docUdyam", "sample_synthetic_udyam.png", "Udyam Registration"),
+        "udyam_registration": ("docUdyam", "sample_synthetic_udyam.png", "Udyam Registration"),
+        "doc10th": ("doc10th", "sample_synthetic_10th_marksheet.png", "10th Marksheet"),
+        "10th": ("doc10th", "sample_synthetic_10th_marksheet.png", "10th Marksheet"),
+        "10th_marksheet": ("doc10th", "sample_synthetic_10th_marksheet.png", "10th Marksheet"),
+        "doc12th": ("doc12th", "sample_synthetic_12th_marksheet.png", "12th Marksheet"),
+        "12th": ("doc12th", "sample_synthetic_12th_marksheet.png", "12th Marksheet"),
+        "12th_marksheet": ("doc12th", "sample_synthetic_12th_marksheet.png", "12th Marksheet"),
+        "docadmission": ("docAdmission", "sample_synthetic_admission_letter.png", "Admission Letter"),
+        "admission": ("docAdmission", "sample_synthetic_admission_letter.png", "Admission Letter"),
+        "admission_letter": ("docAdmission", "sample_synthetic_admission_letter.png", "Admission Letter"),
+        "docfeestructure": ("docFeeStructure", "sample_synthetic_fee_structure.png", "Fee Structure"),
+        "fee_structure": ("docFeeStructure", "sample_synthetic_fee_structure.png", "Fee Structure"),
+        "feestructure": ("docFeeStructure", "sample_synthetic_fee_structure.png", "Fee Structure")
     }
 
     lookup_key = doc_key.strip().lower()
@@ -618,6 +771,7 @@ def load_synthetic_sample(
         "file_path": doc_entry.file_path,
         "verification_status": doc_entry.verification_status,
         "status": doc_entry.verification_status,
+        "is_valid": str(doc_entry.verification_status).upper() in ["VERIFIED", "SUCCESS"],
         "ocr_status": doc_entry.ocr_status or "SUCCESS",
         "format_valid": doc_entry.format_valid if doc_entry.format_valid is not None else True,
         "profile_match": doc_entry.profile_match if doc_entry.profile_match is not None else True,
@@ -633,132 +787,9 @@ def load_synthetic_sample(
     }
 
 
-@router.get("/synthetic-file/{filename}")
-def serve_synthetic_file(filename: str):
-    file_path = os.path.join(SYNTHETIC_DIR, filename)
-    if not os.path.exists(file_path):
-        SyntheticDocumentGenerator.generate_all_samples(SYNTHETIC_DIR)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Synthetic image not found")
-    return FileResponse(file_path, media_type="image/png")
-
-
-@router.get("/audit-logs/{document_id}")
-def get_document_audit_logs(
-    document_id: int,
-    current_user: User = Depends(get_current_user_flexible),
-    db: Session = Depends(get_db)
-):
-    doc = db.query(UserDocument).filter(
-        UserDocument.id == document_id,
-        UserDocument.user_id == current_user.id
-    ).first()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    audit_logs = _safe_json_loads(getattr(doc, "audit_logs", "[]"), [])
-    checks = _safe_json_loads(getattr(doc, "validation_checks", "[]"), [])
-
-    return {
-        "document_id": doc.id,
-        "document_type": doc.document_type,
-        "file_name": doc.file_name,
-        "overall_status": doc.verification_status,
-        "compliance_summary": {
-            "pii_masked": doc.masked_identifier is not None,
-            "verhoeff_or_checksum_checked": any("verhoeff" in c.get("check_name", "").lower() or "checksum" in c.get("check_name", "").lower() for c in checks),
-            "profile_crosscheck_executed": len(audit_logs) >= 4,
-            "official_gateway_logged": doc.official_verification == "VERIFIED"
-        },
-        "audit_trail": audit_logs,
-        "validation_checks": checks
-    }
-
-
-@router.delete("/{document_id}")
-def delete_document(
-    document_id: int,
-    current_user: User = Depends(get_current_user_flexible),
-    db: Session = Depends(get_db)
-):
-    doc = db.query(UserDocument).filter(
-        UserDocument.id == document_id,
-        UserDocument.user_id == current_user.id
-    ).first()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    if os.path.exists(doc.file_path):
-        try:
-            os.remove(doc.file_path)
-        except Exception:
-            pass
-
-    db.delete(doc)
-    db.commit()
-    return {"message": "Document deleted successfully", "id": document_id}
-
-
-@router.get("/scheme/{scheme_id}/checklist", response_model=SchemeDocumentReadiness)
-def get_scheme_checklist(
-    scheme_id: int,
-    current_user: User = Depends(get_current_user_flexible),
-    db: Session = Depends(get_db)
-):
-    scheme = db.query(Scheme).filter(Scheme.id == scheme_id).first()
-    if not scheme:
-        raise HTTPException(status_code=404, detail="Scheme not found")
-
-    user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all()
-    uploaded_types = {}
-    for d in user_docs:
-        norm = DocumentValidationPipeline.normalize_doc_type(d.document_type).lower()
-        uploaded_types[norm] = d
-
-    checklist = []
-    uploaded_count = 0
-    mandatory_count = 0
-
-    for req_doc in scheme.documents:
-        if req_doc.is_mandatory:
-            mandatory_count += 1
-        
-        doc_type_norm = DocumentValidationPipeline.normalize_doc_type(req_doc.document_type).lower()
-        matching_user_doc = uploaded_types.get(doc_type_norm) or uploaded_types.get(req_doc.document_type.lower())
-        is_up = matching_user_doc is not None
-        if is_up and req_doc.is_mandatory:
-            uploaded_count += 1
-
-        extracted_info = {}
-        if matching_user_doc:
-            extracted_info = _safe_json_loads(matching_user_doc.extracted_data, {})
-
-        checklist.append({
-            "document_name": req_doc.document_name,
-            "document_type": req_doc.document_type,
-            "is_mandatory": req_doc.is_mandatory,
-            "is_uploaded": is_up,
-            "verification_status": matching_user_doc.verification_status if matching_user_doc else "pending",
-            "file_name": matching_user_doc.file_name if matching_user_doc else None,
-            "masked_identifier": getattr(matching_user_doc, "masked_identifier", None) if matching_user_doc else None,
-            "confidence": getattr(matching_user_doc, "confidence_score", 0.0) if matching_user_doc else 0.0,
-            "extracted_preview": extracted_info
-        })
-
-    readiness = round((uploaded_count / max(mandatory_count, 1)) * 100, 1)
-
-    return {
-        "scheme_id": scheme.id,
-        "scheme_name": scheme.name,
-        "total_mandatory": mandatory_count,
-        "uploaded_mandatory": uploaded_count,
-        "readiness_percentage": readiness,
-        "documents": checklist
-    }
-
-
 @router.get("/required-checklist")
 def get_dynamic_required_checklist(
+    purpose_type: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
     purpose: Optional[str] = Query(None),
     loan_amount: Optional[float] = Query(None),
@@ -767,22 +798,109 @@ def get_dynamic_required_checklist(
     db: Session = Depends(get_db)
 ):
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
-    eff_category = category or (profile.category if profile else "SC") or "SC"
-    eff_purpose = purpose or (profile.purpose if profile else "Start a Business") or "Start a Business"
+    eff_p_type = (purpose_type or (profile.purpose_type if profile else None) or "BUSINESS").upper()
+    eff_category = category or (profile.category if profile else "General") or "General"
+    eff_purpose = purpose or (profile.purpose if profile else "") or ""
     eff_loan = loan_amount or (profile.required_loan_amount if profile else 1200000.0) or 1200000.0
     eff_biz = business_type or (profile.business_type if profile else "manufacturing") or "manufacturing"
 
-    req_docs = [
-        {
+    req_docs = []
+
+    if eff_p_type == "EDUCATION":
+        # 100% Dynamic Education Document Requirements
+        req_docs.append({
+            "doc_key": "docAadhaar",
+            "document_name": "Aadhaar Card",
+            "document_type": "Aadhaar",
+            "is_mandatory": True,
+            "reason": "Mandatory identity proof & UIDAI Verhoeff checksum verification for DBT interest subvention."
+        })
+        req_docs.append({
+            "doc_key": "doc10th",
+            "document_name": "10th Standard Marksheet / Certificate",
+            "document_type": "10th Marksheet",
+            "is_mandatory": True,
+            "reason": "Proof of age and foundational academic qualification."
+        })
+        req_docs.append({
+            "doc_key": "doc12th",
+            "document_name": "12th Standard / Diploma Marksheet",
+            "document_type": "12th Marksheet",
+            "is_mandatory": True,
+            "reason": "Mandatory eligibility credential for higher professional & technical degree enrollment."
+        })
+        req_docs.append({
+            "doc_key": "docAdmission",
+            "document_name": "College / University Admission Offer Letter",
+            "document_type": "Admission Letter",
+            "is_mandatory": True,
+            "reason": "Proof of confirmed enrollment in accredited AICTE/UGC/NAAC technical or professional institute."
+        })
+        req_docs.append({
+            "doc_key": "docFeeStructure",
+            "document_name": "Institutional Fee Breakdown & Schedule",
+            "document_type": "Fee Structure",
+            "is_mandatory": True,
+            "reason": "Official college document establishing exact loan quantum for tuition, exams, and hostel fees."
+        })
+        req_docs.append({
+            "doc_key": "docIncome",
+            "document_name": "Annual Family Income Certificate",
+            "document_type": "Income Certificate",
+            "is_mandatory": True,
+            "reason": "Mandatory for CSIS 100% full interest subsidy (Family income <= ₹4.50 Lakh/year)."
+        })
+        if eff_category.upper() in ["SC", "ST", "OBC", "MINORITY", "EWS"]:
+            req_docs.append({
+                "doc_key": "docCaste",
+                "document_name": f"{eff_category.upper()} Community / Caste Certificate",
+                "document_type": "Caste Certificate",
+                "is_mandatory": True,
+                "reason": f"Required to unlock concessional interest rates under {eff_category.upper()} education credit quotas (NSFDC 3.5%-4%, NBCFDC, NMDFC 3%)."
+            })
+
+    elif eff_p_type == "SELF_EMPLOYMENT":
+        # Dynamic Self-Employment Requirements
+        req_docs.append({
+            "doc_key": "docAadhaar",
+            "document_name": "Aadhaar Card",
+            "document_type": "Aadhaar",
+            "is_mandatory": True,
+            "reason": "Mandatory identity proof & DBT linking."
+        })
+        req_docs.append({
+            "doc_key": "docIncome",
+            "document_name": "Annual Income Certificate / Ration Card",
+            "document_type": "Income Certificate",
+            "is_mandatory": True,
+            "reason": "Required for income band verification under micro-credit & welfare schemes."
+        })
+        if eff_category.upper() in ["SC", "ST", "OBC", "MINORITY"]:
+            req_docs.append({
+                "doc_key": "docCaste",
+                "document_name": f"{eff_category.upper()} Community Certificate",
+                "document_type": "Caste Certificate",
+                "is_mandatory": True,
+                "reason": f"Required for {eff_category.upper()} micro-enterprise subsidy and PM Vishwakarma / Mahila Samridhi benefits."
+            })
+        if eff_loan >= 50000:
+            req_docs.append({
+                "doc_key": "docPan",
+                "document_name": "PAN Card",
+                "document_type": "PAN",
+                "is_mandatory": False,
+                "reason": "Required for credit sanction above ₹50,000."
+            })
+
+    else:
+        # Dynamic Business Requirements
+        req_docs.append({
             "doc_key": "docAadhaar",
             "document_name": "Aadhaar Card",
             "document_type": "Aadhaar",
             "is_mandatory": True,
             "reason": "Mandatory identity proof & UIDAI Verhoeff checksum verification for direct DBT benefit linkage."
-        }
-    ]
-
-    if eff_loan >= 50000 or "business" in eff_purpose.lower():
+        })
         req_docs.append({
             "doc_key": "docPan",
             "document_name": "PAN Card",
@@ -790,25 +908,21 @@ def get_dynamic_required_checklist(
             "is_mandatory": True,
             "reason": "Required for credit sanction, tax compliance, and entity identification."
         })
-
-    if eff_category.upper() in ["SC", "ST", "MINORITY"]:
+        if eff_category.upper() in ["SC", "ST", "MINORITY", "OBC"]:
+            req_docs.append({
+                "doc_key": "docCaste",
+                "document_name": f"{eff_category.upper()} Community / Caste Certificate",
+                "document_type": "Caste Certificate",
+                "is_mandatory": True,
+                "reason": f"Required to unlock 25%-35% special capital subsidy and concessional terms under {eff_category.upper()} quota."
+            })
         req_docs.append({
-            "doc_key": "docCaste",
-            "document_name": f"{eff_category.upper()} Community / Caste Certificate",
-            "document_type": "Caste Certificate",
+            "doc_key": "docIncome",
+            "document_name": "Annual Income Certificate",
+            "document_type": "Income Certificate",
             "is_mandatory": True,
-            "reason": f"Required to unlock 25%-35% special capital subsidy and concessional terms under {eff_category.upper()} quota."
+            "reason": "Required to verify family income compliance with statutory subsidy caps."
         })
-
-    req_docs.append({
-        "doc_key": "docIncome",
-        "document_name": "Annual Income Certificate",
-        "document_type": "Income Certificate",
-        "is_mandatory": True,
-        "reason": "Required to verify family income compliance with statutory subsidy caps."
-    })
-
-    if "business" in eff_purpose.lower() or eff_loan > 50000:
         req_docs.append({
             "doc_key": "docDpr",
             "document_name": "Detailed Project Report (DPR)",
@@ -816,15 +930,14 @@ def get_dynamic_required_checklist(
             "is_mandatory": True,
             "reason": "Project financial summary verifying Project Cost, Promoter Margin (5%-10%), and Bank Loan."
         })
-
-    if eff_biz.lower() in ["manufacturing", "service", "trading"] or "expand" in eff_purpose.lower():
-        req_docs.append({
-            "doc_key": "docUdyam",
-            "document_name": "Udyam MSME Registration Certificate",
-            "document_type": "Udyam Registration",
-            "is_mandatory": False,
-            "reason": "Provides priority lending status and exemption from processing fees under MSME Act."
-        })
+        if eff_biz.lower() in ["manufacturing", "service", "trading"] or "expand" in eff_purpose.lower():
+            req_docs.append({
+                "doc_key": "docUdyam",
+                "document_name": "Udyam MSME Registration Certificate",
+                "document_type": "Udyam Registration",
+                "is_mandatory": False,
+                "reason": "Provides priority lending status and exemption from processing fees under MSME Act."
+            })
 
     user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all()
     user_doc_map = {}
@@ -862,6 +975,7 @@ def get_dynamic_required_checklist(
     all_verified = (total_mandatory > 0) and (verified_mandatory == total_mandatory)
 
     return {
+        "purpose_type": eff_p_type,
         "all_mandatory_verified": all_verified,
         "total_mandatory": total_mandatory,
         "verified_mandatory": verified_mandatory,

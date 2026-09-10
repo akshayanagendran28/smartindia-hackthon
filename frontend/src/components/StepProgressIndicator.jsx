@@ -5,15 +5,16 @@ import {
   MapPin, CheckCircle2, Lock 
 } from 'lucide-react';
 import { useApplication } from '../context/ApplicationContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const STEPS = [
-  { id: 1, key: 'profile', title: '1. Profile', icon: User, path: '/profile' },
-  { id: 2, key: 'requirement', title: '2. Requirement', icon: Sliders, path: '/find-scheme' },
-  { id: 3, key: 'documents', title: '3. Documents', icon: FileCheck, path: '/documents' },
-  { id: 4, key: 'eligibility', title: '4. Eligibility', icon: Sparkles, path: '/results' },
-  { id: 5, key: 'scheme', title: '5. Scheme', icon: Award, path: '/results' },
-  { id: 6, key: 'emi', title: '6. EMI', icon: Calculator, path: '/calculator' },
-  { id: 7, key: 'partner', title: '7. Partner Map', icon: MapPin, path: '/partners' },
+  { id: 1, key: 'stepProfile', title: '1. Profile', icon: User, path: '/profile' },
+  { id: 2, key: 'stepRequirement', title: '2. Requirement', icon: Sliders, path: '/find-scheme' },
+  { id: 3, key: 'stepDocuments', title: '3. Documents', icon: FileCheck, path: '/documents' },
+  { id: 4, key: 'stepEligibility', title: '4. Eligibility', icon: Sparkles, path: '/results' },
+  { id: 5, key: 'stepScheme', title: '5. Scheme', icon: Award, path: '/results' },
+  { id: 6, key: 'stepEmi', title: '6. EMI', icon: Calculator, path: '/calculator' },
+  { id: 7, key: 'stepPartner', title: '7. Partner Map', icon: MapPin, path: '/partners' },
 ];
 
 export default function StepProgressIndicator({ currentStep = 1 }) {
@@ -23,6 +24,7 @@ export default function StepProgressIndicator({ currentStep = 1 }) {
     selectedScheme, 
     canAccess 
   } = useApplication();
+  const { t } = useLanguage();
 
   const isStepComplete = (stepId) => {
     if (stepId === 1) return isProfileConfirmed;
@@ -68,9 +70,9 @@ export default function StepProgressIndicator({ currentStep = 1 }) {
                   title={
                     isLocked 
                       ? step.id >= 6 
-                        ? 'Select an eligible scheme to unlock' 
-                        : 'Complete document verification to unlock'
-                      : step.title
+                        ? t('Select an eligible scheme to unlock') 
+                        : t('Complete document verification to unlock')
+                      : t(step.title)
                   }
                 >
                   {isCompleted && !isCurrent ? (
@@ -89,11 +91,11 @@ export default function StepProgressIndicator({ currentStep = 1 }) {
                 <span className={`text-[11px] font-bold mt-1.5 truncate max-w-[85px] sm:max-w-none ${
                   isCurrent ? 'text-emerald-700' : isCompleted ? 'text-slate-800' : isLocked ? 'text-slate-400' : 'text-slate-600'
                 }`}>
-                  {step.title}
+                  {t(step.title)}
                 </span>
 
                 <span className="text-[9px] text-slate-400 hidden sm:block">
-                  {isCurrent ? 'Current' : isCompleted ? 'Completed' : isLocked ? 'Locked 🔒' : 'Next'}
+                  {isCurrent ? t('Current') : isCompleted ? t('Completed') : isLocked ? t('Locked 🔒') : t('Next')}
                 </span>
               </div>
 

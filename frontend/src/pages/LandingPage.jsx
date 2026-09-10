@@ -16,9 +16,11 @@ export default function LandingPage() {
   const [featuredSchemes, setFeaturedSchemes] = useState([]);
   const [stats, setStats] = useState({ total_schemes: "25+", total_partners: 13, max_subsidy: "50%", active_beneficiaries: "12,450+" });
   const [quickForm, setQuickForm] = useState({
+    purpose_type: 'EDUCATION',
     social_category: 'SC',
     gender: 'female',
-    required_loan: 500000,
+    required_loan: 450000,
+    course_type: 'Technical / Engineering (B.Tech / B.E / M.Tech)',
     business_type: 'manufacturing'
   });
 
@@ -120,12 +122,46 @@ export default function LandingPage() {
               </div>
 
               <form onSubmit={handleQuickCheck} className="space-y-4">
+                {/* Track Selector */}
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1.5">
+                    Select Your Goal Track
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5 bg-slate-950/60 p-1 rounded-xl border border-slate-700">
+                    {[
+                      { id: 'EDUCATION', label: '🎓 Education' },
+                      { id: 'BUSINESS', label: '🏢 Business' },
+                      { id: 'SELF_EMPLOYMENT', label: '🏪 Self-Emp' }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => {
+                          const loan = tab.id === 'EDUCATION' ? 450000 : tab.id === 'SELF_EMPLOYMENT' ? 50000 : 1200000;
+                          setQuickForm({
+                            ...quickForm,
+                            purpose_type: tab.id,
+                            required_loan: loan
+                          });
+                        }}
+                        className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
+                          quickForm.purpose_type === tab.id
+                            ? 'bg-emerald-500 text-slate-950 shadow-md'
+                            : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-medium text-slate-200 mb-1">{t('socialCategory')}</label>
                   <select
                     value={quickForm.social_category}
                     onChange={(e) => setQuickForm({ ...quickForm, social_category: e.target.value })}
-                    className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="SC">Scheduled Caste (SC)</option>
                     <option value="ST">Scheduled Tribe (ST)</option>
@@ -140,7 +176,7 @@ export default function LandingPage() {
                     <select
                       value={quickForm.gender}
                       onChange={(e) => setQuickForm({ ...quickForm, gender: e.target.value })}
-                      className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     >
                       <option value="female">{t('optionFemale')}</option>
                       <option value="male">{t('optionMale')}</option>
@@ -149,45 +185,76 @@ export default function LandingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-200 mb-1">{t('businessType')}</label>
-                    <select
-                      value={quickForm.business_type}
-                      onChange={(e) => setQuickForm({ ...quickForm, business_type: e.target.value })}
-                      className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    >
-                      <option value="manufacturing">{t('manufacturingOption')}</option>
-                      <option value="service">{t('serviceOption')}</option>
-                      <option value="trading">{t('tradingOption')}</option>
-                      <option value="street_vendor">{t('streetVendorOption')}</option>
-                      <option value="artisan">{t('artisanOption')}</option>
-                    </select>
+                    {quickForm.purpose_type === 'EDUCATION' ? (
+                      <>
+                        <label className="block text-xs font-medium text-slate-200 mb-1">Course Stream</label>
+                        <select
+                          value={quickForm.course_type}
+                          onChange={(e) => setQuickForm({ ...quickForm, course_type: e.target.value })}
+                          className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        >
+                          <option value="Technical / Engineering (B.Tech / B.E / M.Tech)">Engineering / Tech</option>
+                          <option value="Medical / Dental / Paramedical (MBBS / BDS / Nursing)">Medical / Healthcare</option>
+                          <option value="Management / MBA / Post Graduate Diploma">Management / MBA</option>
+                          <option value="Overseas / International Masters & PhD Studies">Overseas Studies</option>
+                        </select>
+                      </>
+                    ) : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? (
+                      <>
+                        <label className="block text-xs font-medium text-slate-200 mb-1">Activity Type</label>
+                        <select
+                          value={quickForm.business_type}
+                          onChange={(e) => setQuickForm({ ...quickForm, business_type: e.target.value })}
+                          className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        >
+                          <option value="street_vendor">Street Vendor / Hawkers</option>
+                          <option value="artisan">Artisan / Handicrafts</option>
+                          <option value="micro_services">Small Service / Repair</option>
+                        </select>
+                      </>
+                    ) : (
+                      <>
+                        <label className="block text-xs font-medium text-slate-200 mb-1">{t('businessType')}</label>
+                        <select
+                          value={quickForm.business_type}
+                          onChange={(e) => setQuickForm({ ...quickForm, business_type: e.target.value })}
+                          className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        >
+                          <option value="manufacturing">{t('manufacturingOption')}</option>
+                          <option value="service">{t('serviceOption')}</option>
+                          <option value="trading">{t('tradingOption')}</option>
+                        </select>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs font-medium text-slate-200 mb-1">
-                    <span>{t('requiredLoan')}</span>
-                    <span className="text-emerald-400 font-bold">₹{(quickForm.required_loan / 100000).toFixed(1)} {t('unitLakh')}</span>
+                    <span>{quickForm.purpose_type === 'EDUCATION' ? 'Target Course / Loan Amount' : t('requiredLoan')}</span>
+                    <span className="text-emerald-400 font-bold font-mono">
+                      ₹{quickForm.required_loan >= 100000 ? `${(quickForm.required_loan / 100000).toFixed(1)} Lakh` : `${quickForm.required_loan.toLocaleString('en-IN')}`}
+                    </span>
                   </div>
                   <input
                     type="range"
-                    min="10000"
-                    max="10000000"
-                    step="10000"
+                    min={quickForm.purpose_type === 'EDUCATION' ? '50000' : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '10000' : '100000'}
+                    max={quickForm.purpose_type === 'EDUCATION' ? '2500000' : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '300000' : '10000000'}
+                    step={quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '10000' : '50000'}
                     value={quickForm.required_loan}
                     onChange={(e) => setQuickForm({ ...quickForm, required_loan: Number(e.target.value) })}
                     className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                   />
                   <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                    <span>{t('sliderMinSVANidhi')}</span>
-                    <span>{t('sliderMidPMEGP')}</span>
-                    <span>{t('sliderMaxStandUp')}</span>
+                    <span>{quickForm.purpose_type === 'EDUCATION' ? '₹50k (Base)' : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '₹10k (PM SVANidhi)' : '₹1 Lakh (Micro)'}</span>
+                    <span>{quickForm.purpose_type === 'EDUCATION' ? '₹7.5L (CSIS / CGFSEL)' : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '₹1L (Scale Up)' : '₹50 Lakh (PMEGP)'}</span>
+                    <span>{quickForm.purpose_type === 'EDUCATION' ? '₹20L+ (NSFDC / Overseas)' : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '₹3L (PM Vishwakarma)' : '₹1 Cr (Stand-Up)'}</span>
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm mt-2"
+                  className="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm mt-2 cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>{t('btnAnalyzeSchemes')}</span>

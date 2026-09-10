@@ -11,6 +11,7 @@ class Scheme(Base):
     name = Column(String(255), nullable=False)
     department = Column(String(255), nullable=False)
     category = Column(String(100), default="Credit & Loan") # Credit & Loan, Subsidy, Education, Women, SC/ST, Artisan
+    purpose_type = Column(String(50), default="BUSINESS", index=True) # BUSINESS, EDUCATION, SELF_EMPLOYMENT
     description = Column(Text, nullable=False)
     loan_type = Column(String(100), default="Term Loan / Working Capital")
     
