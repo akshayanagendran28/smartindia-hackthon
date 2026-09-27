@@ -1,0 +1,749 @@
+
+(
+/admin/dashboard
+/admin/partners
+/applications/my-applications
+/banking/banks
+/banking/states
+/profile/me
+/schemes
+0 documents verified yet. Complete verification in Document Assistant.
+1 Year (Postgraduate / Diploma)
+1. Profile Demographics Completeness
+1. profile demographics completeness
+10% of Project Cost
+100% Full Govt Subvention: Student pays ₹0 interest during study!
+100% Govt Reimbursed
+100% full interest subsidy applicable under CSIS during study tenure + 1 year!
+100% rule verified
+10th Pass (High School Pass)
+10th Pass / SSC
+10th Standard / Matriculation
+10th Standard Marksheet / Certificate
+12 Verified Schemes
+12th Pass / HSC
+12th Pass / Intermediate / ITI
+12th Standard / Higher Secondary (Pass)
+12th Standard Marksheet / Diploma
+15-digit GSTIN for verification.
+2 Years (Masters / MBA / M.Tech)
+2-week Entrepreneurship Development Training (Adds +15% preference)
+2. Deterministic Rule Engine Eligibility
+2. Dynamic Geographic Location (Cascading State & District)
+2. deterministic rule engine eligibility
+3 Years (General Degree / BCA / BBA / B.Sc)
+3. OCR Document Verification
+3. Purpose Track & Unified Loan Parameters
+3. ocr document verification
+35% Special Rural
+4 Years (B.Tech / B.E / B.Pharm)
+4. Academic Qualification & Course Details
+4. Operational Attributes, Qualifications & Credentials
+4. Partner Bank Routing
+4. partner bank routing
+5 Verified Schemes
+5 Years (MBBS / Integrated Dual Degree / LLB)
+5% for Special Categories (SC/ST/OBC/Women/Minority); 10% for General.
+5% of Project Cost
+6 Verified Schemes
+7% Interest Subvention
+8th Pass (Eligible for PMEGP Manufacturing > ₹10L)
+8th Pass (Eligible for PMEGP Manufacturing up to ₹10L / Service ₹5L)
+A multi-factor audit ensuring zero application rejections by lending banks.
+AI Compatibility
+Aadhaar Card
+Aadhaar OCR Verification Successful
+Academic & Financial Details
+Account for micro-credit disbursement and digital UPI cashback
+Action Required: Verify Pending Documents
+Active Track
+Activity Type
+Admin Control Room
+Admission Status
+Age
+Age Limits & Income Ceiling:
+Age of the student applying for the education scheme (typically 17-35 years).
+Age proof & foundational academic merit verification
+All Applications
+All Financial Institutions
+All Focus Areas
+All States
+All Types
+All mandatory documents complete!
+Allowed Business Purposes:
+Amortization Schedule
+Annual Business Turnover (₹)
+Annual Family Income (₹)
+Annual Family Income Certificate
+Annual Family Income:
+Annual Household Income (₹)
+Annual Tuition & Institutional Fees (₹)
+Annual fee charged by the college/university as per official fee breakdown.
+Applicant Age (Years)
+Applicant Eligibility Profile
+Applicant Profile & Demographics
+Application & Loan Tracking Hub
+Application Readiness Assessment
+Application Submitted / Awaiting Scorecard
+Apply for Scheme
+Are you an Urban / Rural Street Vendor with ULB Survey or LoR?
+Are you registered or working in one of 18 traditional Vishwakarma trades?
+Area Type
+Artisan / Handicrafts
+Artisans (PM Vishwakarma)
+At fixed statutory rate
+Authorized lending bank mapped in district.
+Available & Alternative Schemes
+BPL verification for priority subventions
+Bank Loan Quantum Required (₹)
+Bank Partner returned query on application.
+Bank Partner successfully accepted the application! Status updated to PARTNER_ASSIGNED.
+Bank Passbook / Statement
+Bank Statement (Last 6 Months)
+Below 8th Pass
+Below 8th Standard
+Beneficiary & Enterprise Profile
+Beneficiary Application Details:
+Beneficiary Category
+Beneficiary Own Contribution (Margin Money) (₹)
+Buddhist (Minority Subsidies)
+Business
+Business & Enterprise Setup
+Business & Enterprise Setup / Expansion
+Business Stage
+CSIS 100% interest subsidy, NSFDC, NBCFDC, CGFSEL up to ₹7.5L collateral-free.
+CSIS, NSFDC, NBCFDC, NMDFC, Overseas
+Calculated total financial assistance required for tuition, hostel, books, and equipment. CGFSEL covers up to ₹7.5L collateral-free.
+Capital Subsidies
+Capital Subsidy
+Caste / Category Certificate
+Category Quota:
+Central & State Education Schemes
+Central Scheme
+Central Schemes
+Christian (Minority Subsidies)
+Community / Caste Certificate
+Complete document verification to unlock
+Complete your profile to unlock 100% deterministic government scheme matching.
+Completed
+Compute real-time capital margin money subsidy, net bank credit exposure, and monthly amortization schedule.
+Confirm & Proceed to Document Assistant
+Confirm your details below. Once confirmed, you will proceed to the Document Verification Assistant.
+Confirmed Admission (Offer / Allotment Letter in Hand)
+Confirmed Admission / Offer Letter Received
+Contextual Parameter Hub
+Cottage Production / Papad / Pickles / Handicrafts
+Course & Loan Amount Breakdown
+Course / Degree Admitted or Applying For
+Course Duration
+Course Duration (Years)
+Course Stream
+Credit Guarantee (CGFSEL)
+Credit-Linked Subsidies
+Criteria mismatch with applicant profile or required loan ceiling exceeded.
+Current
+Current Academic Level
+Currently Enrolled (Pursuing 2nd/3rd/4th Year)
+Degree in Sciences / Commerce / Arts (B.Sc / B.Com / B.A)
+Delhi
+Detailed Project Report (DPR)
+Diploma / Polytechnic
+Disbursement Readiness Notice
+Do you have GST Registration?
+Do you hold MSME Udyam Registration?
+Documents validated by OCR
+Dynamic EMI & Government Subsidy Calculator
+Dynamic Scheme Eligibility & Recommendation Engine
+EDP Skill Training Certificate
+EDP Training certification adds +15% suitability bonus
+EMI Calculator Locked
+Economically Weaker Section (EWS - CSIS / Ambedkar)
+Education
+Education & Student Loans
+Education Level
+Education Loan & 100% Subsidy Calculation
+Education Loan & Interest Subvention Calculator
+Education Loan Required (₹)
+Eligible Categories & Purposes
+Eligible Schemes
+Enables PM SVANidhi 1st tranche (₹10,000) with 7% interest subsidy and cashback.
+Enables PM Vishwakarma ₹15,000 modern toolkit grant and ₹3 Lakh 5% credit.
+Engineering & Technology (B.Tech / B.E / M.Tech)
+Engineering / Tech
+Enter estimated project investment, promoter contribution, and required bank loan.
+Enter institutional fee structure to compute the full interest subsidy and required loan amount.
+Enterprise & Financial Quantum
+Enterprise Activity:
+Enterprise Status
+Entrance Exam Cleared / Counseling Pending
+Entrepreneurship / Skill Training Completed (EDP)
+Error loading assigned applications.
+Error loading customer dossier from database.
+Error loading customer list from database.
+Error loading partner directory.
+Error loading schemes.
+Error saving scheme.
+Error saving stage update.
+Evaluating Government Gazette rules...
+Evaluating statutory gazette rules & calculating SHAP match scores...
+Existing / Expansion Project
+Existing Enterprise Expansion (Modernization / Scaling)
+Explore Questionnaire
+Failed Gazette Condition(s):
+Failed to advance application stage.
+Failed to create partner.
+Failed to toggle scheme status.
+Failed to update application status.
+Failed to update profile. Please check inputs.
+Fast Analyzer
+Fast-track PMEGP loan sanction camp on Sept 20th at Bandra Kurla Complex.
+Female
+Female (Eligible for special girl student interest concessions)
+Female (Special Priority & Higher Subsidy up to 35%)
+Female (Special access to Mahila Samridhi & Udyogini)
+Financial transaction history & credit assessment
+Find Branch
+Focus:
+Full Details
+GSTIN (GST Identification Number)
+Gender
+General
+General (15%-25% PMEGP Subsidy)
+General (Eligible for CSIS & CGFSEL)
+General Category (Male)
+Go to Document Assistant (OCR)
+Go to Scheme Finder
+Go to Step 4: Check Eligible Schemes
+GovTech Trust & Safety
+Government / AICTE / UGC Accredited Institute
+Government Capital Subsidy & EMI Planner
+Government Gazette Fixed Interest Rate
+Government Purpose Track / Goal
+Government Subsidy / Margin Grant (%)
+Government Subsidy:
+Government-Verified Scheme Intelligence
+Grace
+Graduate / Diploma
+Graduate / Post-Graduate / Professional Degree (NEEDS/MMYSY eligible)
+Gram Panchayat / Rural Area
+Grants priority scoring under PMEGP and Vishwakarma
+Gujarat
+Handicrafts / Handlooms / Agro-Processing
+Have you completed EDP / Entrepreneurship Skill Training?
+High Sanction Probability
+High Suitability
+Higher Education & Student Loans
+Higher secondary qualification for college admission
+Highest Completed Qualification
+Highest Education Qualification
+Highest Match Score
+Hindu
+Identity & Address proof with UIDAI Verhoeff checksum validation
+Identity & Address proof with mobile OTP linkage
+In Progress
+Includes plant, machinery, civil works, and initial working capital.
+Income Ceiling
+Income Certificate / Ration Card
+India
+Industry / Enterprise Sector
+Institution Classification
+Institution Type
+Interest Paid
+Interest Subsidy (CSIS)
+Interest subsidies (CSIS), collateral-free higher education loans (CGFSEL), and concessional credit (NSFDC/NBCFDC/NMDFC)
+Jain (Minority Subsidies)
+Karnataka
+Kerala
+Lakh
+Lakhs
+Last financial year turnover for existing units.
+Live Dynamic Profile
+Loading live application audit trails from database...
+Loading statutory gazette scheme details from myscheme.gov.in records...
+Loan Amount: High to Low
+Loan Amount: Low to High
+Loan Parameters
+Loan Quantum:
+Locate Processing Partner Branches
+Locked 🔒
+MSME & Business Loans
+Maharashtra
+Mahila Samridhi requires ≤ ₹3.0 Lakh/year; PM SVANidhi has no ceiling for certified vendors.
+Male
+Management & Business (MBA / PGDM)
+Management / Business (MBA / PGDM)
+Management / MBA
+Mandatory
+Mandatory Document Verification Checklist
+Mandatory Pending
+Mandatory before 2nd installment under PMEGP and NEEDS schemes.
+Mandatory for NSFDC / NBCFDC / NMDFC concessional rates
+Manufacturing
+Manufacturing Unit (Machinery, Production, Food Processing - Up to ₹50 Lakh)
+Match Score
+Max Limit:
+Maximum Cap:
+Medical & Healthcare (MBBS / BDS / Nursing)
+Medical / Dental / Nursing / Pharma (MBBS / BDS / B.Pharm)
+Medical / Healthcare
+Merit List / Entrance Exam Qualified (Counseling)
+Micro Credit / Working Capital Required (₹)
+Micro Retail / Small Kirana / Vegetable Vending
+Micro-Credit & Toolkits
+Minimum age is 18 years for PMEGP, Stand-Up India, and State MSME schemes.
+Minority (Maulana Azad)
+Minority (Muslim, Christian, Sikh, Buddhist, Jain, Parsi - NMDFC 3%)
+Minority (NMDFC / 35% PMEGP Special Category)
+Minority (NMDFC Micro Loan)
+Minority Community
+Modify Questionnaire
+Modify Requirement
+Monthly EMI
+Months
+Moratorium
+Moratorium Period
+Moratorium Savings
+Mudra Shishu
+Muslim (Minority Subsidies)
+NAAC / AICTE / UGC Approved Govt / Aided College
+National MSME Helpline
+New / Greenfield Project
+New Greenfield Enterprise (Proposed / First Time Setup)
+New Subsidy Slab Announced for PMEGP
+New application created and partner invitation dispatched!
+Next
+Next Step
+Next Step: Document Assistant Verification
+No Applications Found in this Category
+No Income Ceiling
+No Matching Eligible Schemes Found
+No active application found for this customer.
+No additional available schemes found matching your search.
+No documents verified yet
+No exact matches found for your current profile filters. Try adjusting loan quantum or track.
+OBC Students (NBCFDC)
+Official Gazette Registry • myScheme.gov.in
+Official Government of India MSME recognition and priority sector status
+Official Portal
+Official Portals
+Official academic documents, fee schedules, and income certificates required for CSIS & education loan sanction.
+Official government-mandated interest subvention under CSIS, course moratorium timeline, and concessional post-study EMIs.
+Official myScheme Statutory Intelligence
+Optional
+Other
+Other / Transgender
+Other Backward Class (OBC - Mahila Samridhi / NBCFDC 4%)
+Other Backward Class (OBC - Up to 35% Subsidy)
+Other Backward Class (OBC / Non-Creamy Layer - NBCFDC / Ambedkar)
+Overall Submission Score
+Overseas / International Masters & PhD
+Overseas / International University
+Overseas Higher Education (Masters / Ph.D. abroad)
+Overseas Studies
+Overseas Studies (Ambedkar)
+Own Margin Contribution
+PAN Card
+PM SVANidhi 7% interest subsidy, PM Vishwakarma toolkit & ₹3L loans, Mudra Shishu zero-collateral micro-credit
+PM SVANidhi 7% subvention, PM Vishwakarma toolkit grant & ₹3L concessional credit.
+PM SVANidhi, PM Vishwakarma, Mudra Shishu
+PMEGP & Stand-Up India have NO income cap; State schemes may prioritize specific income bands.
+PMEGP up to 35% margin grant, Stand-Up India up to ₹1 Cr, State CMEGP/NEEDS.
+PMEGP up to 35% subsidy, Stand-Up India up to ₹1 Cr, State CMEGP/NEEDS capital grants
+PMEGP, Stand-Up India, Mudra Kishore/Tarun
+Passed Eligibility Conditions:
+Pending
+Permanent Account Number for banking and financial KYC compliance
+Permanent Resident District
+Permanent Resident State
+Person with Disability (Divyangjan - Special Category)
+Person with Disability (Divyangjan)
+Please provide Rule Name and Condition expression.
+Please select a bank branch.
+Please select a channel partner branch to invite.
+Polytechnic / Diploma
+Polytechnic / Recognized Technical Diploma
+Post Graduate & Professional
+Post-Moratorium Tenure (Years)
+Postgraduate Degree
+Postgraduate Degree (M.Tech / MBA / MS / PhD)
+Premier Govt Institute (IIT / IIM / NIT / AIIMS / Central Univ)
+Previous
+Primary Purpose Track
+Principle vs Interest Balance
+Print Checklist
+Private NAAC A+ Ranked University
+Private Recognized University / College
+Proceed to Channel Partner Locator (Step 7)
+Professional / Law / CA / ICWA / CS
+Profile
+Profile officially confirmed and synchronized with application workflow!
+Profile parameters updated
+Project / Unit District
+Project / Unit State
+Project Financial Structure
+Project Location Classification
+Project cost breakdown, machinery list, and 3-year revenue model
+Project cost is well within the ceiling limit of ₹50 Lakh
+Promoter Contribution / Margin Money (₹)
+Prototype Demo Environment
+Pure Sciences, Law & Humanities
+Qualified Schemes for
+Ranked by SHAP compatibility factors and deterministic rules
+Ready
+Ready for Bank Sanction
+Ready to locate nodal banks & lending partners?
+Real-time milestone transparency for AI document verification, bank branch invitations, credit appraisal, and government margin subsidy release.
+Recognized Foreign / International University
+Religion
+Remaining Balance
+Repair Shop / Tailoring / Beauty / Local Services (Mudra Shishu / Karma Sathi)
+Repayment Period:
+Required Documents Checklist
+Required Loan Amount:
+Required before bank submission
+Required for 35% Special Category Subsidy under PMEGP & Stand-Up India
+Required for CSIS 100% full interest subsidy (Income <= Rs. 4.5 Lakh)
+Required for existing business credit lines and National SC-ST Hub support.
+Required for formal MSME scheme disbursements
+Resident District
+Resident Location:
+Resident State
+Review & Confirm Profile
+Review & Unlock Documents
+Rule Breakdown
+Rural Area (Higher PMEGP Subsidy: 25% General / 35% Special)
+Rural Subsidy Rate
+Rural area classification grants maximum 35% capital subsidy
+Rural special category subsidy increased to 35% with ₹50 Lakh project ceiling.
+SC Students (NSFDC)
+Sanction Confidence Scorecard
+Sanctioned Loan Quantum (₹)
+Scheduled Caste (SC - NSFDC Concessional Rate 3.5%-4%)
+Scheduled Caste (SC - Stand-Up India / NSSH / 35% PMEGP)
+Scheduled Caste (SC - Udyogini 50% subsidy / Vishwakarma)
+Scheduled Caste (SC)
+Scheduled Tribe (ST - Concessional Education Rate)
+Scheduled Tribe (ST - Stand-Up India / NSSH / 35% PMEGP)
+Scheduled Tribe (ST - Udyogini 50% subsidy / Vishwakarma)
+Scheduled Tribe (ST)
+Scheme Code
+Scheme Sathi • AI-Driven Statutory Rules Matching Engine
+Scheme Sathi • Statutory Document Verification Engine
+Search scheme name, ministry, or keyword...
+Select Language
+Select Scheme & Calculate EMI (Step 5)
+Select Your Goal Track
+Select an eligible scheme to unlock
+Select your track. All subsequent questions, documents, loan ceilings, and subsidies will dynamically adapt.
+Selected Scheme
+Selected Scheme (Active)
+Selected Track:
+Self / Family Contribution (₹)
+Self-Emp
+Self-Employment
+Self-Employment & Artisans
+Self-Employment Trade / Activity
+Self-Employment, Artisans & Vendors
+Service Enterprise (Repair, IT, Logistics, Healthcare, Hospitality - Up to ₹20 Lakh)
+Services
+Showing
+Sikh (Minority Subsidies)
+Single source of truth
+Single source of truth for your identity, geographic location, and unified financial parameters.
+Single source of truth loan quantum:
+Small Service / Repair
+Social Category
+Social Category:
+Sort:
+Special Category (SC, ST, OBC, Women, Minorities, PwD, NER)
+Speech synthesis not supported on this browser.
+State / Central Autonomous University
+State DIC Camp Scheduled in Mumbai
+State Scheme
+State Schemes
+Statutory Education Loan Subvention
+Statutory Match
+Statutory Verified • myScheme.gov.in
+Statutory documents required by lending banks under official gazette guidelines.
+Step 1: Choose Your Primary Focus / Objective
+Street Vendor / Hawker / Cart Operator (PM SVANidhi 7% Subvention)
+Street Vendor / Hawkers
+Street Vendors & Artisans
+Street Vendors (PM SVANidhi)
+Submit Application Now
+Subsidy Slabs & Beneficiary Contribution (Gazette Statutory Rules)
+Supervisor / Admin
+Switch purpose to discover all statutory schemes across sectors
+Sync request completed.
+Tamil Nadu
+Target Beneficiary Category
+Target Categories:
+Target Course / Loan Amount
+Target Course Stream
+Target Course:
+Target Loan Quantum Sync
+Target Track
+Target Track:
+Tax identification required for commercial bank loan sanction
+Technical / Engineering (B.Tech / B.E / M.Tech)
+The EMI Calculator requires statutory government interest rates, moratorium timelines, and subsidy rules from a verified scheme selection.
+These core parameters determine statutory quotas, interest subventions, and eligibility bands.
+These schemes are currently operating under Central / State mandates. Transparent gazette reasons for exclusion are displayed below.
+Top Recommended Schemes For You
+Total Course / Study Cost (₹)
+Total Estimated Project Cost (₹)
+Total Interest
+Total Required Education Loan Amount (₹)
+Total gross annual income of parents/family. CSIS subsidy requires ≤ ₹4.5 Lakh; NBCFDC/NSFDC requires ≤ ₹3 Lakh.
+Total loan sought after deducting your own margin money contribution.
+Track:
+Trading / Wholesale / Retail (Stand-Up India / State Schemes)
+Traditional Artisan / Craftsman (PM Vishwakarma Toolkit + 5% Loan)
+UIDAI card cross-verified with 100% name and demographic match.
+Udyam MSME Registered
+Udyam MSME Registration Certificate
+Under PMEGP, rural SC/ST, women, and minority entrepreneurs are eligible for up to 35% capital subsidy with a 5% margin money contribution on manufacturing projects up to ₹50 Lakh. For street vendors, PM SVANidhi provides up to ₹50,000 micro-credit with a 7% interest subvention.
+Undergraduate Degree (B.Tech / MBBS / B.Sc / B.Com)
+Undergraduate Degree (Graduated)
+Up to 35% Special Rural
+Update Profile
+Upload / Verify
+Upload documents or test 1-click synthetic samples
+Urban Area (PMEGP Subsidy: 15% General / 25% Special)
+Urban Local Body (Municipal / Town Area)
+Urban Local Body (ULB) vending survey identity card or PM Vishwakarma verification
+Urban Subsidy Rate
+Vending Certificate / Letter of Recommendation (LoR)
+Verification Action
+Verified
+Verified Documents
+Verify OCR
+View All Matches
+View Available Schemes
+View Hash
+View Scheme
+View Scheme Guidelines
+View authorized banks and DIC/CSC centers in your district processing this scheme.
+Welcome
+Woman / Female
+Women / Special Category
+Women Microfinance
+Year
+Years
+You have not submitted a scheme application for this track yet. Explore the AI matching questionnaire to submit your application.
+You qualify for the statutory schemes below. Verify your mandatory documents in the Document Assistant for fast-track loan sanction.
+You will verify your 10th & 12th marksheets, Admission Offer Letter, Institutional Fee Schedule, and Income Certificate.
+You will verify your Detailed Project Report (DPR), PAN Card, Income Certificate, and Caste Certificate.
+Your academic credentials and income parameters meet statutory criteria for interest subventions under CSIS.
+Your demographic certificates and project parameters meet standard gazetted bank criteria.
+Zero disqualifying gazette criteria identified.
+activity type
+admin portal
+ageYears
+annual family income (₹)
+appName
+applicant profile & demographics
+application readiness
+application readiness assessment
+applications
+area setting
+artisan / handicrafts
+authenticating...
+back to matching results
+btnAnalyzeSchemes
+btnChatAssistant
+btnExploreSchemes
+btnFindScheme
+btnPrevious
+btnPrintChecklist
+btnWhyEligible
+business nature
+businessType
+calculate exact monthly emis after 35% subsidy or locate your nearest nodal bank.
+chatBtnBank
+chatBtnEmi
+chatBtnOcr
+chatBtnWizard
+chatCatchFallback
+chatGeneratingResponse
+chatPlaceholder
+chatSend
+chatTitle
+chatWelcome
+confirm & save profile
+country
+course stream
+create entrepreneur profile
+ctaButton
+ctaDesc
+ctaTitle
+demographicsTitle
+differentlyAbled
+directly adjust financial parameters to see scheme eligibility recalculate instantly.
+district
+doc10th
+doc12th
+docAadhaar
+docBank
+docCaste
+docChecklistTitle
+docDpr
+docEdp
+docIncome
+docPan
+docUdyam
+documents verified by AI OCR
+eligible schemes
+email address
+engineering / tech
+error
+evaluating...
+featuredSchemesSubtitle
+featuredSchemesTitle
+female
+filterCentral
+filterState
+find_my_scheme
+fullName
+gazette policy updates and application reminders
+gender
+heroSubtitle
+heroTitle
+in progress
+ineligible
+info
+instantCheckSubtitle
+instantCheckTitle
+interestRateLabel
+limiting / disqualifying factors (- impact)
+liveAiBadge
+loading
+location setting
+lowInterest
+male
+management / mba
+mandatoryTag
+manufacturing
+manufacturingOption
+max potential subsidy
+maxLoan
+medical / healthcare
+minority community
+minorityCategory
+minorityCommunities
+monthly installments
+mySchemePortal
+navAdmin
+navDocAssistant
+navEmi
+navFeatures
+navFindScheme
+navLogin
+navPartners
+navRegister
+navSchemes
+notifications & alerts
+of
+optionFemale
+optionMale
+optionTransgender
+optional
+other backward classes (obc)
+overall submission score
+overseas studies
+partner banks near you
+password
+pending
+positive contributing factors (+ impact)
+promptPmegp
+promptSubsidy
+promptSvanidhi
+promptWomen
+quick demo login:
+qwenPowered
+rapid requirement questionnaire
+ready
+ready to proceed with application?
+required loan amount (₹)
+requiredLoan
+resultsTitle
+run real-time scheme compatibility
+rural
+ruralOption
+sanction confidence scorecard
+saving
+scCategory
+scStFounders
+scheduled caste (sc)
+scheduled tribe (st)
+scheme_code
+searchPlaceholder
+select your goal track
+service
+serviceOption
+shap-style factor attribution & rule compliance
+sign in
+sign out
+sihSubtext
+small service / repair
+socialCategory
+specialRural
+stCategory
+statCentralState
+statIntegrity
+statLanguages
+statSubsidies
+state / ut
+step1WorkflowDesc
+step1WorkflowTitle
+step2WorkflowDesc
+step2WorkflowTitle
+step3WorkflowDesc
+step3WorkflowTitle
+step4WorkflowDesc
+step4WorkflowTitle
+street vendor
+street vendor / hawkers
+streetVendors
+subsidyRate
+suggestedQueries
+switch to user view
+tagline
+tailoredFor
+target course / loan amount
+target demographic quota matched (SC/ST / Woman Entrepreneur privilege)
+target marginalized category
+target marginalized category (drives special subsidies)
+targetMarginalized
+tenor
+these core parameters determine statutory quotas, interest subventions, and eligibility bands.
+total project cost (₹)
+trading
+tradingOption
+traditionalArtisans
+transgender
+translationBadge
+unitLakh
+unitMonths
+unitYears
+urban
+urbanOption
+verified
+viewDetails
+woman founder
+women entrepreneur / special category
+womenEntrepreneurs
+workflowSubtitle
+workflowTitle
+years
+yr
+₹1 Cr (Stand-Up)
+₹1 Lakh (Micro)
+₹10,000-₹50,000 for SVANidhi / Mudra Shishu; up to ₹3,00,000 for PM Vishwakarma / Karma Sathi.
+₹10k (PM SVANidhi)
+₹1L (Scale Up)
+₹20L+ (NSFDC / Overseas)
+₹3L (PM Vishwakarma)
+₹50 Lakh (PMEGP)
+₹50k (Base)
+₹7.5L (CSIS / CGFSEL)

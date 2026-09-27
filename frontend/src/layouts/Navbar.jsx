@@ -30,9 +30,8 @@ const Navbar = () => {
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-xl text-gov-darkblue tracking-tight">SCHEME</span>
                 <span className="font-extrabold text-xl text-gov-accent tracking-tight">SATHI</span>
-                <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-300">SIH 2026</span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium hidden sm:block">AI-Driven Financial Scheme Matching for Entrepreneurs</p>
+              <p className="text-[11px] text-slate-500 font-medium hidden sm:block">{t('tagline')}</p>
             </div>
           </Link>
 
@@ -49,7 +48,7 @@ const Navbar = () => {
 
               {isLangOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
-                  <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Select Language</div>
+                  <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('Select Language')}</div>
                   {languages.map((lang) => (
                     <button
                       key={lang.code}

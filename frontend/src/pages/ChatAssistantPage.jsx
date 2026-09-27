@@ -85,10 +85,10 @@ export default function ChatAssistantPage() {
         {
           id: Date.now() + 1,
           sender: 'assistant',
-          text: 'Under PMEGP, rural SC/ST, women, and minority entrepreneurs are eligible for up to 35% capital subsidy with a 5% margin money contribution on manufacturing projects up to ₹50 Lakh. For street vendors, PM SVANidhi provides up to ₹50,000 micro-credit with a 7% interest subvention.',
+          text: t('chatCatchFallback', 'Under PMEGP, rural SC/ST, women, and minority entrepreneurs are eligible for up to 35% capital subsidy with a 5% margin money contribution on manufacturing projects up to ₹50 Lakh. For street vendors, PM SVANidhi provides up to ₹50,000 micro-credit with a 7% interest subvention.'),
           recommendations: [
-            { name: "Prime Minister's Employment Generation Programme (PMEGP)", code: 'PMEGP', subsidy: '35% Special Rural' },
-            { name: "PM Street Vendor's AtmaNirbhar Nidhi (PM SVANidhi)", code: 'PM_SVANIDHI', subsidy: '7% Interest Subvention' }
+            translateScheme({ name: "Prime Minister's Employment Generation Programme (PMEGP)", code: 'PMEGP', subsidy: t('35% Special Rural') }),
+            translateScheme({ name: "PM Street Vendor's AtmaNirbhar Nidhi (PM SVANidhi)", code: 'PM_SVANIDHI', subsidy: t('7% Interest Subvention', '7% Interest Subvention') })
           ],
           model_used: 'Scheme Sathi Grounded Engine',
           language: currentLanguage
@@ -212,7 +212,7 @@ export default function ChatAssistantPage() {
             </div>
             <div className="bg-white border border-slate-200 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-600 font-medium flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-purple-600 animate-pulse" />
-              <span>Generating grounded response in {languages.find(l => l.code === currentLanguage)?.name || 'selected language'} with Qwen (Ollama)...</span>
+              <span>{t('chatGeneratingResponse')}</span>
             </div>
           </div>
         )}

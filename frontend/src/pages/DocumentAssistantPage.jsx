@@ -375,17 +375,17 @@ export default function DocumentAssistantPage() {
               <span>{t('Scheme Sathi • Statutory Document Verification Engine')}</span>
             </span>
             <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30">
-              Deterministic 7-Stage Validation
+              {t('Deterministic 7-Stage Validation')}
             </span>
             <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
-              Zero-PII Synthetic Compliance
+              {t('Zero-PII Synthetic Compliance')}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Real-Time Multi-Tier Document Validation Engine
+            {t('Real-Time Multi-Tier Document Validation Engine')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-            Optical preprocessing, Verhoeff & regex checksums, fuzzy beneficiary profile alignment, and government sandbox adapters with zero raw PII storage.
+            {t('Optical preprocessing, Verhoeff & regex checksums, fuzzy beneficiary profile alignment, and government sandbox adapters with zero raw PII storage.')}
           </p>
         </div>
 
@@ -396,7 +396,7 @@ export default function DocumentAssistantPage() {
             className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>⚡ Verify All Mandatory (1-Click Jury)</span>
+            <span>{t('⚡ Verify All Mandatory (1-Click Jury)')}</span>
           </button>
         </div>
       </div>
@@ -424,18 +424,18 @@ export default function DocumentAssistantPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-black text-slate-900">
-                    Mandatory Document Verification Gate (Step 3 / 7)
+                    {t('Mandatory Document Verification Gate (Step 3 / 7)')}
                   </h2>
                   <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
                     checklistData.all_mandatory_verified || allDocumentsVerified
                       ? 'bg-emerald-100 text-emerald-800'
                       : 'bg-amber-100 text-amber-800'
                   }`}>
-                    {checklistData.verified_mandatory} of {checklistData.total_mandatory} Mandatory Verified
+                    {checklistData.verified_mandatory} {t('of')} {checklistData.total_mandatory} {t('Mandatory Verified')}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Based on target requirement: <strong className="text-slate-800">{application.purpose}</strong> ({application.category} Category). All mandatory proofs must be validated to unlock scheme matching.
+                  {t('Based on target requirement:')} <strong className="text-slate-800">{t(application.purpose)}</strong> ({t(application.category)} {t('Category')}). {t('All mandatory proofs must be validated to unlock scheme matching.')}
                 </p>
               </div>
             </div>
@@ -446,17 +446,17 @@ export default function DocumentAssistantPage() {
                   onClick={() => navigate('/results')}
                   className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-2xl shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
                 >
-                  <span>Check Eligible Schemes</span>
+                  <span>{t('Check Eligible Schemes')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
                 <button
                   disabled
                   className="w-full md:w-auto px-6 py-3 bg-slate-200 text-slate-400 font-bold text-xs rounded-2xl cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300"
-                  title="Complete verification of all mandatory documents below to unlock"
+                  title={t('Complete verification of all mandatory documents below to unlock')}
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Scheme Matching Locked</span>
+                  <span>{t('Scheme Matching Locked')}</span>
                 </button>
               )}
             </div>
@@ -487,23 +487,23 @@ export default function DocumentAssistantPage() {
                     <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
                       item.is_mandatory ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'
                     }`}>
-                      {item.is_mandatory ? 'Mandatory' : 'Optional'}
+                      {item.is_mandatory ? t('Mandatory') : t('Optional')}
                     </span>
 
                     {isVerified ? (
                       <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                         <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>VERIFIED</span>
+                        <span>{t('VERIFIED')}</span>
                       </span>
                     ) : (
                       <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                        PENDING
+                        {t('PENDING')}
                       </span>
                     )}
                   </div>
 
-                  <h4 className="text-xs font-bold text-slate-900 truncate">{item.document_name}</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{item.reason}</p>
+                  <h4 className="text-xs font-bold text-slate-900 truncate">{t(item.document_name)}</h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{t(item.reason)}</p>
                 </div>
               );
             })}
@@ -539,8 +539,8 @@ export default function DocumentAssistantPage() {
                 )}
               </div>
               <div>
-                <span className="text-xs font-bold block truncate">{t(doc.label) || doc.name}</span>
-                <span className="text-[10px] text-slate-400 block truncate mt-0.5">{doc.tag}</span>
+                <span className="text-xs font-bold block truncate">{t(doc.name) || t(doc.label)}</span>
+                <span className="text-[10px] text-slate-400 block truncate mt-0.5">{t(doc.tag)}</span>
               </div>
             </button>
           );
@@ -555,10 +555,10 @@ export default function DocumentAssistantPage() {
           </div>
           <div>
             <span className="text-xs font-black text-slate-900 uppercase tracking-wider block">
-              Quick Jury Demo Mode (100% Synthetic Non-PII Data)
+              {t('Quick Jury Demo Mode (100% Synthetic Non-PII Data)')}
             </span>
             <span className="text-xs text-slate-600">
-              Instantly test verification of synthetic <strong className="text-emerald-800">{activeDocMeta.name}</strong> against applicant profile.
+              {t('Instantly test verification of synthetic')} <strong className="text-emerald-800">{t(activeDocMeta.name)}</strong> {t('against applicant profile.')}
             </span>
           </div>
         </div>
@@ -571,12 +571,12 @@ export default function DocumentAssistantPage() {
           {validating ? (
             <>
               <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
-              <span>Verifying Stream...</span>
+              <span>{t('Verifying Stream...')}</span>
             </>
           ) : (
             <>
               <CheckCircle className="w-4 h-4 text-emerald-400" />
-              <span>Validate Synthetic {activeDocMeta.name}</span>
+              <span>{t('Validate Synthetic')} {t(activeDocMeta.name)}</span>
             </>
           )}
         </button>
@@ -594,7 +594,7 @@ export default function DocumentAssistantPage() {
                 activeTab === 'upload' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Upload File
+              {t('Upload File')}
             </button>
             <button
               onClick={() => setActiveTab('synthetic')}
@@ -602,7 +602,7 @@ export default function DocumentAssistantPage() {
                 activeTab === 'synthetic' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Synthetic Spec
+              {t('Synthetic Spec')}
             </button>
             <button
               onClick={() => setActiveTab('stream')}
@@ -610,7 +610,7 @@ export default function DocumentAssistantPage() {
                 activeTab === 'stream' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              OCR Stream
+              {t('OCR Stream')}
             </button>
             <button
               onClick={() => setActiveTab('vault')}
@@ -618,7 +618,7 @@ export default function DocumentAssistantPage() {
                 activeTab === 'vault' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Vault ({userDocs.length})
+              {t('Vault')} ({userDocs.length})
             </button>
           </div>
 
@@ -626,7 +626,7 @@ export default function DocumentAssistantPage() {
           {activeTab === 'upload' && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-sm font-black text-slate-900">Upload {activeDocMeta.name}</span>
+                <span className="text-sm font-black text-slate-900">{t('Upload')} {t(activeDocMeta.name)}</span>
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono">
                   {activeDocMeta.key}
                 </span>
@@ -635,7 +635,7 @@ export default function DocumentAssistantPage() {
               {/* Scheme Context for Income & DPR */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Target Scheme (for Income Ceiling & Loan Ratio Validation)
+                  {t('Target Scheme (for Income Ceiling & Loan Ratio Validation)')}
                 </label>
                 <select
                   value={targetScheme}
@@ -660,10 +660,10 @@ export default function DocumentAssistantPage() {
                 />
                 <UploadCloud className="w-10 h-10 text-emerald-600 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-bold text-slate-800 block">
-                  {file ? file.name : 'Click or Drag Document Image / PDF'}
+                  {file ? file.name : t('Click or Drag Document Image / PDF')}
                 </span>
                 <span className="text-[10px] text-slate-400 mt-1 block">
-                  Supports PNG, JPG, JPEG, PDF up to 10MB
+                  {t('Supports PNG, JPG, JPEG, PDF up to 10MB')}
                 </span>
               </div>
 
@@ -674,7 +674,7 @@ export default function DocumentAssistantPage() {
                     <span className="text-xs font-mono text-slate-700 truncate">{file?.name}</span>
                   </div>
                   <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
-                    Ready
+                    {t('Ready')}
                   </span>
                 </div>
               )}
@@ -682,7 +682,7 @@ export default function DocumentAssistantPage() {
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-xs text-red-700">
                   <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                  <span>{t(error)}</span>
                 </div>
               )}
 
@@ -694,12 +694,12 @@ export default function DocumentAssistantPage() {
                 {validating ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Executing Pipeline Stages...</span>
+                    <span>{t('Executing Pipeline Stages...')}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    <span>Run Real-Time Document Validation</span>
+                    <span>{t('Run Real-Time Document Validation')}</span>
                   </>
                 )}
               </button>
@@ -711,11 +711,11 @@ export default function DocumentAssistantPage() {
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
-                  <span className="text-sm font-black text-slate-900">{activeSynthetic.document_name}</span>
-                  <span className="text-[10px] text-emerald-600 font-bold block">100% Synthetic SIH Benchmark</span>
+                  <span className="text-sm font-black text-slate-900">{t(activeSynthetic.document_name)}</span>
+                  <span className="text-[10px] text-emerald-600 font-bold block">{t('100% Synthetic SIH Benchmark')}</span>
                 </div>
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                  Zero PII Safe
+                  {t('Zero PII Safe')}
                 </span>
               </div>
 
@@ -734,11 +734,11 @@ export default function DocumentAssistantPage() {
 
               {/* Preset Metadata */}
               <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Sample Test Attributes:</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">{t('Sample Test Attributes:')}</span>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {Object.entries(activeSynthetic.preview_data || {}).map(([k, v]) => (
                     <div key={k} className="p-2 bg-slate-50 rounded-xl border border-slate-100">
-                      <span className="text-[9px] uppercase font-bold text-slate-400 block">{k.replace(/_/g, ' ')}</span>
+                      <span className="text-[9px] uppercase font-bold text-slate-400 block">{t(k.replace(/_/g, ' '))}</span>
                       <span className="font-semibold text-slate-800 text-[11px]">{String(v)}</span>
                     </div>
                   ))}
@@ -751,7 +751,7 @@ export default function DocumentAssistantPage() {
                 className="w-full py-3 bg-slate-900 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <CheckCircle className="w-4 h-4 text-emerald-400" />
-                <span>Inject & Validate This Benchmark Sample</span>
+                <span>{t('Inject & Validate This Benchmark Sample')}</span>
               </button>
             </div>
           )}
@@ -760,19 +760,19 @@ export default function DocumentAssistantPage() {
           {activeTab === 'stream' && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-sm font-black text-slate-900">Custom OCR Stream Simulator</span>
-                <span className="text-[10px] text-slate-500 font-mono">Edge-case testing</span>
+                <span className="text-sm font-black text-slate-900">{t('Custom OCR Stream Simulator')}</span>
+                <span className="text-[10px] text-slate-500 font-mono">{t('Edge-case testing')}</span>
               </div>
 
               <p className="text-xs text-slate-500">
-                Paste raw OCR output or corrupted formats to test algorithmic resilience against faulty Verhoeff checksums or mismatched category records.
+                {t('Paste raw OCR output or corrupted formats to test algorithmic resilience against faulty Verhoeff checksums or mismatched category records.')}
               </p>
 
               <textarea
                 rows={7}
                 value={rawTextInput}
                 onChange={(e) => setRawTextInput(e.target.value)}
-                placeholder="Example: Government of India UIDAI Name: Aarav Rajesh Sharma DOB: 15/08/1995 2345 6789 1238..."
+                placeholder={t('Example: Government of India UIDAI Name: Aarav Rajesh Sharma DOB: 15/08/1995 2345 6789 1238...')}
                 className="w-full p-3 text-xs font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50"
               />
 
@@ -782,7 +782,7 @@ export default function DocumentAssistantPage() {
                 className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Cpu className="w-4 h-4" />
-                <span>Execute Rule Pipeline on Stream</span>
+                <span>{t('Execute Rule Pipeline on Stream')}</span>
               </button>
             </div>
           )}
@@ -791,20 +791,20 @@ export default function DocumentAssistantPage() {
           {activeTab === 'vault' && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-sm font-black text-slate-900">Verified Document Vault</span>
+                <span className="text-sm font-black text-slate-900">{t('Verified Document Vault')}</span>
                 <button
                   onClick={fetchUserDocuments}
                   className="p-1 text-slate-400 hover:text-emerald-600 transition-colors"
-                  title="Refresh Vault"
+                  title={t('Refresh Vault')}
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
 
               {loadingVault ? (
-                <div className="py-8 text-center text-xs text-slate-400">Loading documents...</div>
+                <div className="py-8 text-center text-xs text-slate-400">{t('Loading documents...')}</div>
               ) : userDocs.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">No documents in vault yet.</div>
+                <div className="py-8 text-center text-xs text-slate-400">{t('No documents in vault yet.')}</div>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                   {userDocs.map((doc) => (
@@ -814,7 +814,7 @@ export default function DocumentAssistantPage() {
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-900 truncate">{doc.document_type}</span>
+                          <span className="text-xs font-bold text-slate-900 truncate">{t(doc.document_type)}</span>
                           <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
                             doc.verification_status === 'VERIFIED'
                               ? 'bg-emerald-100 text-emerald-800'
@@ -822,7 +822,7 @@ export default function DocumentAssistantPage() {
                               ? 'bg-amber-100 text-amber-800'
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {doc.verification_status}
+                            {t(doc.verification_status)}
                           </span>
                         </div>
                         <span className="text-[10px] text-slate-500 font-mono block truncate">
@@ -834,14 +834,14 @@ export default function DocumentAssistantPage() {
                         <button
                           onClick={() => handleViewAuditLogs(doc.id)}
                           className="p-1.5 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg text-slate-600 text-xs"
-                          title="View Audit Logs"
+                          title={t('View Audit Logs')}
                         >
                           <Info className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteDocument(doc.id)}
                           className="p-1.5 bg-white border border-slate-200 hover:bg-red-50 hover:text-red-600 rounded-lg text-slate-400 text-xs"
-                          title="Delete Document"
+                          title={t('Delete Document')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -862,9 +862,9 @@ export default function DocumentAssistantPage() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
                   <Activity className="w-4 h-4 animate-spin text-emerald-600" />
-                  Real-Time Pipeline Execution in Progress
+                  {t('Real-Time Pipeline Execution in Progress')}
                 </span>
-                <span className="text-xs font-mono text-slate-500">Stage {validationStep} of 5</span>
+                <span className="text-xs font-mono text-slate-500">{t('Stage')} {validationStep} {t('of')} 5</span>
               </div>
 
               <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
@@ -875,11 +875,11 @@ export default function DocumentAssistantPage() {
               </div>
 
               <div className="grid grid-cols-5 gap-2 text-center text-[10px] font-bold text-slate-600">
-                <span className={validationStep >= 1 ? 'text-emerald-700' : 'text-slate-400'}>1. Ingestion</span>
-                <span className={validationStep >= 2 ? 'text-emerald-700' : 'text-slate-400'}>2. OCR</span>
-                <span className={validationStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}>3. Rules</span>
-                <span className={validationStep >= 4 ? 'text-emerald-700' : 'text-slate-400'}>4. Profile</span>
-                <span className={validationStep >= 5 ? 'text-emerald-700' : 'text-slate-400'}>5. Official</span>
+                <span className={validationStep >= 1 ? 'text-emerald-700' : 'text-slate-400'}>{t('1. Ingestion')}</span>
+                <span className={validationStep >= 2 ? 'text-emerald-700' : 'text-slate-400'}>{t('2. OCR')}</span>
+                <span className={validationStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}>{t('3. Rules')}</span>
+                <span className={validationStep >= 4 ? 'text-emerald-700' : 'text-slate-400'}>{t('4. Profile')}</span>
+                <span className={validationStep >= 5 ? 'text-emerald-700' : 'text-slate-400'}>{t('5. Official')}</span>
               </div>
             </div>
           )}
@@ -902,20 +902,20 @@ export default function DocumentAssistantPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-black text-slate-900 text-base">{result.document_type}</h3>
+                        <h3 className="font-black text-slate-900 text-base">{t(result.document_type)}</h3>
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                           {result.file_name}
                         </span>
                       </div>
                       <span className="text-xs text-slate-500 font-mono">
-                        Masked Identifier: <strong className="text-slate-900">{result.masked_identifier || 'N/A'}</strong>
+                        {t('Masked Identifier:')} <strong className="text-slate-900">{result.masked_identifier || 'N/A'}</strong>
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Confidence</span>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">{t('Confidence')}</span>
                       <span className="text-base font-black text-emerald-600 font-mono">
                         {Math.round((result.confidence || 0.95) * 100)}%
                       </span>
@@ -928,7 +928,7 @@ export default function DocumentAssistantPage() {
                         ? 'bg-amber-500 text-white shadow-md'
                         : 'bg-red-600 text-white shadow-md'
                     }`}>
-                      {result.status || result.verification_status || 'VERIFIED'}
+                      {t(result.status || result.verification_status || 'VERIFIED')}
                     </span>
                   </div>
                 </div>
@@ -938,51 +938,51 @@ export default function DocumentAssistantPage() {
                   {/* Layer 1: OCR Extraction */}
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                     <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
-                      Layer 1: OCR Extraction
+                      {t('Layer 1: OCR Extraction')}
                     </span>
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{result.ocr_status || 'SUCCESS'}</span>
+                      <span>{t(result.ocr_status || 'SUCCESS')}</span>
                     </div>
                     <span className="text-[10px] text-slate-500 block">
-                      Multi-tier image parsing & quality check
+                      {t('Multi-tier image parsing & quality check')}
                     </span>
                   </div>
 
                   {/* Layer 2: Profile Cross-Check */}
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                     <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
-                      Layer 2: Profile Match
+                      {t('Layer 2: Profile Match')}
                     </span>
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                       {result.profile_match ? (
                         <>
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span className="text-emerald-800">100% Match</span>
+                          <span className="text-emerald-800">{t('100% Match')}</span>
                         </>
                       ) : (
                         <>
                           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span className="text-amber-800">Mismatch Flagged</span>
+                          <span className="text-amber-800">{t('Mismatch Flagged')}</span>
                         </>
                       )}
                     </div>
                     <span className="text-[10px] text-slate-500 block">
-                      Cross-referenced with applicant registration
+                      {t('Cross-referenced with applicant registration')}
                     </span>
                   </div>
 
                   {/* Layer 3: Official Gateway Adapter */}
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                     <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
-                      Layer 3: Official Adapter
+                      {t('Layer 3: Official Adapter')}
                     </span>
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 truncate">
                       <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
-                      <span className="truncate">{result.official_verification || 'MOCK_VERIFIED'}</span>
+                      <span className="truncate">{t(result.official_verification || 'MOCK_VERIFIED')}</span>
                     </div>
                     <span className="text-[10px] text-slate-500 block truncate">
-                      {result.official_verification_details?.service || 'Govt Gateway API'}
+                      {t(result.official_verification_details?.service || 'Govt Gateway API')}
                     </span>
                   </div>
                 </div>
@@ -992,11 +992,11 @@ export default function DocumentAssistantPage() {
                   <div className="p-4 bg-red-50 border border-red-200 rounded-2xl space-y-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-red-900">
                       <AlertTriangle className="w-4 h-4 text-red-600" />
-                      <span>Discrepancies Requiring Attention:</span>
+                      <span>{t('Discrepancies Requiring Attention:')}</span>
                     </div>
                     <ul className="text-xs text-red-800 space-y-1 list-disc pl-5">
                       {result.mismatch_details.map((m, idx) => (
-                        <li key={idx}>{m}</li>
+                        <li key={idx}>{t(m)}</li>
                       ))}
                     </ul>
                   </div>
@@ -1005,7 +1005,7 @@ export default function DocumentAssistantPage() {
                 {/* Granular Algorithmic Checks List */}
                 <div className="space-y-3">
                   <span className="text-xs font-black text-slate-900 uppercase tracking-wider block">
-                    Algorithmic & Statutory Validation Checks ({result.checks?.length || 0})
+                    {t('Algorithmic & Statutory Validation Checks')} ({result.checks?.length || 0})
                   </span>
 
                   <div className="space-y-2">
@@ -1022,9 +1022,9 @@ export default function DocumentAssistantPage() {
                           )}
                           <div>
                             <span className="font-bold text-slate-800 block">
-                              {c.check_name || c.field || `Rule Check #${idx + 1}`}
+                              {t(c.check_name || c.field || `Rule Check #${idx + 1}`)}
                             </span>
-                            <span className="text-[11px] text-slate-600 mt-0.5 block">{c.details}</span>
+                            <span className="text-[11px] text-slate-600 mt-0.5 block">{t(c.details)}</span>
                           </div>
                         </div>
 
@@ -1033,7 +1033,7 @@ export default function DocumentAssistantPage() {
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-amber-100 text-amber-800'
                         }`}>
-                          {c.status || (c.passed ? 'PASS' : 'FAIL')}
+                          {t(c.status || (c.passed ? 'PASS' : 'FAIL'))}
                         </span>
                       </div>
                     ))}
@@ -1043,14 +1043,14 @@ export default function DocumentAssistantPage() {
                 {/* Extracted Structured NER Data Viewer */}
                 <div className="space-y-3 pt-2">
                   <span className="text-xs font-black text-slate-900 uppercase tracking-wider block">
-                    Extracted Structured Data (Entities)
+                    {t('Extracted Structured Data (Entities)')}
                   </span>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     {Object.entries(result.extracted_data || {}).map(([key, val]) => (
                       <div key={key} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                         <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">
-                          {key.replace(/_/g, ' ')}
+                          {t(key.replace(/_/g, ' '))}
                         </span>
                         <span className="font-semibold text-slate-800 text-[11px] mt-0.5 block">
                           {typeof val === 'object' ? JSON.stringify(val) : String(val)}
@@ -1077,7 +1077,7 @@ export default function DocumentAssistantPage() {
                     className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
                   >
                     <Info className="w-3.5 h-3.5 text-slate-500" />
-                    <span>View Immutable Audit Trail ({result.audit_logs?.length || 0} Events)</span>
+                    <span>{t('View Immutable Audit Trail')} ({result.audit_logs?.length || 0} {t('Events')})</span>
                   </button>
                 </div>
               </div>
@@ -1088,9 +1088,9 @@ export default function DocumentAssistantPage() {
                 <FileCheck className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-800">No Document Validated in this Session</h3>
+                <h3 className="text-base font-bold text-slate-800">{t('No Document Validated in this Session')}</h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-                  Upload a document on the left or click the <strong className="text-emerald-700">"1-Click Jury Demo"</strong> button above to run the deterministic real-time validation pipeline.
+                  {t('Upload a document on the left or click the "1-Click Jury Demo" button above to run the deterministic real-time validation pipeline.')}
                 </p>
               </div>
 
@@ -1101,7 +1101,7 @@ export default function DocumentAssistantPage() {
                     onClick={() => handle1ClickSynthetic(d.key)}
                     className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800 text-[11px] font-bold rounded-xl transition-all"
                   >
-                    + Test {d.name}
+                    + {t('Test')} {t(d.name)}
                   </button>
                 ))}
               </div>
@@ -1123,13 +1123,13 @@ export default function DocumentAssistantPage() {
           <div>
             <h3 className="text-sm font-black text-slate-900">
               {allDocumentsVerified || checklistData?.all_mandatory_verified
-                ? 'All Mandatory Documents Successfully Verified'
-                : 'Document Verification In Progress'}
+                ? t('All Mandatory Documents Successfully Verified')
+                : t('Document Verification In Progress')}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               {allDocumentsVerified || checklistData?.all_mandatory_verified
-                ? 'Statutory eligibility matching is now fully unlocked. Proceed to view evaluated schemes.'
-                : 'Please verify the required mandatory documents above or click "⚡ Verify All Mandatory" for SIH testing.'}
+                ? t('Statutory eligibility matching is now fully unlocked. Proceed to view evaluated schemes.')
+                : t('Please verify the required mandatory documents above or click "⚡ Verify All Mandatory" for SIH testing.')}
             </p>
           </div>
         </div>
@@ -1140,7 +1140,7 @@ export default function DocumentAssistantPage() {
               onClick={() => navigate('/results')}
               className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
             >
-              <span>Check Eligible Schemes (Step 4)</span>
+              <span>{t('Check Eligible Schemes (Step 4)')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
@@ -1149,7 +1149,7 @@ export default function DocumentAssistantPage() {
               className="w-full sm:w-auto px-6 py-3 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl cursor-not-allowed flex items-center justify-center gap-2 border border-slate-200"
             >
               <Lock className="w-3.5 h-3.5" />
-              <span>Verify Docs to Unlock Results</span>
+              <span>{t('Verify Docs to Unlock Results')}</span>
             </button>
           )}
         </div>
@@ -1166,9 +1166,9 @@ export default function DocumentAssistantPage() {
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-sm text-white">SIH 2026 Compliance Audit Trail</h3>
+                  <h3 className="font-black text-sm text-white">{t('SIH 2026 Compliance Audit Trail')}</h3>
                   <span className="text-[10px] text-slate-400 font-mono">
-                    {auditLogsData?.document_type} • ID: {auditLogsData?.document_id}
+                    {t(auditLogsData?.document_type)} • ID: {auditLogsData?.document_id}
                   </span>
                 </div>
               </div>
@@ -1186,7 +1186,7 @@ export default function DocumentAssistantPage() {
               {/* Audit Events Timeline */}
               <div className="space-y-3">
                 <span className="font-black text-slate-900 uppercase tracking-wider block">
-                  Immutable Verification Log Events:
+                  {t('Immutable Verification Log Events:')}
                 </span>
 
                 <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
@@ -1194,12 +1194,12 @@ export default function DocumentAssistantPage() {
                     <div key={i} className="relative space-y-1">
                       <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-white" />
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900">{ev.stage}: {ev.action}</span>
+                        <span className="font-bold text-slate-900">{t(ev.stage)}: {t(ev.action)}</span>
                         <span className="text-[10px] font-mono text-slate-400">{ev.timestamp?.slice(11, 19)}</span>
                       </div>
-                      <p className="text-slate-600 text-[11px]">{ev.details}</p>
+                      <p className="text-slate-600 text-[11px]">{t(ev.details)}</p>
                       <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono">
-                        STATUS: {ev.status}
+                        STATUS: {t(ev.status)}
                       </span>
                     </div>
                   ))}
@@ -1210,10 +1210,10 @@ export default function DocumentAssistantPage() {
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-1">
                 <div className="flex items-center gap-2 text-emerald-900 font-bold">
                   <CheckCircle className="w-4 h-4 text-emerald-600" />
-                  <span>SIH 2026 Data Protection Certification</span>
+                  <span>{t('SIH 2026 Data Protection Certification')}</span>
                 </div>
                 <p className="text-emerald-800 text-[11px]">
-                  All Indian identity parameters (Aadhaar 12-digit number, PAN identifier) are cryptographically hashed via SHA-256 and masked before persistence. No raw PII was stored on disk.
+                  {t('All Indian identity parameters (Aadhaar 12-digit number, PAN identifier) are cryptographically hashed via SHA-256 and masked before persistence. No raw PII was stored on disk.')}
                 </p>
               </div>
             </div>
@@ -1224,7 +1224,7 @@ export default function DocumentAssistantPage() {
                 onClick={() => setShowAuditModal(false)}
                 className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl"
               >
-                Close Audit Certificate
+                {t('Close Audit Certificate')}
               </button>
             </div>
           </div>

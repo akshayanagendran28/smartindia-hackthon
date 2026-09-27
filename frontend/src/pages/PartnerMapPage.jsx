@@ -503,7 +503,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                 className="px-5 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer shrink-0 animate-pulse"
               >
                 <Send className="w-4 h-4" />
-                <span>Apply with Partner</span>
+                <span>{t('Apply with Partner')}</span>
               </button>
             </div>
           )}
@@ -521,13 +521,13 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
             </div>
             <div>
               <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <span>Smart Channel Partner Suggestions in {userDistrict}, {stateFilter !== 'all' ? stateFilter : userState}</span>
+                <span>{t('Smart Channel Partner Suggestions in')} {t(userDistrict)}, {stateFilter !== 'all' ? t(stateFilter) : t(userState)}</span>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-mono">
-                  {suggestions.length} Matches Found
+                  {suggestions.length} {t('Matches Found')}
                 </span>
               </h2>
               <p className="text-xs text-indigo-200">
-                Top designated Lead District Banks and Nodal Desks tailored to your location for <strong>{activeScheme?.scheme_code || 'Scheme'}</strong> credit appraisal.
+                {t('Top designated Lead District Banks and Nodal Desks tailored to your location for')} <strong>{t(activeScheme?.scheme_code || 'Scheme')}</strong> {t('credit appraisal.')}
               </p>
             </div>
           </div>
@@ -538,7 +538,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
             className="self-start sm:self-auto px-3 py-1.5 bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 text-xs font-bold rounded-xl border border-indigo-700 flex items-center gap-1.5 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${suggestionsLoading ? 'animate-spin' : ''}`} />
-            <span>Refresh Suggestions</span>
+            <span>{t('Refresh Suggestions')}</span>
           </button>
         </div>
 
@@ -547,11 +547,11 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
           {suggestionsLoading ? (
             <div className="col-span-full text-center py-8 text-indigo-300 text-xs font-semibold flex items-center justify-center gap-2">
               <RefreshCw className="w-4 h-4 animate-spin" />
-              <span>Calculating smart proximity and lead bank suitability scores...</span>
+              <span>{t('Calculating smart proximity and lead bank suitability scores...')}</span>
             </div>
           ) : suggestions.length === 0 ? (
             <div className="col-span-full text-center py-6 text-indigo-300 text-xs bg-slate-800/50 rounded-2xl p-4">
-              <span>No direct matches found in district. Showing state-wide lead nodal banks.</span>
+              <span>{t('No direct matches found in district. Showing state-wide lead nodal banks.')}</span>
             </div>
           ) : (
             suggestions.map((sug) => {
@@ -567,10 +567,10 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30 flex items-center gap-1">
                         <Award className="w-3 h-3 text-emerald-400" />
-                        <span>{sug.match_badge || 'District Partner'}</span>
+                        <span>{t(sug.match_badge || 'District Partner')}</span>
                       </span>
                       <div className="flex items-center gap-1">
-                        <span className="text-xs font-mono font-black text-amber-300">{sug.match_score || 95}% Match</span>
+                        <span className="text-xs font-mono font-black text-amber-300">{sug.match_score || 95}% {t('Match')}</span>
                       </div>
                     </div>
 
@@ -584,14 +584,14 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                     <div className="text-[11px] text-slate-300 space-y-1">
                       <div className="flex items-center gap-1.5 text-slate-200">
                         <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                        <span className="font-semibold text-amber-200">{sug.distance_str || 'In your District'}</span>
+                        <span className="font-semibold text-amber-200">{t(sug.distance_str || 'In your District')}</span>
                       </div>
                       <p className="text-[10px] text-slate-400 line-clamp-1">{sug.address}</p>
                     </div>
 
                     {/* Nodal Officer Contact */}
                     <div className="p-2 bg-slate-900/80 rounded-xl text-[10px] text-slate-300 flex items-center justify-between">
-                      <span className="text-slate-400">Nodal: <strong className="text-white">{sug.nodal_officer?.split('(')[0] || 'Lending Desk'}</strong></span>
+                      <span className="text-slate-400">{t('Nodal')}: <strong className="text-white">{t(sug.nodal_officer?.split('(')[0] || 'Lending Desk')}</strong></span>
                       <span className="font-mono text-emerald-300">{sug.nodal_phone || sug.contact}</span>
                     </div>
                   </div>
@@ -606,7 +606,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                       className="py-2 px-2 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-sm transition-all cursor-pointer"
                     >
                       <Mail className="w-3.5 h-3.5" />
-                      <span>✉️ Invite</span>
+                      <span>✉️ {t('Invite')}</span>
                     </button>
 
                     <button
@@ -617,7 +617,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                       className="py-2 px-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-black rounded-xl flex items-center justify-center gap-1 shadow-sm transition-all cursor-pointer"
                     >
                       <Send className="w-3.5 h-3.5" />
-                      <span>⚡ Apply</span>
+                      <span>⚡ {t('Apply')}</span>
                     </button>
                   </div>
                 </div>
@@ -637,7 +637,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">
-                  {selectedBranch.lead_bank_flag ? 'Lead District Bank' : 'Nodal Partner Branch'}
+                  {selectedBranch.lead_bank_flag ? t('Lead District Bank') : t('Nodal Partner Branch')}
                 </span>
                 <span className="text-xs font-mono font-bold text-emerald-800">{selectedBranch.ifsc}</span>
               </div>
@@ -658,7 +658,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
               className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer hover:scale-105"
             >
               <Mail className="w-4 h-4" />
-              <span>✉️ Invite Partner</span>
+              <span>✉️ {t('Invite Partner')}</span>
             </button>
 
             <button
@@ -666,7 +666,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer hover:scale-105"
             >
               <Send className="w-4 h-4" />
-              <span>⚡ Apply &amp; Assign</span>
+              <span>⚡ {t('Apply & Assign')}</span>
             </button>
 
             <a
@@ -676,7 +676,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
               className="px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold border border-slate-300 text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
             >
               <Navigation className="w-4 h-4 text-emerald-600" />
-              <span>GPS Route</span>
+              <span>{t('GPS Route')}</span>
             </a>
 
             <button
@@ -709,7 +709,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
             <input
               type="text"
-              placeholder="Search Bank, Branch, Town, District or Landmark..."
+              placeholder={t('Search Bank, Branch, Town, District or Landmark...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchBranches()}
@@ -721,7 +721,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
           <form onSubmit={handleIfscSearch} className="md:col-span-3 flex gap-1.5">
             <input
               type="text"
-              placeholder="Lookup IFSC (e.g. SBIN0000123)"
+              placeholder={t('Lookup IFSC (e.g. SBIN0000123)')}
               value={ifscSearch}
               onChange={(e) => setIfscSearch(e.target.value.toUpperCase())}
               className="w-full px-3 py-2 text-xs font-mono font-bold border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 uppercase"
@@ -880,10 +880,10 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
           <div className="bg-slate-50 border-t border-slate-200 px-4 py-2 text-[11px] text-slate-600 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block ring-1 ring-amber-300" /> Lead District Bank Desk
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block ring-1 ring-amber-300" /> {t('Lead District Bank Desk')}
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block ring-1 ring-emerald-300" /> Commercial Bank Desk
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block ring-1 ring-emerald-300" /> {t('Commercial Bank Desk')}
               </span>
             </div>
             <span className="font-mono text-slate-500 font-bold">
@@ -902,7 +902,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30">
-                      {selectedBranch.bankcode} • {selectedBranch.lead_bank_flag ? 'Lead District Bank' : 'Scheme Nodal Branch'}
+                      {selectedBranch.bankcode} • {selectedBranch.lead_bank_flag ? t('Lead District Bank') : t('Scheme Nodal Branch')}
                     </span>
                     <span className="text-[10px] font-mono text-slate-300 bg-slate-800 px-2 py-0.5 rounded">
                       {selectedBranch.ifsc}
@@ -916,10 +916,10 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
               <div className="text-xs text-slate-300 space-y-1.5 pt-2 border-t border-emerald-800/60">
                 <p className="text-xs leading-relaxed">{selectedBranch.address}</p>
                 <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
-                  <div><strong className="text-slate-400">District:</strong> {selectedBranch.district}</div>
-                  <div><strong className="text-slate-400">State:</strong> {selectedBranch.state}</div>
-                  <div><strong className="text-slate-400">Phone:</strong> {selectedBranch.contact || '1800-425-3800'}</div>
-                  <div><strong className="text-slate-400">Nodal Officer:</strong> {selectedBranch.nodal_officer || 'Lending Manager'}</div>
+                  <div><strong className="text-slate-400">{t('District')}:</strong> {t(selectedBranch.district)}</div>
+                  <div><strong className="text-slate-400">{t('State')}:</strong> {t(selectedBranch.state)}</div>
+                  <div><strong className="text-slate-400">{t('Phone')}:</strong> {selectedBranch.contact || '1800-425-3800'}</div>
+                  <div><strong className="text-slate-400">{t('Nodal Officer')}:</strong> {t(selectedBranch.nodal_officer || 'Lending Manager')}</div>
                 </div>
               </div>
 
@@ -930,14 +930,14 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                   className="py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Mail className="w-4 h-4" />
-                  <span>✉️ Invite Partner</span>
+                  <span>✉️ {t('Invite Partner')}</span>
                 </button>
                 <button
                   onClick={() => handleOpenApplyModal(selectedBranch)}
                   className="py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
-                  <span>⚡ Apply Now</span>
+                  <span>⚡ {t('Apply Now')}</span>
                 </button>
               </div>
             </div>
@@ -946,7 +946,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
           {/* List of All Available Branches */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-              All Available Bank Branches in Region ({branches.length})
+              {t('All Available Bank Branches in Region')} ({branches.length})
             </h4>
             
             {branches.map((b) => {
@@ -1017,7 +1017,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                   <span className="font-mono text-xs font-black bg-blue-100 text-blue-800 px-3 py-1 rounded-full border border-blue-200 inline-block">
                     {inviteResult.invitation_number}
                   </span>
-                  <h3 className="text-xl font-black text-slate-900">Partner Invitation Dispatched!</h3>
+                  <h3 className="text-xl font-black text-slate-900">{t('Partner Invitation Dispatched!')}</h3>
                   <p className="text-xs text-slate-500">
                     Official appraisal request dispatched to <strong>{inviteResult.partner_name}</strong>.
                   </p>
@@ -1026,7 +1026,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                 <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-left space-y-2 text-blue-950">
                   <div className="flex items-center gap-2 font-bold text-blue-900">
                     <ShieldCheck className="w-4 h-4 text-blue-600" />
-                    <span>Real-Time Admin &amp; Branch Notification Sent</span>
+                    <span>{t('Real-Time Admin & Branch Notification Sent')}</span>
                   </div>
                   <p className="text-[11px] text-blue-800 leading-relaxed">
                     The National Portal Admin has been notified of this invitation in real time. An immutable entry has been recorded in the platform audit trail.
@@ -1038,13 +1038,13 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                     to="/dashboard"
                     className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md text-center"
                   >
-                    Track in Customer Dashboard
+                    {t('Track in Customer Dashboard')}
                   </Link>
                   <Link
                     to="/history"
                     className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md text-center"
                   >
-                    View Audit Trail
+                    {t('View Audit Trail')}
                   </Link>
                 </div>
               </div>
@@ -1057,8 +1057,8 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                       <Mail className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-black text-slate-900 text-base">Invite Channel Partner</h3>
-                      <p className="text-xs text-slate-500">Request Branch Desk Evaluation &amp; Alert Admin</p>
+                      <h3 className="font-black text-slate-900 text-base">{t('Invite Channel Partner')}</h3>
+                      <p className="text-xs text-slate-500">{t('Request Branch Desk Evaluation & Alert Admin')}</p>
                     </div>
                   </div>
                   <button
@@ -1072,7 +1072,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
 
                 {/* Selected Bank Desk Details */}
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Channel Partner Desk to Invite</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">{t('Channel Partner Desk to Invite')}</span>
                   <div className="flex justify-between font-bold text-slate-900">
                     <span>Bank:</span>
                     <span>{selectedBranch?.bank}</span>
@@ -1097,7 +1097,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
 
                 {/* Target Scheme */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Target Scheme</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('Target Scheme')}</label>
                   <input
                     type="text"
                     value={`${activeScheme?.scheme_code} - ${activeScheme?.scheme_name}`}
@@ -1108,20 +1108,20 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
 
                 {/* Notes / Message */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Invitation Notes &amp; Appraisal Request</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('Invitation Notes & Appraisal Request')}</label>
                   <textarea
                     rows={3}
                     value={inviteNotes}
                     onChange={(e) => setInviteNotes(e.target.value)}
                     className="w-full p-2.5 border border-slate-300 rounded-xl text-xs bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter specific project details or requirements..."
+                    placeholder={t('Enter specific project details or requirements...')}
                   />
                 </div>
 
                 {/* Admin Live Notification Notice */}
                 <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-[11px] text-indigo-900 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>Submitting dispatches the invitation and fires a real-time alert to the Admin console.</span>
+                  <span>{t('Submitting dispatches the invitation and fires a real-time alert to the Admin console.')}</span>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
@@ -1138,7 +1138,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                     className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2 cursor-pointer"
                   >
                     {submittingInvite ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                    <span>Confirm &amp; Send Invitation</span>
+                    <span>{t('Confirm & Send Invitation')}</span>
                   </button>
                 </div>
               </form>
@@ -1166,7 +1166,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                   <span className="font-mono text-xs font-black bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 inline-block">
                     {applyResult.application_number}
                   </span>
-                  <h3 className="text-xl font-black text-slate-900">Application Submitted &amp; Partner Assigned!</h3>
+                  <h3 className="text-xl font-black text-slate-900">{t('Application Submitted & Partner Assigned!')}</h3>
                   <p className="text-xs text-slate-500">
                     Your application for <strong>{applyResult.scheme_name}</strong> has been created and assigned to <strong>{applyResult.partner_name}</strong>.
                   </p>
@@ -1175,7 +1175,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-left space-y-2 text-slate-700">
                   <div className="flex items-center gap-2 font-bold text-emerald-800">
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Real-Time Admin &amp; Partner Notification Active</span>
+                    <span>{t('Real-Time Admin & Partner Notification Active')}</span>
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
                     The National Portal Admin has been notified in real time, and an immutable entry has been recorded in the audit trail. You can track branch appraisal milestones in real time.
@@ -1187,13 +1187,13 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                     to="/dashboard"
                     className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-md text-center"
                   >
-                    Track in Customer Dashboard
+                    {t('Track in Customer Dashboard')}
                   </Link>
                   <Link
                     to="/history"
                     className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md text-center"
                   >
-                    View Full Audit Trail
+                    {t('View Full Audit Trail')}
                   </Link>
                 </div>
               </div>
@@ -1206,8 +1206,8 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                       <Send className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-black text-slate-900 text-base">Apply for Government Scheme</h3>
-                      <p className="text-xs text-slate-500">Assign Channel Partner &amp; Dispatch Application</p>
+                      <h3 className="font-black text-slate-900 text-base">{t('Apply for Government Scheme')}</h3>
+                      <p className="text-xs text-slate-500">{t('Assign Channel Partner & Dispatch Application')}</p>
                     </div>
                   </div>
                   <button
@@ -1221,7 +1221,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
 
                 {/* Target Scheme Selection */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Target Scheme</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('Target Scheme')}</label>
                   {schemesList.length > 0 ? (
                     <select
                       value={activeScheme?.scheme_code || ''}
@@ -1247,7 +1247,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
 
                 {/* Selected Bank Desk Details */}
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Assigned Channel Partner Desk</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">{t('Assigned Channel Partner Desk')}</span>
                   <div className="flex justify-between font-bold text-slate-900">
                     <span>Bank:</span>
                     <span>{selectedBranch?.bank}</span>
@@ -1268,7 +1268,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
 
                 {/* Required Loan Quantum Input */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Required Loan Quantum (₹)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('Required Loan Quantum (₹)')}</label>
                   <input
                     type="number"
                     value={selectedLoanAmount}
@@ -1277,14 +1277,14 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                     required
                   />
                   <span className="text-[11px] text-slate-400 mt-0.5 block">
-                    Subsidy will be calculated dynamically based on affirmative category quota.
+                    {t('Subsidy will be calculated dynamically based on affirmative category quota.')}
                   </span>
                 </div>
 
                 {/* Admin Live Notification Notice */}
                 <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-[11px] text-indigo-900 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>Submitting immediately creates an Audit Log entry and alerts the Admin console in real time.</span>
+                  <span>{t('Submitting immediately creates an Audit Log entry and alerts the Admin console in real time.')}</span>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
@@ -1301,7 +1301,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                     className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer"
                   >
                     {submittingApply ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    <span>Confirm &amp; Submit Application</span>
+                    <span>{t('Confirm & Submit Application')}</span>
                   </button>
                 </div>
               </form>
@@ -1321,8 +1321,8 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-slate-900 text-base">Direct Benefit Transfer (DBT) Verifier</h3>
-                  <p className="text-[11px] text-slate-500">Validate account for direct government subsidy disbursement</p>
+                  <h3 className="font-black text-slate-900 text-base">{t('Direct Benefit Transfer (DBT) Verifier')}</h3>
+                  <p className="text-[11px] text-slate-500">{t('Validate account for direct government subsidy disbursement')}</p>
                 </div>
               </div>
               <button
@@ -1335,7 +1335,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
 
             <form onSubmit={handleVerifyDbtAccount} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Applicant Name</label>
+                <label className="block font-bold text-slate-700 mb-1">{t('Applicant Name')}</label>
                 <input
                   type="text"
                   value={dbtHolder}
@@ -1346,7 +1346,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Bank Account Number</label>
+                <label className="block font-bold text-slate-700 mb-1">{t('Bank Account Number')}</label>
                 <input
                   type="text"
                   placeholder="e.g. 123456789012"
@@ -1358,7 +1358,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">IFSC Code</label>
+                <label className="block font-bold text-slate-700 mb-1">{t('IFSC Code')}</label>
                 <input
                   type="text"
                   placeholder="e.g. SBIN0000123"
@@ -1383,7 +1383,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                   className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow cursor-pointer flex items-center gap-1.5"
                 >
                   {dbtLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                  <span>Verify Account</span>
+                  <span>{t('Verify Account')}</span>
                 </button>
               </div>
             </form>

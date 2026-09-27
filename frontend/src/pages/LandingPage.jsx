@@ -41,12 +41,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* SIH 2026 Header Banner */}
-      <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-emerald-700 text-white py-2 px-4 text-center text-xs md:text-sm font-medium tracking-wide shadow-sm flex items-center justify-center gap-2">
-        <span className="bg-white/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">{t('sihBadgeText')}</span>
-        <span>{t('sihSubtext')}</span>
-      </div>
-
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-emerald-950 via-slate-900 to-slate-950 text-white pt-16 pb-24 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px]"></div>
@@ -125,13 +119,13 @@ export default function LandingPage() {
                 {/* Track Selector */}
                 <div>
                   <label className="block text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-1.5">
-                    Select Your Goal Track
+                    {t('select your goal track', 'Select Your Goal Track')}
                   </label>
                   <div className="grid grid-cols-3 gap-1.5 bg-slate-950/60 p-1 rounded-xl border border-slate-700">
                     {[
-                      { id: 'EDUCATION', label: '🎓 Education' },
-                      { id: 'BUSINESS', label: '🏢 Business' },
-                      { id: 'SELF_EMPLOYMENT', label: '🏪 Self-Emp' }
+                      { id: 'EDUCATION', label: `🎓 ${t('Education', 'Education')}` },
+                      { id: 'BUSINESS', label: `🏢 ${t('Business', 'Business')}` },
+                      { id: 'SELF_EMPLOYMENT', label: `🏪 ${t('Self-Emp', 'Self-Emp')}` }
                     ].map(tab => (
                       <button
                         key={tab.id}
@@ -163,10 +157,10 @@ export default function LandingPage() {
                     onChange={(e) => setQuickForm({ ...quickForm, social_category: e.target.value })}
                     className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="SC">Scheduled Caste (SC)</option>
-                    <option value="ST">Scheduled Tribe (ST)</option>
-                    <option value="Minority">Minority Community</option>
-                    <option value="Women/Special">Women / Special Category</option>
+                    <option value="SC">{t('scCategory', 'Scheduled Caste (SC)')}</option>
+                    <option value="ST">{t('stCategory', 'Scheduled Tribe (ST)')}</option>
+                    <option value="Minority">{t('minorityCategory', 'Minority Community')}</option>
+                    <option value="Women/Special">{t('women entrepreneur / special category', 'Women / Special Category')}</option>
                   </select>
                 </div>
 
@@ -187,29 +181,29 @@ export default function LandingPage() {
                   <div>
                     {quickForm.purpose_type === 'EDUCATION' ? (
                       <>
-                        <label className="block text-xs font-medium text-slate-200 mb-1">Course Stream</label>
+                        <label className="block text-xs font-medium text-slate-200 mb-1">{t('course stream', 'Course Stream')}</label>
                         <select
                           value={quickForm.course_type}
                           onChange={(e) => setQuickForm({ ...quickForm, course_type: e.target.value })}
                           className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                         >
-                          <option value="Technical / Engineering (B.Tech / B.E / M.Tech)">Engineering / Tech</option>
-                          <option value="Medical / Dental / Paramedical (MBBS / BDS / Nursing)">Medical / Healthcare</option>
-                          <option value="Management / MBA / Post Graduate Diploma">Management / MBA</option>
-                          <option value="Overseas / International Masters & PhD Studies">Overseas Studies</option>
+                          <option value="Technical / Engineering (B.Tech / B.E / M.Tech)">{t('engineering / tech', 'Engineering / Tech')}</option>
+                          <option value="Medical / Dental / Paramedical (MBBS / BDS / Nursing)">{t('medical / healthcare', 'Medical / Healthcare')}</option>
+                          <option value="Management / MBA / Post Graduate Diploma">{t('management / mba', 'Management / MBA')}</option>
+                          <option value="Overseas / International Masters & PhD Studies">{t('overseas studies', 'Overseas Studies')}</option>
                         </select>
                       </>
                     ) : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? (
                       <>
-                        <label className="block text-xs font-medium text-slate-200 mb-1">Activity Type</label>
+                        <label className="block text-xs font-medium text-slate-200 mb-1">{t('activity type', 'Activity Type')}</label>
                         <select
                           value={quickForm.business_type}
                           onChange={(e) => setQuickForm({ ...quickForm, business_type: e.target.value })}
                           className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                         >
-                          <option value="street_vendor">Street Vendor / Hawkers</option>
-                          <option value="artisan">Artisan / Handicrafts</option>
-                          <option value="micro_services">Small Service / Repair</option>
+                          <option value="street_vendor">{t('street vendor / hawkers', 'Street Vendor / Hawkers')}</option>
+                          <option value="artisan">{t('artisan / handicrafts', 'Artisan / Handicrafts')}</option>
+                          <option value="micro_services">{t('small service / repair', 'Small Service / Repair')}</option>
                         </select>
                       </>
                     ) : (
@@ -231,9 +225,9 @@ export default function LandingPage() {
 
                 <div>
                   <div className="flex justify-between text-xs font-medium text-slate-200 mb-1">
-                    <span>{quickForm.purpose_type === 'EDUCATION' ? 'Target Course / Loan Amount' : t('requiredLoan')}</span>
+                    <span>{quickForm.purpose_type === 'EDUCATION' ? t('target course / loan amount', 'Target Course / Loan Amount') : t('requiredLoan')}</span>
                     <span className="text-emerald-400 font-bold font-mono">
-                      ₹{quickForm.required_loan >= 100000 ? `${(quickForm.required_loan / 100000).toFixed(1)} Lakh` : `${quickForm.required_loan.toLocaleString('en-IN')}`}
+                      ₹{quickForm.required_loan >= 100000 ? `${(quickForm.required_loan / 100000).toFixed(1)} ${t('unitLakh', 'Lakh')}` : `${quickForm.required_loan.toLocaleString('en-IN')}`}
                     </span>
                   </div>
                   <input
@@ -246,9 +240,9 @@ export default function LandingPage() {
                     className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                   />
                   <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                    <span>{quickForm.purpose_type === 'EDUCATION' ? '₹50k (Base)' : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '₹10k (PM SVANidhi)' : '₹1 Lakh (Micro)'}</span>
-                    <span>{quickForm.purpose_type === 'EDUCATION' ? '₹7.5L (CSIS / CGFSEL)' : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '₹1L (Scale Up)' : '₹50 Lakh (PMEGP)'}</span>
-                    <span>{quickForm.purpose_type === 'EDUCATION' ? '₹20L+ (NSFDC / Overseas)' : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? '₹3L (PM Vishwakarma)' : '₹1 Cr (Stand-Up)'}</span>
+                    <span>{quickForm.purpose_type === 'EDUCATION' ? t('₹50k (Base)', '₹50k (Base)') : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? t('₹10k (PM SVANidhi)', '₹10k (PM SVANidhi)') : t('₹1 Lakh (Micro)', '₹1 Lakh (Micro)')}</span>
+                    <span>{quickForm.purpose_type === 'EDUCATION' ? t('₹7.5L (CSIS / CGFSEL)', '₹7.5L (CSIS / CGFSEL)') : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? t('₹1L (Scale Up)', '₹1L (Scale Up)') : t('₹50 Lakh (PMEGP)', '₹50 Lakh (PMEGP)')}</span>
+                    <span>{quickForm.purpose_type === 'EDUCATION' ? t('₹20L+ (NSFDC / Overseas)', '₹20L+ (NSFDC / Overseas)') : quickForm.purpose_type === 'SELF_EMPLOYMENT' ? t('₹3L (PM Vishwakarma)', '₹3L (PM Vishwakarma)') : t('₹1 Cr (Stand-Up)', '₹1 Cr (Stand-Up)')}</span>
                   </div>
                 </div>
 
@@ -344,7 +338,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
             <div>
-              <span className="text-xs uppercase tracking-wider font-bold text-emerald-700">{t('sihBadgeText')} • myScheme.gov.in</span>
+              <span className="text-xs uppercase tracking-wider font-bold text-emerald-700">{t('Official Gazette Registry • myScheme.gov.in')}</span>
               <h2 className="text-3xl font-extrabold text-slate-900 mt-1">{t('featuredSchemesTitle')}</h2>
               <p className="text-slate-600 text-sm mt-1">{t('featuredSchemesSubtitle')}</p>
             </div>

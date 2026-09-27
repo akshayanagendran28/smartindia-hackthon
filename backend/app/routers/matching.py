@@ -64,9 +64,19 @@ def evaluate_schemes(
     if data:
         user_dict.update(data)
 
-    target_purpose = (user_dict.get("purpose_type") or (user_dict.get("purpose") if user_dict.get("purpose") in ["EDUCATION", "BUSINESS", "SELF_EMPLOYMENT"] else None) or "BUSINESS").upper()
+    # Robust purpose track resolution
+    raw_p_type = user_dict.get("purpose_type") or user_dict.get("purposeType") or ""
+    raw_purpose = user_dict.get("purpose") or ""
+    if raw_p_type.upper() in ["EDUCATION", "BUSINESS", "SELF_EMPLOYMENT"]:
+        target_purpose = raw_p_type.upper()
+    elif "education" in raw_purpose.lower() or "student" in raw_purpose.lower():
+        target_purpose = "EDUCATION"
+    elif "self" in raw_purpose.lower() or "vendor" in raw_purpose.lower() or "artisan" in raw_purpose.lower():
+        target_purpose = "SELF_EMPLOYMENT"
+    else:
+        target_purpose = "BUSINESS"
 
-    # 1. Document Verification Gate Enforcement
+    # 1. Document Verification Status (Advisory / Readiness)
     user_docs = []
     if current_user:
         user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all()
@@ -87,7 +97,6 @@ def evaluate_schemes(
     has_income_or_caste = any("caste" in t or "income" in t for t in verified_doc_types)
 
     if target_purpose == "EDUCATION":
-        # Education Document Gate: Aadhaar + at least 2 educational/income proofs
         has_edu_proof = any("10th" in t or "12th" in t or "admission" in t or "fee" in t for t in verified_doc_types)
         is_docs_verified = bypass_check or (has_aadhaar and (has_edu_proof or has_income_or_caste or len(verified_doc_types) >= 2))
         schemes = db.query(Scheme).filter(Scheme.is_active == True, Scheme.purpose_type == "EDUCATION").all()
@@ -112,6 +121,8 @@ def evaluate_schemes(
             except Exception:
                 pass
 
+        is_statutory_eligible = ranked_res.get("is_eligible", False)
+
         card = {
             "scheme_id": scheme.id,
             "scheme_code": scheme.code,
@@ -130,7 +141,8 @@ def evaluate_schemes(
             "interest_rate_max": scheme.interest_rate_max,
             "subsidy_percentage_general": scheme.subsidy_percentage_general,
             "subsidy_percentage_special": scheme.subsidy_percentage_special,
-            "eligible": ranked_res.get("is_eligible", False) and is_docs_verified,
+            "eligible": is_statutory_eligible,
+            "is_docs_verified": is_docs_verified,
             "match_score": ranked_res.get("match_score", 0.0),
             "explainability": {
                 "positive_factors": ranked_res.get("matching_factors", []),
@@ -148,11 +160,9 @@ def evaluate_schemes(
 
         available_schemes.append(card)
 
-        if is_docs_verified and ranked_res.get("is_eligible", False):
+        if is_statutory_eligible:
             eligible_schemes.append(card)
         else:
-            if not is_docs_verified:
-                card["failed_rules"] = ["Mandatory document verification pending. Please complete document verification."] + card.get("failed_rules", [])
             ineligible_schemes.append(card)
 
     eligible_schemes.sort(key=lambda x: x["match_score"], reverse=True)
@@ -161,8 +171,8 @@ def evaluate_schemes(
     result_payload = {
         "purpose_type": target_purpose,
         "documents_verified": is_docs_verified,
-        "eligibility_blocked": not is_docs_verified,
-        "message": "All documents verified. Full eligibility calculated." if is_docs_verified else "Please complete and verify all required documents before checking eligibility.",
+        "eligibility_blocked": False,
+        "message": "Statutory rules matching complete.",
         "total_evaluated": len(schemes),
         "eligible_count": len(eligible_schemes),
         "eligible_schemes": eligible_schemes,

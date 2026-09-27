@@ -182,6 +182,7 @@ export default function SchemeResultsPage() {
             onClick={() => {
               updatePurposeType('EDUCATION');
               setCategoryFilter('all');
+              setSearchQuery('');
             }}
             className={`p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between ${
               currentPurpose === 'EDUCATION'
@@ -205,6 +206,7 @@ export default function SchemeResultsPage() {
             onClick={() => {
               updatePurposeType('BUSINESS');
               setCategoryFilter('all');
+              setSearchQuery('');
             }}
             className={`p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between ${
               currentPurpose === 'BUSINESS'
@@ -228,6 +230,7 @@ export default function SchemeResultsPage() {
             onClick={() => {
               updatePurposeType('SELF_EMPLOYMENT');
               setCategoryFilter('all');
+              setSearchQuery('');
             }}
             className={`p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between ${
               currentPurpose === 'SELF_EMPLOYMENT'
@@ -408,22 +411,22 @@ export default function SchemeResultsPage() {
       {/* TAB 1: ELIGIBLE SCHEMES */}
       {activeTab === 'eligible' && (
         <div className="space-y-4">
-          {evaluation?.eligibility_blocked && (
-            <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          {!evaluation?.documents_verified && filteredEligible.length > 0 && (
+            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-950 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                <FileCheck className="w-5 h-5 text-gov-blue shrink-0" />
                 <div>
-                  <strong className="font-bold block text-sm">{t('Mandatory Document Gate Active')}</strong>
-                  <p className="text-[11px] text-amber-800">
-                    {t('Please complete and verify all required documents before checking eligibility.')}
+                  <strong className="font-bold block text-sm">{t('Disbursement Readiness Notice')}</strong>
+                  <p className="text-[11px] text-blue-800">
+                    {t('You qualify for the statutory schemes below. Verify your mandatory documents in the Document Assistant for fast-track loan sanction.')}
                   </p>
                 </div>
               </div>
               <Link
                 to="/documents"
-                className="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl text-xs shrink-0 flex items-center gap-1"
+                className="px-3.5 py-1.5 bg-gov-blue hover:bg-gov-darkblue text-white font-bold rounded-xl text-xs shrink-0 flex items-center gap-1 shadow-sm"
               >
-                <span>{t('Verify Documents')}</span>
+                <span>{t('Upload / Verify')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -607,7 +610,9 @@ export default function SchemeResultsPage() {
             <span>{t('These schemes are currently operating under Central / State mandates. Transparent gazette reasons for exclusion are displayed below.')}</span>
           </div>
 
-          {filteredAvailable.map((scheme, idx) => (
+          {filteredAvailable.map((rawScheme, idx) => {
+            const scheme = translateScheme(rawScheme);
+            return (
             <div
               key={idx}
               className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6"
@@ -615,11 +620,11 @@ export default function SchemeResultsPage() {
               <div className="space-y-2 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-700 px-2 py-0.5 bg-slate-100 rounded font-mono">
-                    {scheme.scheme_code}
+                    {scheme.scheme_code || scheme.code}
                   </span>
-                  <span className="text-xs font-extrabold text-slate-900">{t(scheme.scheme_name)}</span>
+                  <span className="text-xs font-extrabold text-slate-900">{scheme.scheme_name || scheme.name}</span>
                 </div>
-                <p className="text-xs text-slate-600 line-clamp-2">{t(scheme.scheme_description || scheme.description)}</p>
+                <p className="text-xs text-slate-600 line-clamp-2">{scheme.scheme_description || scheme.description}</p>
 
                 {/* Failed Rules Box */}
                 <div className="p-3 bg-red-50/70 border border-red-200 rounded-xl text-xs space-y-1">
@@ -649,7 +654,8 @@ export default function SchemeResultsPage() {
                 </Link>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {filteredAvailable.length === 0 && (
             <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 text-slate-500 text-xs">
