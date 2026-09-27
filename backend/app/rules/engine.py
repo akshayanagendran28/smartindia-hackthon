@@ -127,6 +127,25 @@ class EligibilityRuleEngine:
                     "detail": f"Family income of ₹{user_inc:,.0f} is within allowable statutory ceiling of ₹{scheme.max_income_limit:,.0f}."
                 })
 
+        # Min / Max Loan Amount Check
+        user_loan = float(user_data.get("required_loan_amount", 0) or user_data.get("required_loan", 0) or user_data.get("loan_amount", 0) or 0)
+        if user_loan > 0 and scheme.max_loan_amount and scheme.max_loan_amount > 0:
+            if user_loan > scheme.max_loan_amount:
+                failed_rules.append({
+                    "rule_code": "MAX_LOAN_AMOUNT",
+                    "rule_name": "Maximum Loan Quantum Limit",
+                    "field": "required_loan_amount",
+                    "user_value": f"₹{user_loan:,.0f}",
+                    "threshold": f"₹{scheme.max_loan_amount:,.0f}",
+                    "reason": f"Requested loan of ₹{user_loan:,.0f} exceeds the maximum allowable limit of ₹{scheme.max_loan_amount:,.0f} for {scheme.name}."
+                })
+            else:
+                matched_rules.append({
+                    "rule_code": "MAX_LOAN_AMOUNT",
+                    "rule_name": "Maximum Loan Quantum Limit",
+                    "detail": f"Requested loan of ₹{user_loan:,.0f} is within statutory maximum of ₹{scheme.max_loan_amount:,.0f}."
+                })
+
         # Project Cost / Total Course Cost Check
         if scheme.max_project_cost and scheme.max_project_cost > 0:
             if is_edu_scheme:

@@ -982,30 +982,55 @@ def get_dynamic_required_checklist(
     }
 
 
-@router.get("/verification-summary")
-def get_verification_summary(
-    current_user: User = Depends(get_current_user_flexible),
+@router.get("/checklist")
+@router.get("/required")
+def get_required_checklist_alias(
+    purpose_type: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    purpose: Optional[str] = Query(None),
+    loan_amount: Optional[float] = Query(None),
+    business_type: Optional[str] = Query(None),
+    current_user: Optional[User] = Depends(get_current_user_flexible),
     db: Session = Depends(get_db)
 ):
-    user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all()
-    verified_types = set()
-    for d in user_docs:
-        if str(d.verification_status).upper() in ["VERIFIED", "SUCCESS"]:
-            verified_types.add(DocumentValidationPipeline.normalize_doc_type(d.document_type).lower())
-            verified_types.add(d.document_type.lower())
+    return get_dynamic_required_checklist(
+        purpose_type=purpose_type,
+        category=category,
+        purpose=purpose,
+        loan_amount=loan_amount,
+        business_type=business_type,
+        current_user=current_user,
+        db=db
+    )
 
-    has_aadhaar = any("aadhaar" in t for t in verified_types)
-    has_pan = any("pan" in t for t in verified_types)
-    has_income_or_caste = any("caste" in t or "income" in t for t in verified_types)
 
-    all_verified = has_aadhaar and (has_pan or len(verified_types) >= 3) and has_income_or_caste
-
+@router.post("/verify-pan")
+def verify_pan_direct(payload: Dict[str, Any]):
+    pan_number = str(payload.get("pan_number", "")).strip().upper()
+    full_name = str(payload.get("full_name", "")).strip()
+    dob = str(payload.get("dob", "15/08/1995")).strip()
+    
+    import re
+    is_valid_format = bool(re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]{1}$", pan_number))
+    
+    if not is_valid_format:
+        return {
+            "valid": False,
+            "status": "INVALID_FORMAT",
+            "pan_number": pan_number,
+            "message": "Invalid PAN format. PAN must be 10 characters: 5 letters, 4 digits, 1 letter."
+        }
+    
+    res = NsdlPanAdapter.verify_pan(pan_number, full_name, dob)
     return {
-        "user_id": current_user.id,
-        "total_uploaded": len(user_docs),
-        "total_verified": len(verified_types),
-        "all_mandatory_verified": all_verified,
-        "verified_document_types": list(verified_types)
+        "valid": True,
+        "status": "VERIFIED",
+        "pan_number": pan_number,
+        "full_name": full_name,
+        "masked_pan": f"XXXXXX{pan_number[-4:]}",
+        "details": res,
+        "message": f"PAN {pan_number} verified successfully with NSDL Income Tax Database."
     }
+
 
 

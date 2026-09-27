@@ -44,9 +44,8 @@ QUESTIONNAIRES = {
             "label": "Gender",
             "type": "select",
             "options": [
-                {"value": "female", "label": "Female (Eligible for special girl student interest concessions)"},
-                {"value": "male", "label": "Male"},
-                {"value": "other", "label": "Other / Transgender"}
+                {"value": "female", "label": "Female"},
+                {"value": "male", "label": "Male"}
             ],
             "default": "female",
             "required": True
@@ -56,14 +55,9 @@ QUESTIONNAIRES = {
             "label": "Social Category",
             "type": "select",
             "options": [
-                {"value": "General", "label": "General (Eligible for CSIS & CGFSEL)"},
-                {"value": "EWS", "label": "Economically Weaker Section (EWS - CSIS / Ambedkar)"},
-                {"value": "OBC", "label": "Other Backward Class (OBC / Non-Creamy Layer - NBCFDC / Ambedkar)"},
-                {"value": "SC", "label": "Scheduled Caste (SC - NSFDC Concessional Rate 3.5%-4%)"},
-                {"value": "ST", "label": "Scheduled Tribe (ST - Concessional Education Rate)"},
-                {"value": "Minority", "label": "Minority (Muslim, Christian, Sikh, Buddhist, Jain, Parsi - NMDFC 3%)"}
+                {"value": "SC", "label": "Scheduled Caste (SC)"}
             ],
-            "default": "General",
+            "default": "SC",
             "required": True
         },
         {
@@ -198,9 +192,8 @@ QUESTIONNAIRES = {
             "label": "Gender",
             "type": "select",
             "options": [
-                {"value": "female", "label": "Female (Special Priority & Higher Subsidy up to 35%)"},
-                {"value": "male", "label": "Male"},
-                {"value": "other", "label": "Other / Transgender"}
+                {"value": "female", "label": "Female"},
+                {"value": "male", "label": "Male"}
             ],
             "default": "female",
             "required": True
@@ -210,14 +203,9 @@ QUESTIONNAIRES = {
             "label": "Social Category",
             "type": "select",
             "options": [
-                {"value": "General", "label": "General (15%-25% PMEGP Subsidy)"},
-                {"value": "OBC", "label": "Other Backward Class (OBC - Up to 35% Subsidy)"},
-                {"value": "SC", "label": "Scheduled Caste (SC - Stand-Up India / NSSH / 35% PMEGP)"},
-                {"value": "ST", "label": "Scheduled Tribe (ST - Stand-Up India / NSSH / 35% PMEGP)"},
-                {"value": "Minority", "label": "Minority (NMDFC / 35% PMEGP Special Category)"},
-                {"value": "Divyangjan", "label": "Person with Disability (Divyangjan - Special Category)"}
+                {"value": "SC", "label": "Scheduled Caste (SC)"}
             ],
-            "default": "General",
+            "default": "SC",
             "required": True
         },
         {
@@ -378,9 +366,8 @@ QUESTIONNAIRES = {
             "label": "Gender",
             "type": "select",
             "options": [
-                {"value": "female", "label": "Female (Special access to Mahila Samridhi & Udyogini)"},
-                {"value": "male", "label": "Male"},
-                {"value": "other", "label": "Other"}
+                {"value": "female", "label": "Female"},
+                {"value": "male", "label": "Male"}
             ],
             "default": "female",
             "required": True
@@ -390,14 +377,9 @@ QUESTIONNAIRES = {
             "label": "Social Category",
             "type": "select",
             "options": [
-                {"value": "General", "label": "General"},
-                {"value": "OBC", "label": "Other Backward Class (OBC - Mahila Samridhi / NBCFDC 4%)"},
-                {"value": "SC", "label": "Scheduled Caste (SC - Udyogini 50% subsidy / Vishwakarma)"},
-                {"value": "ST", "label": "Scheduled Tribe (ST - Udyogini 50% subsidy / Vishwakarma)"},
-                {"value": "Minority", "label": "Minority (NMDFC Micro Loan)"},
-                {"value": "Divyangjan", "label": "Person with Disability (Divyangjan)"}
+                {"value": "SC", "label": "Scheduled Caste (SC)"}
             ],
-            "default": "OBC",
+            "default": "SC",
             "required": True
         },
         {

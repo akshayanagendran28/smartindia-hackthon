@@ -49,15 +49,15 @@ export default function LandingPage() {
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-medium">
               <Sparkles className="w-4 h-4" />
-              <span>{t('translationBadge')}</span>
+              <span>{t('translationBadge', 'AI Powered Scheme Matching')}</span>
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-              {t('heroTitle')}
+              {t('heroTitle', 'Scheme Sathi')}
             </h1>
             
             <p className="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
-              {t('heroSubtitle')}
+              {t('heroSubtitle', 'AI-Driven Statutory Scheme Matching & Subventions for Marginalized Founders and Students')}
             </p>
 
             {/* Quick CTAs */}
@@ -67,7 +67,7 @@ export default function LandingPage() {
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-lg shadow-lg shadow-emerald-500/25 transition-all transform hover:-translate-y-0.5"
               >
                 <Compass className="w-5 h-5" />
-                <span>{t('btnFindScheme')}</span>
+                <span>{t('btnFindScheme', 'Find My Scheme')}</span>
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
@@ -75,7 +75,7 @@ export default function LandingPage() {
                 className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-base transition-all"
               >
                 <MessageSquare className="w-5 h-5 text-emerald-400" />
-                <span>{t('btnChatAssistant')}</span>
+                <span>{t('btnChatAssistant', 'Chat with Scheme Sathi')}</span>
               </Link>
             </div>
 
@@ -108,11 +108,11 @@ export default function LandingPage() {
                     <Target className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-lg">{t('instantCheckTitle')}</h3>
-                    <p className="text-xs text-slate-300">{t('instantCheckSubtitle')}</p>
+                    <h3 className="font-bold text-white text-lg">{t('instantCheckTitle', 'Quick Scheme Eligibility Check')}</h3>
+                    <p className="text-xs text-slate-300">{t('instantCheckSubtitle', 'Find eligible loans, interest subventions & subsidies in 30 seconds')}</p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30">{t('liveAiBadge')}</span>
+                <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30">{t('liveAiBadge', 'Live AI')}</span>
               </div>
 
               <form onSubmit={handleQuickCheck} className="space-y-4">
@@ -151,30 +151,26 @@ export default function LandingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-200 mb-1">{t('socialCategory')}</label>
+                  <label className="block text-xs font-medium text-slate-200 mb-1">{t('socialCategory', 'Social Category')}</label>
                   <select
                     value={quickForm.social_category}
                     onChange={(e) => setQuickForm({ ...quickForm, social_category: e.target.value })}
                     className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   >
-                    <option value="SC">{t('scCategory', 'Scheduled Caste (SC)')}</option>
-                    <option value="ST">{t('stCategory', 'Scheduled Tribe (ST)')}</option>
-                    <option value="Minority">{t('minorityCategory', 'Minority Community')}</option>
-                    <option value="Women/Special">{t('women entrepreneur / special category', 'Women / Special Category')}</option>
+                    <option value="SC">{t('Scheduled Caste (SC)', 'Scheduled Caste (SC)')}</option>
                   </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-200 mb-1">{t('gender')}</label>
+                    <label className="block text-xs font-medium text-slate-200 mb-1">{t('gender', 'Gender')}</label>
                     <select
                       value={quickForm.gender}
                       onChange={(e) => setQuickForm({ ...quickForm, gender: e.target.value })}
                       className="w-full bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     >
-                      <option value="female">{t('optionFemale')}</option>
-                      <option value="male">{t('optionMale')}</option>
-                      <option value="transgender">{t('optionTransgender')}</option>
+                      <option value="female">{t('Female', 'Female')}</option>
+                      <option value="male">{t('Male', 'Male')}</option>
                     </select>
                   </div>
 
@@ -251,7 +247,7 @@ export default function LandingPage() {
                   className="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm mt-2 cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>{t('btnAnalyzeSchemes')}</span>
+                  <span>{t('btnAnalyzeSchemes', 'Analyze Schemes')}</span>
                 </button>
               </form>
             </div>

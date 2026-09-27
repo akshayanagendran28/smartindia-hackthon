@@ -56,11 +56,7 @@ export default function RequirementQuestionnairePage() {
                 onChange={(e) => setForm({ ...form, social_category: e.target.value })}
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
               >
-                <option value="SC">{t('scheduled caste (sc)')}</option>
-                <option value="ST">{t('scheduled tribe (st)')}</option>
-                <option value="OBC">{t('other backward classes (obc)')}</option>
-                <option value="Minority">{t('minority community')}</option>
-                <option value="Women/Special">{t('women entrepreneur / special category')}</option>
+                <option value="SC">{t('Scheduled Caste (SC)', 'Scheduled Caste (SC)')}</option>
               </select>
             </div>
 
@@ -71,9 +67,8 @@ export default function RequirementQuestionnairePage() {
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
               >
-                <option value="female">{t('female')}</option>
-                <option value="male">{t('male')}</option>
-                <option value="transgender">{t('transgender')}</option>
+                <option value="female">{t('Female', 'Female')}</option>
+                <option value="male">{t('Male', 'Male')}</option>
               </select>
             </div>
 
