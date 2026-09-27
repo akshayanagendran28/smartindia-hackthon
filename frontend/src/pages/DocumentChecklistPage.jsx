@@ -52,12 +52,19 @@ export default function DocumentChecklistPage() {
           key: 'aadhaar', 
           name: t('docAadhaar', 'Aadhaar Card'), 
           mandatory: true, 
-          desc: t('Identity & Address proof with mobile OTP linkage', 'Identity & Address proof with mobile OTP linkage'),
+          desc: t('Identity & Address proof with UIDAI Verhoeff checksum validation', 'Identity & Address proof with UIDAI Verhoeff checksum validation'),
           authority: 'UIDAI'
         },
         { 
+          key: 'pan', 
+          name: t('docPan', 'PAN Card'), 
+          mandatory: true, 
+          desc: t('Permanent Account Number for banking and financial KYC compliance', 'Permanent Account Number for banking and financial KYC compliance'),
+          authority: 'Income Tax Department (ITD)'
+        },
+        { 
           key: '10th', 
-          name: t('doc10th', '10th Standard Marksheet'), 
+          name: t('doc10th', '10th Standard Marksheet / Certificate'), 
           mandatory: true, 
           desc: t('Age proof & foundational academic merit verification', 'Age proof & foundational academic merit verification'),
           authority: 'State Board / CBSE / ICSE'
@@ -67,21 +74,7 @@ export default function DocumentChecklistPage() {
           name: t('doc12th', '12th Standard Marksheet / Diploma'), 
           mandatory: true, 
           desc: t('Higher secondary qualification for college admission', 'Higher secondary qualification for college admission'),
-          authority: 'HSC Board'
-        },
-        { 
-          key: 'admission', 
-          name: t('docAdmission', 'College Admission Offer / Allotment Letter'), 
-          mandatory: true, 
-          desc: t('Proof of admission into accredited technical/professional degree', 'Proof of admission into accredited technical/professional degree'),
-          authority: 'University / Institute'
-        },
-        { 
-          key: 'fee', 
-          name: t('docFeeStructure', 'Institutional Fee Schedule & Breakdown'), 
-          mandatory: true, 
-          desc: t('Official schedule of tuition, exam & hostel expenses', 'Official schedule of tuition, exam & hostel expenses'),
-          authority: 'College Finance Section'
+          authority: 'HSC Board / State Technical Board'
         },
         { 
           key: 'income', 
@@ -92,17 +85,10 @@ export default function DocumentChecklistPage() {
         },
         { 
           key: 'caste', 
-          name: t('docCaste', 'Caste / Community Certificate'), 
-          mandatory: application.category !== 'General', 
+          name: t('docCaste', 'Community / Caste Certificate'), 
+          mandatory: true, 
           desc: t('Mandatory for NSFDC / NBCFDC / NMDFC concessional rates', 'Mandatory for NSFDC / NBCFDC / NMDFC concessional rates'),
           authority: 'e-District / Revenue Dept'
-        },
-        { 
-          key: 'bank', 
-          name: t('docBank', 'Student / Parent Bank Passbook'), 
-          mandatory: true, 
-          desc: t('Bank account details for Direct Benefit Transfer (DBT)', 'Bank account details for Direct Benefit Transfer (DBT)'),
-          authority: 'Scheduled Bank'
         }
       ];
     } else if (effPurpose === 'SELF_EMPLOYMENT') {

@@ -1,3 +1,4 @@
+from app.models.application import PartnerInvitation
 import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship

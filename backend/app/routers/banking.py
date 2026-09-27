@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Banking & Offline Razorpay IFSC API Router
-Provides offline IFSC verification, branch discovery, and DBT subsidy bank validation.
+Provides offline IFSC verification, branch discovery, smart localized suggestions, and DBT subsidy bank validation.
 """
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import List, Optional, Dict, Any
@@ -28,6 +28,23 @@ def lookup_ifsc(ifsc_code: str):
             detail=f"IFSC Code '{ifsc_code}' not found in offline dataset."
         )
     return result
+
+@router.get("/suggestions")
+def get_partner_suggestions(
+    state: Optional[str] = Query(None, description="Customer State"),
+    district: Optional[str] = Query(None, description="Customer District"),
+    scheme_code: Optional[str] = Query(None, description="Target Scheme Code"),
+    limit: int = Query(6, description="Max suggestions")
+):
+    """
+    Returns smart localized Channel Partner & Bank recommendations ranked by proximity and suitability.
+    """
+    return OfflineBankingService.get_smart_suggestions(
+        state=state,
+        district=district,
+        scheme_code=scheme_code,
+        limit=limit
+    )
 
 @router.get("/branches")
 def search_branches(

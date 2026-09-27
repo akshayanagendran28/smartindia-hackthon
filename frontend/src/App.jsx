@@ -82,6 +82,7 @@ export default function App() {
                 <Route path="/schemes" element={<SchemeResultsPage />} />
                 <Route path="/scheme/:id" element={<SchemeDetailsPage />} />
                 <Route path="/explanation/:id" element={<EligibilityExplanationPage />} />
+                <Route path="/transparency" element={<EligibilityExplanationPage />} />
                 <Route path="/partners" element={<PartnerMapPage />} />
                 <Route path="/documents" element={<DocumentAssistantPage />} />
                 <Route path="/checklist" element={<DocumentChecklistPage />} />

@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Building2, Globe, User, LogOut, Menu, X, Sparkles, LayoutDashboard } from 'lucide-react';
+import { Building2, Globe, LogOut, LayoutDashboard } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { currentLanguage, setLanguage, languages, t } = useLanguage();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,31 +35,6 @@ const Navbar = () => {
               <p className="text-[11px] text-slate-500 font-medium hidden sm:block">AI-Driven Financial Scheme Matching for Entrepreneurs</p>
             </div>
           </Link>
-
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2 text-sm font-medium text-slate-700">
-            <Link to="/" className={`px-3 py-1.5 rounded-lg transition-colors ${location.pathname === '/' ? 'text-gov-blue font-semibold bg-blue-50' : 'hover:text-gov-blue hover:bg-slate-100'}`}>
-              {t('navHome')}
-            </Link>
-            <Link to="/find-scheme" className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${location.pathname === '/find-scheme' ? 'text-gov-blue font-semibold bg-blue-50' : 'hover:text-gov-blue hover:bg-slate-100'}`}>
-              <Sparkles className="w-4 h-4 text-gov-accent" />
-              {t('navFindScheme')}
-            </Link>
-            <Link to="/schemes" className={`px-3 py-1.5 rounded-lg transition-colors ${location.pathname === '/schemes' ? 'text-gov-blue font-semibold bg-blue-50' : 'hover:text-gov-blue hover:bg-slate-100'}`}>
-              {t('navSchemes')}
-            </Link>
-            <Link to="/calculator" className={`px-3 py-1.5 rounded-lg transition-colors ${location.pathname === '/calculator' ? 'text-gov-blue font-semibold bg-blue-50' : 'hover:text-gov-blue hover:bg-slate-100'}`}>
-              {t('navEmi')}
-            </Link>
-            <Link to="/documents" className={`px-3 py-1.5 rounded-lg transition-colors ${location.pathname === '/documents' ? 'text-gov-blue font-semibold bg-blue-50' : 'hover:text-gov-blue hover:bg-slate-100'}`}>
-              {t('navDocAssistant')}
-            </Link>
-            <Link to="/partners" className={`px-3 py-1.5 rounded-lg transition-colors ${location.pathname === '/partners' ? 'text-gov-blue font-semibold bg-blue-50' : 'hover:text-gov-blue hover:bg-slate-100'}`}>
-              {t('navPartners')}
-            </Link>
-            <Link to="/chat" className={`px-3 py-1.5 rounded-lg transition-colors ${location.pathname === '/chat' ? 'text-gov-blue font-semibold bg-blue-50' : 'hover:text-gov-blue hover:bg-slate-100'}`}>
-              {t('navChat')}
-            </Link>
-          </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative">
@@ -116,25 +90,9 @@ const Navbar = () => {
                 <Link to="/register" className="px-3.5 py-1.5 text-xs font-bold text-white bg-gov-blue hover:bg-gov-darkblue rounded-lg shadow-sm">{t('navRegister')}</Link>
               </div>
             )}
-
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100">
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
         </div>
       </div>
-
-      {isMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg">
-          <Link to="/" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-blue-50">{t('navHome')}</Link>
-          <Link to="/find-scheme" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-semibold text-gov-blue bg-blue-50">✨ {t('navFindScheme')}</Link>
-          <Link to="/schemes" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-blue-50">{t('navSchemes')}</Link>
-          <Link to="/calculator" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-blue-50">{t('navEmi')}</Link>
-          <Link to="/documents" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-blue-50">{t('navDocAssistant')}</Link>
-          <Link to="/partners" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-blue-50">{t('navPartners')}</Link>
-          <Link to="/chat" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-blue-50">{t('navChat')}</Link>
-        </div>
-      )}
     </header>
   );
 };

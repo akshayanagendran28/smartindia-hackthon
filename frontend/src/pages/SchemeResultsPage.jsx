@@ -254,7 +254,7 @@ export default function SchemeResultsPage() {
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{t('SIH 2026 Problem Statement SIH26092 • Deterministic Rules Engine')}</span>
+            <span>{t('Scheme Sathi • AI-Driven Statutory Rules Matching Engine')}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
             {filteredEligible.length} {t('Qualified Schemes for')} ₹{((application.loanAmount || 450000) / 100000).toLocaleString('en-IN')} {t('Lakhs')}

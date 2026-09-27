@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { 
   ShieldCheck, AlertTriangle, CheckCircle2, XCircle, ArrowLeft,
-  HelpCircle, Info, ChevronRight, Calculator, FileCheck, Sparkles, Languages
+  HelpCircle, Info, ChevronRight, Calculator, FileCheck, Sparkles, Languages, MapPin
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';

@@ -16,12 +16,11 @@ const getDocTypes = (pType) => {
   if (norm === 'EDUCATION') {
     return [
       { key: 'docAadhaar', name: 'Aadhaar Card', label: 'docAadhaar', icon: Shield, tag: 'UIDAI Verhoeff Checksum' },
-      { key: 'doc10th', name: '10th Marksheet', label: 'doc10th', icon: FileCheck, tag: 'Age & Foundational Merit' },
-      { key: 'doc12th', name: '12th Marksheet', label: 'doc12th', icon: Award, tag: 'Higher Secondary Credential' },
-      { key: 'docAdmission', name: 'Admission Offer Letter', label: 'docAdmission', icon: FileText, tag: 'Accredited Institution Proof' },
-      { key: 'docFeeStructure', name: 'Institutional Fee Schedule', label: 'docFeeStructure', icon: FileCode, tag: 'Tuition & Hostel Breakdown' },
+      { key: 'docPan', name: 'PAN Card', label: 'docPan', icon: FileText, tag: 'ITD Financial Compliance' },
+      { key: 'doc10th', name: '10th Marksheet / Certificate', label: 'doc10th', icon: FileCheck, tag: 'Age & Foundational Merit' },
+      { key: 'doc12th', name: '12th Marksheet / Certificate', label: 'doc12th', icon: Award, tag: 'Higher Secondary Credential' },
       { key: 'docIncome', name: 'Income Certificate', label: 'docIncome', icon: Database, tag: 'CSIS <= Rs. 4.5L Subsidy Cap' },
-      { key: 'docCaste', name: 'Caste Certificate', label: 'docCaste', icon: Award, tag: 'NSFDC/NBCFDC/NMDFC Quota' },
+      { key: 'docCaste', name: 'Community / Caste Certificate', label: 'docCaste', icon: Award, tag: 'NSFDC/NBCFDC Quota' },
     ];
   } else if (norm === 'SELF_EMPLOYMENT') {
     return [
@@ -240,28 +239,66 @@ export default function DocumentAssistantPage() {
     setError('');
     try {
       const normPurpose = (purposeType || application.purpose_type || 'EDUCATION').toUpperCase();
-      let keysToVerify = [];
+      let requiredKeys = [];
       if (normPurpose === 'EDUCATION') {
-        keysToVerify = ['docAadhaar', 'doc10th', 'doc12th', 'docAdmission', 'docFeeStructure', 'docIncome', 'docCaste'];
+        requiredKeys = ['docAadhaar', 'docPan', 'doc10th', 'doc12th', 'docIncome', 'docCaste'];
       } else if (normPurpose === 'SELF_EMPLOYMENT') {
-        keysToVerify = ['docAadhaar', 'docIncome', 'docCaste', 'docPan'];
+        requiredKeys = ['docAadhaar', 'docIncome', 'docCaste', 'docPan'];
       } else {
-        keysToVerify = ['docAadhaar', 'docPan', 'docCaste', 'docIncome', 'docDpr', 'docUdyam'];
+        requiredKeys = ['docAadhaar', 'docPan', 'docCaste', 'docIncome', 'docDpr', 'docUdyam'];
       }
-      for (const key of keysToVerify) {
-        try {
-          await documentsAPI.loadSyntheticSample(key, targetScheme);
-          recordDocumentVerified(key);
-        } catch (e) {
-          console.warn(`Synthetic auto-load for ${key}:`, e);
-        }
+
+      // 1. Fetch current vault documents
+      const res = await documentsAPI.getUserDocuments();
+      const currentVaultDocs = res.data || [];
+      setUserDocs(currentVaultDocs);
+
+      const uploadedDocTypes = new Set(
+        currentVaultDocs.map(d => (d.document_type || '').toLowerCase())
+      );
+
+      const isDocUploaded = (key) => {
+        const kLower = key.toLowerCase();
+        if (kLower === 'docaadhaar' || kLower === 'aadhaar') return uploadedDocTypes.has('aadhaar') || uploadedDocTypes.has('docaadhaar') || uploadedDocTypes.has('aadhaar card');
+        if (kLower === 'docpan' || kLower === 'pan') return uploadedDocTypes.has('pan') || uploadedDocTypes.has('docpan') || uploadedDocTypes.has('pan card');
+        if (kLower === 'doc10th' || kLower === '10th') return uploadedDocTypes.has('10th') || uploadedDocTypes.has('10th marksheet') || uploadedDocTypes.has('doc10th');
+        if (kLower === 'doc12th' || kLower === '12th') return uploadedDocTypes.has('12th') || uploadedDocTypes.has('12th marksheet') || uploadedDocTypes.has('doc12th');
+        if (kLower === 'docincome' || kLower === 'income') return uploadedDocTypes.has('income') || uploadedDocTypes.has('income certificate') || uploadedDocTypes.has('docincome');
+        if (kLower === 'doccaste' || kLower === 'caste') return uploadedDocTypes.has('caste') || uploadedDocTypes.has('caste certificate') || uploadedDocTypes.has('doccaste');
+        if (kLower === 'docdpr' || kLower === 'dpr') return uploadedDocTypes.has('dpr') || uploadedDocTypes.has('project report') || uploadedDocTypes.has('docdpr');
+        if (kLower === 'docudyam' || kLower === 'udyam') return uploadedDocTypes.has('udyam') || uploadedDocTypes.has('udyam registration') || uploadedDocTypes.has('docudyam');
+        return false;
+      };
+
+      const uploadedToVerify = requiredKeys.filter(k => isDocUploaded(k));
+      const missingKeys = requiredKeys.filter(k => !isDocUploaded(k));
+
+      if (uploadedToVerify.length === 0) {
+        setError('No uploaded documents found to verify. Please upload your mandatory documents first.');
+        setValidating(false);
+        return;
       }
-      setAllDocumentsVerified(true);
+
+      // Verify all uploaded documents
+      for (const key of uploadedToVerify) {
+        recordDocumentVerified(key);
+      }
+
       await fetchUserDocuments();
       await fetchRequiredChecklist();
-      setSelectedDocKey('docAadhaar');
+
+      if (missingKeys.length > 0) {
+        const missingNames = missingKeys.map(k => {
+          const m = DOC_TYPES.find(d => d.key === k);
+          return m ? m.name : k;
+        });
+        setError(`Verified ${uploadedToVerify.length} uploaded document(s). Missing: ${missingNames.join(', ')}. Please upload them to complete verification.`);
+      } else {
+        setAllDocumentsVerified(true);
+      }
     } catch (err) {
       console.error('Batch verification error:', err);
+      setError('Document verification process encountered an error.');
     } finally {
       setValidating(false);
     }
@@ -335,7 +372,7 @@ export default function DocumentAssistantPage() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>SIH 2026 Problem Statement SIH26092</span>
+              <span>{t('Scheme Sathi • Statutory Document Verification Engine')}</span>
             </span>
             <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30">
               Deterministic 7-Stage Validation

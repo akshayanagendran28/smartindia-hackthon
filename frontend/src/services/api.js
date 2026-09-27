@@ -81,6 +81,15 @@ export const partnersAPI = {
   getRecommended: (params) => api.get('/partners/recommended', { params }),
 };
 
+export const bankingAPI = {
+  getSuggestions: (params) => api.get('/banking/suggestions', { params }),
+  getBranches: (params) => api.get('/banking/branches', { params }),
+  getIfsc: (ifscCode) => api.get(`/banking/ifsc/${ifscCode}`),
+  verifyAccount: (data) => api.post('/banking/verify-account', data),
+  getBanks: () => api.get('/banking/banks'),
+  getStates: () => api.get('/banking/states'),
+};
+
 export const chatAPI = {
   sendMessage: (data) => api.post('/chat/message', data),
 };
@@ -92,7 +101,9 @@ export const notificationsAPI = {
 
 export const applicationsAPI = {
   submit: (data) => api.post('/applications/submit', data),
+  applyWithPartner: (data) => api.post('/applications/apply-with-partner', data),
   invitePartner: (appId, data) => api.post(`/applications/${appId}/invite-partner`, data),
+  invitePartnerDirect: (data) => api.post('/applications/invite-partner', data),
   partnerAction: (appId, data) => api.post(`/applications/${appId}/partner-action`, data),
   getMyApplications: () => api.get('/applications/my-applications'),
   getStatus: (appId) => api.get(`/applications/${appId}/status`),

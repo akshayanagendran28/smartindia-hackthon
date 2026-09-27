@@ -249,6 +249,64 @@ export default function EmiCalculatorPage() {
     });
   }
 
+  // Gated: If no scheme selected, render lock screen
+  if (!activeScheme) {
+    return (
+      <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6 space-y-8">
+        <StepProgressIndicator currentStep={6} />
+        <div className="bg-white p-12 rounded-3xl border border-slate-200 shadow-xl text-center space-y-6">
+          <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner border border-amber-200/60">
+            <Lock className="w-10 h-10" />
+          </div>
+
+          <div className="space-y-2 max-w-lg mx-auto">
+            <h2 className="text-2xl font-black text-slate-900">
+              {t('EMI Calculator Locked')}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              {t('The EMI Calculator requires statutory government interest rates, moratorium timelines, and subsidy rules from a verified scheme selection.')}
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl max-w-md mx-auto text-xs text-slate-600 space-y-2 text-left">
+            <div className="font-bold text-slate-800 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>{t('Beneficiary Application Details:')}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-200 pb-1">
+              <span>{t('Target Track:')}</span>
+              <span className="font-bold text-slate-900 capitalize">{t(purposeType)}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-200 pb-1">
+              <span>{t('Loan Quantum:')}</span>
+              <span className="font-bold text-slate-900">₹{(loanAmount).toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>{t('Category Quota:')}</span>
+              <span className="font-bold text-slate-900">{t(application.category || 'General')}</span>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
+            <button
+              onClick={() => navigate('/results')}
+              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+            >
+              <span>{t('Go to Step 4: Check Eligible Schemes')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => navigate('/find-scheme')}
+              className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
+            >
+              {t('Modify Requirement')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       {/* Workflow Step Progress */}
@@ -474,6 +532,23 @@ export default function EmiCalculatorPage() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          {/* Action to Step 7 Partner Locator */}
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 rounded-3xl text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h4 className="font-black text-base">{t('Ready to locate nodal banks & lending partners?')}</h4>
+              <p className="text-xs text-emerald-100 mt-0.5">
+                {t('View authorized banks and DIC/CSC centers in your district processing this scheme.')}
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/partners', { state: { scheme: activeScheme, loanAmount } })}
+              className="px-6 py-3 bg-white hover:bg-emerald-50 text-emerald-900 font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 shrink-0 hover:scale-[1.02]"
+            >
+              <span>{t('Proceed to Channel Partner Locator (Step 7)')}</span>
+              <ArrowRight className="w-4 h-4 text-emerald-700" />
+            </button>
           </div>
         </div>
       </div>

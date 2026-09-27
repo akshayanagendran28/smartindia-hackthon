@@ -797,23 +797,36 @@ def get_dynamic_required_checklist(
     current_user: User = Depends(get_current_user_flexible),
     db: Session = Depends(get_db)
 ):
-    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
-    eff_p_type = (purpose_type or (profile.purpose_type if profile else None) or "BUSINESS").upper()
-    eff_category = category or (profile.category if profile else "General") or "General"
-    eff_purpose = purpose or (profile.purpose if profile else "") or ""
-    eff_loan = loan_amount or (profile.required_loan_amount if profile else 1200000.0) or 1200000.0
-    eff_biz = business_type or (profile.business_type if profile else "manufacturing") or "manufacturing"
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first() if current_user else None
+    p_type_val = purpose_type if isinstance(purpose_type, str) else None
+    cat_val = category if isinstance(category, str) else None
+    purp_val = purpose if isinstance(purpose, str) else None
+    loan_val = loan_amount if isinstance(loan_amount, (int, float)) else None
+    biz_val = business_type if isinstance(business_type, str) else None
+
+    eff_p_type = (p_type_val or (profile.purpose_type if profile else None) or "BUSINESS").upper()
+    eff_category = cat_val or (profile.category if profile else "SC") or "SC"
+    eff_purpose = purp_val or (profile.purpose if profile else "") or ""
+    eff_loan = loan_val or (profile.required_loan_amount if profile else 1200000.0) or 1200000.0
+    eff_biz = biz_val or (profile.business_type if profile else "manufacturing") or "manufacturing"
 
     req_docs = []
 
     if eff_p_type == "EDUCATION":
-        # 100% Dynamic Education Document Requirements
+        # Education Loan Mandatory Document Requirements (10th, 12th, Aadhaar, Income, Caste, PAN)
         req_docs.append({
             "doc_key": "docAadhaar",
             "document_name": "Aadhaar Card",
             "document_type": "Aadhaar",
             "is_mandatory": True,
             "reason": "Mandatory identity proof & UIDAI Verhoeff checksum verification for DBT interest subvention."
+        })
+        req_docs.append({
+            "doc_key": "docPan",
+            "document_name": "PAN Card",
+            "document_type": "PAN",
+            "is_mandatory": True,
+            "reason": "Permanent Account Number verification for financial compliance and education loan sanction."
         })
         req_docs.append({
             "doc_key": "doc10th",
@@ -830,34 +843,19 @@ def get_dynamic_required_checklist(
             "reason": "Mandatory eligibility credential for higher professional & technical degree enrollment."
         })
         req_docs.append({
-            "doc_key": "docAdmission",
-            "document_name": "College / University Admission Offer Letter",
-            "document_type": "Admission Letter",
-            "is_mandatory": True,
-            "reason": "Proof of confirmed enrollment in accredited AICTE/UGC/NAAC technical or professional institute."
-        })
-        req_docs.append({
-            "doc_key": "docFeeStructure",
-            "document_name": "Institutional Fee Breakdown & Schedule",
-            "document_type": "Fee Structure",
-            "is_mandatory": True,
-            "reason": "Official college document establishing exact loan quantum for tuition, exams, and hostel fees."
-        })
-        req_docs.append({
             "doc_key": "docIncome",
             "document_name": "Annual Family Income Certificate",
             "document_type": "Income Certificate",
             "is_mandatory": True,
             "reason": "Mandatory for CSIS 100% full interest subsidy (Family income <= ₹4.50 Lakh/year)."
         })
-        if eff_category.upper() in ["SC", "ST", "OBC", "MINORITY", "EWS"]:
-            req_docs.append({
-                "doc_key": "docCaste",
-                "document_name": f"{eff_category.upper()} Community / Caste Certificate",
-                "document_type": "Caste Certificate",
-                "is_mandatory": True,
-                "reason": f"Required to unlock concessional interest rates under {eff_category.upper()} education credit quotas (NSFDC 3.5%-4%, NBCFDC, NMDFC 3%)."
-            })
+        req_docs.append({
+            "doc_key": "docCaste",
+            "document_name": f"{eff_category.upper() if eff_category else 'SC'} Community / Caste Certificate",
+            "document_type": "Caste Certificate",
+            "is_mandatory": True,
+            "reason": f"Required to unlock concessional interest rates under {eff_category.upper() if eff_category else 'SC'} education credit quotas (NSFDC 3.5%-4%, NBCFDC, NMDFC 3%)."
+        })
 
     elif eff_p_type == "SELF_EMPLOYMENT":
         # Dynamic Self-Employment Requirements
@@ -939,7 +937,7 @@ def get_dynamic_required_checklist(
                 "reason": "Provides priority lending status and exemption from processing fees under MSME Act."
             })
 
-    user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all()
+    user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all() if current_user else []
     user_doc_map = {}
     for d in user_docs:
         norm = DocumentValidationPipeline.normalize_doc_type(d.document_type).lower()

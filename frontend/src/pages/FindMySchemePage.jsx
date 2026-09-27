@@ -123,11 +123,16 @@ export default function FindMySchemePage() {
   // Handle Purpose Switcher
   const handlePurposeChange = (newPurpose) => {
     updatePurposeType(newPurpose);
+    const defaultLoan = newPurpose === 'EDUCATION' ? 450000 : (newPurpose === 'SELF_EMPLOYMENT' ? 50000 : 1200000);
     setFormData(prev => ({
       ...prev,
       purpose_type: newPurpose,
-      purposeType: newPurpose
+      purposeType: newPurpose,
+      required_loan_amount: defaultLoan,
+      loanAmount: defaultLoan,
+      required_loan: defaultLoan
     }));
+    updateLoanAmount(defaultLoan);
     setStep(1);
   };
 
@@ -202,7 +207,7 @@ export default function FindMySchemePage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-emerald-400/20 text-emerald-200 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-400/30">
-                {t('SIH26092 Official myScheme Intelligence')}
+                {t('Official myScheme Statutory Intelligence', 'Official myScheme Statutory Intelligence')}
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">

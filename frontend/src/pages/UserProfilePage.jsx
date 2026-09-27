@@ -119,36 +119,36 @@ export default function UserProfilePage() {
           const d = res.data;
           setForm({
             full_name: d.full_name || user?.full_name || '',
-            age: d.age || 28,
-            gender: d.gender || 'female',
-            social_category: d.social_category || d.category || 'General',
-            category: d.category || d.social_category || 'General',
-            religion: d.religion || 'hindu',
+            age: d.age || '',
+            gender: d.gender || '',
+            social_category: d.social_category || d.category || '',
+            category: d.category || d.social_category || '',
+            religion: d.religion || '',
             is_differently_abled: d.is_differently_abled || false,
-            state: d.state || d.location_state || 'Tamil Nadu',
-            district: d.district || d.location_district || 'Chennai',
+            state: d.state || d.location_state || user?.state || '',
+            district: d.district || d.location_district || user?.district || '',
             area_type: d.area_type || 'rural',
-            pincode: d.pincode || '600001',
-            education_qualification: d.education_qualification || 'graduate',
-            has_skill_training: d.has_skill_training !== undefined ? d.has_skill_training : true,
-            skill_training_details: d.skill_training_details || 'EDP 2-week certified',
-            business_type: d.business_type || (d.purpose_type === 'EDUCATION' ? 'education' : 'manufacturing'),
-            business_stage: d.business_stage || 'new',
-            industry_sector: d.industry_sector || 'food_processing',
-            project_cost: d.project_cost || (d.purpose_type === 'EDUCATION' ? 480000 : 1500000),
-            required_loan: d.required_loan || d.required_loan_amount || (d.purpose_type === 'EDUCATION' ? 450000 : 1200000),
-            own_contribution: d.own_contribution || 30000,
-            annual_income: d.annual_income || d.annual_family_income || 250000,
-            annual_family_income: d.annual_family_income || d.annual_income || 250000,
-            credit_score_range: '700_750',
-            has_existing_bank_account: true,
-            has_collateral: false,
+            pincode: d.pincode || '',
+            education_qualification: d.education_qualification || '',
+            has_skill_training: d.has_skill_training !== undefined ? d.has_skill_training : false,
+            skill_training_details: d.skill_training_details || '',
+            business_type: d.business_type || '',
+            business_stage: d.business_stage || '',
+            industry_sector: d.industry_sector || '',
+            project_cost: d.project_cost || '',
+            required_loan: d.required_loan || d.required_loan_amount || '',
+            own_contribution: d.own_contribution || '',
+            annual_income: d.annual_income || d.annual_family_income || '',
+            annual_family_income: d.annual_family_income || d.annual_income || '',
+            credit_score_range: d.credit_score_range || '700_750',
+            has_existing_bank_account: d.has_existing_bank_account !== undefined ? d.has_existing_bank_account : true,
+            has_collateral: d.has_collateral || false,
             is_artisan: d.is_artisan || false,
             is_street_vendor: d.is_street_vendor || false,
             has_udyam_registration: d.has_udyam_registration !== undefined ? d.has_udyam_registration : false,
-            has_gst: false,
+            has_gst: d.has_gst || false,
             purpose: d.purpose || (d.purpose_type === 'EDUCATION' ? 'Higher Education' : 'Start a Business'),
-            purpose_type: d.purpose_type || 'EDUCATION'
+            purpose_type: d.purpose_type || (d.purpose === 'Higher Education' ? 'EDUCATION' : 'BUSINESS')
           });
         }
       } catch (err) {
@@ -301,9 +301,17 @@ export default function UserProfilePage() {
     setMessage({ text: '', type: '' });
 
     try {
-      await confirmAndSaveProfile(form);
-      updateApplication(form);
-      updateLoanAmount(form.required_loan);
+      const sanitizedForm = { ...form };
+      if (sanitizedForm.purpose_type === 'EDUCATION') {
+        sanitizedForm.business_type = null;
+        sanitizedForm.business_stage = null;
+        sanitizedForm.industry_sector = null;
+        sanitizedForm.has_skill_training = false;
+        sanitizedForm.has_udyam_registration = false;
+      }
+      await confirmAndSaveProfile(sanitizedForm);
+      updateApplication(sanitizedForm);
+      updateLoanAmount(sanitizedForm.required_loan);
       setMessage({ text: t('Profile officially confirmed and synchronized with application workflow!'), type: 'success' });
     } catch (err) {
       setMessage({ text: t('Failed to update profile. Please check inputs.'), type: 'error' });
@@ -455,9 +463,8 @@ export default function UserProfilePage() {
                 onChange={handleChange}
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
               >
-                <option value="female">{t('femaleOption')}</option>
-                <option value="male">{t('maleOption')}</option>
-                <option value="transgender">{t('transgenderOption')}</option>
+                <option value="female">{t('Female', 'Female')}</option>
+                <option value="male">{t('Male', 'Male')}</option>
               </select>
             </div>
           </div>
@@ -473,13 +480,7 @@ export default function UserProfilePage() {
                 onChange={handleChange}
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 font-bold text-slate-900"
               >
-                <option value="General">{t('generalCategory')}</option>
-                <option value="SC">{t('scCategory')}</option>
-                <option value="ST">{t('stCategory')}</option>
-                <option value="OBC">{t('obcCategory')}</option>
-                <option value="Minority">{t('minorityCategory')}</option>
-                <option value="Woman">{t('women entrepreneur / special category')}</option>
-                <option value="Divyangjan">{t('specially abled / divyangjan')}</option>
+                <option value="SC">{t('Scheduled Caste (SC)', 'Scheduled Caste (SC)')}</option>
               </select>
             </div>
 
@@ -601,7 +602,8 @@ export default function UserProfilePage() {
                   setForm(prev => ({ 
                     ...prev, 
                     purpose_type: val,
-                    purpose: val === 'EDUCATION' ? 'Higher Education Loan' : (val === 'SELF_EMPLOYMENT' ? 'Micro-enterprise & Artisan' : 'Start a Business')
+                    purpose: val === 'EDUCATION' ? 'Higher Education Loan' : (val === 'SELF_EMPLOYMENT' ? 'Micro-enterprise & Artisan' : 'Start a Business'),
+                    required_loan: val === 'EDUCATION' ? (prev.required_loan || 450000) : (val === 'SELF_EMPLOYMENT' ? 50000 : (prev.required_loan || 1200000))
                   }));
                 }}
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 font-black text-emerald-800"
@@ -613,14 +615,16 @@ export default function UserProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">{t('total project cost (₹)')}</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {form.purpose_type === 'EDUCATION' ? t('Total Course / Study Cost (₹)') : t('total project cost (₹)')}
+              </label>
               <input
                 type="number"
                 name="project_cost"
                 min="10000"
                 max="50000000"
                 step="10000"
-                value={form.project_cost}
+                value={form.project_cost || form.required_loan || ''}
                 onChange={handleChange}
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
                 required
@@ -662,7 +666,9 @@ export default function UserProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">{t('Promoter Contribution / Margin Money (₹)')}</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {form.purpose_type === 'EDUCATION' ? t('Self / Family Contribution (₹)') : t('Promoter Contribution / Margin Money (₹)')}
+              </label>
               <input
                 type="number"
                 name="own_contribution"
@@ -677,74 +683,147 @@ export default function UserProfilePage() {
           </div>
         </div>
 
-        {/* Section 4: Operational Attributes & Certifications */}
+        {/* Section 4: Operational Attributes & Track-Specific Credentials */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-2 font-black text-slate-900 text-base pb-2 border-b border-slate-100">
             <Briefcase className="w-5 h-5 text-emerald-600" />
-            <span>{t('4. Operational Attributes, Qualifications & Credentials')}</span>
+            <span>
+              {form.purpose_type === 'EDUCATION' 
+                ? t('4. Academic Qualification & Course Details') 
+                : t('4. Operational Attributes, Qualifications & Credentials')}
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">{t('Education Level')}</label>
-              <select
-                name="education_qualification"
-                value={form.education_qualification}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
-              >
-                <option value="below_8th">{t('Below 8th Pass')}</option>
-                <option value="8th_pass">{t('8th Pass (Eligible for PMEGP Manufacturing > ₹10L)')}</option>
-                <option value="10th_pass">{t('10th Pass / SSC')}</option>
-                <option value="12th_pass">{t('12th Pass / HSC')}</option>
-                <option value="graduate">{t('Graduate / Diploma')}</option>
-                <option value="post_graduate">{t('Post Graduate & Professional')}</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">{t('Business Stage')}</label>
-              <select
-                name="business_stage"
-                value={form.business_stage}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
-              >
-                <option value="new">{t('New / Greenfield Project')}</option>
-                <option value="existing">{t('Existing / Expansion Project')}</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-            <label className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-emerald-300 cursor-pointer transition-all">
-              <input
-                type="checkbox"
-                name="has_skill_training"
-                checked={form.has_skill_training}
-                onChange={handleChange}
-                className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
-              />
+          {form.purpose_type === 'EDUCATION' ? (
+            /* Educational Loan Specific Fields */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <span className="text-xs font-bold text-slate-900 block">{t('Entrepreneurship / Skill Training Completed (EDP)')}</span>
-                <span className="text-[11px] text-slate-400">{t('Grants priority scoring under PMEGP and Vishwakarma')}</span>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('Current Academic Level')}</label>
+                <select
+                  name="education_qualification"
+                  value={form.education_qualification || '12th_pass'}
+                  onChange={handleChange}
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
+                >
+                  <option value="10th_pass">{t('10th Pass / SSC')}</option>
+                  <option value="12th_pass">{t('12th Pass / HSC')}</option>
+                  <option value="diploma">{t('Diploma / Polytechnic')}</option>
+                  <option value="graduate">{t('Undergraduate Degree (B.Tech / MBBS / B.Sc / B.Com)')}</option>
+                  <option value="post_graduate">{t('Postgraduate Degree (M.Tech / MBA / MS / PhD)')}</option>
+                </select>
               </div>
-            </label>
 
-            <label className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-emerald-300 cursor-pointer transition-all">
-              <input
-                type="checkbox"
-                name="has_udyam_registration"
-                checked={form.has_udyam_registration}
-                onChange={handleChange}
-                className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
-              />
               <div>
-                <span className="text-xs font-bold text-slate-900 block">{t('Udyam MSME Registered')}</span>
-                <span className="text-[11px] text-slate-400">{t('Required for formal MSME scheme disbursements')}</span>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('Target Course Stream')}</label>
+                <select
+                  name="course_type"
+                  value={form.course_type || 'Technical / Engineering'}
+                  onChange={handleChange}
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
+                >
+                  <option value="Technical / Engineering">{t('Engineering & Technology (B.Tech / B.E / M.Tech)')}</option>
+                  <option value="Medical / Healthcare">{t('Medical & Healthcare (MBBS / BDS / Nursing)')}</option>
+                  <option value="Management / Business">{t('Management & Business (MBA / PGDM)')}</option>
+                  <option value="Pure Sciences & Arts">{t('Pure Sciences, Law & Humanities')}</option>
+                  <option value="Overseas Higher Education">{t('Overseas / International Masters & PhD')}</option>
+                </select>
               </div>
-            </label>
-          </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('Institution Classification')}</label>
+                <select
+                  name="institution_type"
+                  value={form.institution_type || 'govt_accredited'}
+                  onChange={handleChange}
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
+                >
+                  <option value="govt_accredited">{t('Government / AICTE / UGC Accredited Institute')}</option>
+                  <option value="autonomous_university">{t('State / Central Autonomous University')}</option>
+                  <option value="private_naac">{t('Private NAAC A+ Ranked University')}</option>
+                  <option value="overseas_university">{t('Recognized Foreign / International University')}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('Admission Status')}</label>
+                <select
+                  name="admission_status"
+                  value={form.admission_status || 'confirmed'}
+                  onChange={handleChange}
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
+                >
+                  <option value="confirmed">{t('Confirmed Admission / Offer Letter Received')}</option>
+                  <option value="counseling">{t('Merit List / Entrance Exam Qualified (Counseling)')}</option>
+                  <option value="applied">{t('Application Submitted / Awaiting Scorecard')}</option>
+                </select>
+              </div>
+            </div>
+          ) : (
+            /* Business & Micro-Enterprise Fields */
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('Education Level')}</label>
+                  <select
+                    name="education_qualification"
+                    value={form.education_qualification}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
+                  >
+                    <option value="below_8th">{t('Below 8th Pass')}</option>
+                    <option value="8th_pass">{t('8th Pass (Eligible for PMEGP Manufacturing > ₹10L)')}</option>
+                    <option value="10th_pass">{t('10th Pass / SSC')}</option>
+                    <option value="12th_pass">{t('12th Pass / HSC')}</option>
+                    <option value="graduate">{t('Graduate / Diploma')}</option>
+                    <option value="post_graduate">{t('Post Graduate & Professional')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('Business Stage')}</label>
+                  <select
+                    name="business_stage"
+                    value={form.business_stage}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
+                  >
+                    <option value="new">{t('New / Greenfield Project')}</option>
+                    <option value="existing">{t('Existing / Expansion Project')}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                <label className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-emerald-300 cursor-pointer transition-all">
+                  <input
+                    type="checkbox"
+                    name="has_skill_training"
+                    checked={form.has_skill_training}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">{t('Entrepreneurship / Skill Training Completed (EDP)')}</span>
+                    <span className="text-[11px] text-slate-400">{t('Grants priority scoring under PMEGP and Vishwakarma')}</span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-emerald-300 cursor-pointer transition-all">
+                  <input
+                    type="checkbox"
+                    name="has_udyam_registration"
+                    checked={form.has_udyam_registration}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">{t('Udyam MSME Registered')}</span>
+                    <span className="text-[11px] text-slate-400">{t('Required for formal MSME scheme disbursements')}</span>
+                  </div>
+                </label>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Submit & Next Step Action */}

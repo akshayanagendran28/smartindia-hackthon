@@ -63,7 +63,7 @@ class Notification(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
-    notification_type = Column(String(50), default="scheme_match") # scheme_match, doc_missing, scheme_update, partner_alert
+    notification_type = Column(String(50), default="scheme_match") # scheme_match, doc_missing, scheme_update, partner_alert, status_update, appointment_alert, fund_alert
     is_read = Column(Boolean, default=False)
     link = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -112,13 +112,27 @@ class SchemeApplication(Base):
     subsidy_amount = Column(Float, default=0.0)
     calculated_emi = Column(Float, default=0.0)
 
-    # Status: DRAFT, SUBMITTED, INVITATION_SENT, PARTNER_ASSIGNED, UNDER_REVIEW, SANCTIONED, REJECTED
+    # Core Application Status: DRAFT, SUBMITTED, INVITATION_SENT, PARTNER_ASSIGNED, UNDER_REVIEW, SANCTIONED, REJECTED, COMPLETED
     status = Column(String(50), default="SUBMITTED", index=True)
     invitation_status = Column(String(50), default="NONE", index=True) # NONE, PENDING, ACCEPTED, REJECTED
     
+    # Financial Processing Lifecycle:
+    loan_status = Column(String(50), default="PENDING", index=True) # PENDING, UNDER_REVIEW, SANCTIONED, APPROVED, REJECTED, DISBURSEMENT_PROCESSING
+    fund_status = Column(String(50), default="PENDING", index=True) # NOT_APPLICABLE, PENDING, PROCESSING, APPROVED, RELEASED, ON_HOLD
+    fund_amount = Column(Float, default=0.0)
+    fund_release_date = Column(DateTime, nullable=True)
+    fund_remarks = Column(Text, nullable=True)
+    
+    # Appointment Lifecycle:
+    appointment_status = Column(String(50), default="NOT_REQUIRED", index=True) # NOT_REQUIRED, PENDING, SCHEDULED, COMPLETED, MISSED, RESCHEDULED
+    appointment_date = Column(DateTime, nullable=True)
+    appointment_time = Column(String(50), nullable=True)
+    appointment_venue = Column(String(255), nullable=True)
+    appointment_remarks = Column(Text, nullable=True)
+
     applicant_data = Column(Text, default="{}") # JSON: Demographics, Course/Business details
     verified_documents = Column(Text, default="[]") # JSON array of verified doc keys
-    status_history = Column(Text, default="[]") # JSON array of {status, timestamp, title, description, updated_by}
+    status_history = Column(Text, default="[]") # JSON array of {status, timestamp, title, description, updated_by, actor_role}
     partner_notes = Column(Text, nullable=True)
     rejection_reason = Column(Text, nullable=True)
 
@@ -147,3 +161,21 @@ class PartnerInvitation(Base):
     application = relationship("SchemeApplication", back_populates="invitations")
     partner = relationship("ChannelPartner")
     user = relationship("User")
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    actor_role = Column(String(50), default="admin") # admin, partner, customer, system
+    actor_name = Column(String(255), default="Administrator")
+    action = Column(String(100), nullable=False) # SCHEME_ADDED, SCHEME_EDITED, SCHEME_DEACTIVATED, RULE_MODIFIED, LOAN_STATUS_UPDATED, FUND_STATUS_UPDATED, APPOINTMENT_SCHEDULED, CUSTOMER_VIEW_MODE
+    entity_type = Column(String(100), nullable=False) # scheme, application, customer, partner, rule
+    entity_id = Column(String(100), nullable=True)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+    reason = Column(Text, nullable=True)
+    ip_address = Column(String(50), default="127.0.0.1")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    actor = relationship("User")

@@ -181,7 +181,60 @@ export const DICTIONARY = {
     unitLakh: 'Lakh',
     unitMonths: 'Months',
     specialRural: '35% Special Rural',
-    lowInterest: 'Concessional Interest'
+    lowInterest: 'Concessional Interest',
+    heroTitle: 'AI-Powered Scheme Discovery & Capital Subsidy Matching',
+    heroSubtitle: 'Discover, verify, and apply for central and state financial schemes tailored for marginalized founders, students, and micro-entrepreneurs.',
+    instantCheckTitle: 'Instant Eligibility Check',
+    instantCheckSubtitle: 'Find matched schemes and subsidies in 30 seconds',
+    btnAnalyzeSchemes: 'Analyze Matching Schemes',
+    liveAiBadge: 'Live AI Engine',
+    tailoredFor: 'Tailored for Priority Beneficiaries',
+    scStFounders: 'SC/ST Founders',
+    womenEntrepreneurs: 'Women Entrepreneurs',
+    minorityCommunities: 'Minority Communities',
+    streetVendors: 'Street Vendors',
+    traditionalArtisans: 'Traditional Artisans',
+    differentlyAbled: 'Differently Abled (Divyangjan)',
+    statCentralState: 'Central & State Schemes',
+    statSubsidies: 'Maximum Subsidies',
+    statLanguages: 'Regional Languages',
+    statIntegrity: 'Rule Verification Integrity',
+    workflowTitle: 'How Scheme Sathi Works',
+    workflowSubtitle: 'Transparent 4-Step Journey from Profile to Bank Sanction',
+    step1WorkflowTitle: 'Profile & Requirements Intake',
+    step1WorkflowDesc: 'Provide your education or business goals, social category, and funding needs.',
+    step2WorkflowTitle: 'Deterministic Rules Engine',
+    step2WorkflowDesc: 'Real-time evaluation against official gazetted rules and eligibility criteria.',
+    step3WorkflowTitle: 'OCR Document Pre-Validation',
+    step3WorkflowDesc: 'Automatic client-side verification and checksums with zero raw PII storage.',
+    step4WorkflowTitle: 'Channel Partner Routing',
+    step4WorkflowDesc: 'Direct application handoff to nearest nodal banks and industry centres.',
+    featuredSchemesTitle: 'Featured Verified Schemes',
+    featuredSchemesSubtitle: 'Explore top government financial schemes for marginalized founders.',
+    targetMarginalized: 'Priority Beneficiary',
+    maxLoan: 'Maximum Loan',
+    subsidyRate: 'Subsidy Rate',
+    tenor: 'Repayment Tenure',
+    viewDetails: 'View Details',
+    ctaTitle: 'Ready to Find Your Government Scheme?',
+    ctaDesc: 'Experience instant scheme matching, verified document checks, and transparent rule explanations.',
+    ctaButton: 'Check My Eligibility Now',
+    demographicsTitle: '1. Beneficiary Demographics & Identification',
+    fullName: 'Full Name',
+    ageYears: 'Age (Years)',
+    femaleOption: 'Female',
+    maleOption: 'Male',
+    transgenderOption: 'Transgender',
+    generalCategory: 'General Category',
+    scCategory: 'Scheduled Caste (SC)',
+    stCategory: 'Scheduled Tribe (ST)',
+    obcCategory: 'Other Backward Class (OBC)',
+    minorityCategory: 'Minority Community',
+    ruralOption: 'Rural Area (Higher Subsidy)',
+    urbanOption: 'Urban Area',
+    businessType: 'Business Type',
+    saving: 'Saving...',
+    'confirm & save profile': 'Confirm & Save Profile'
   },
   ta: {
     appName: 'ஸ்கீம் சாதி (SCHEME SATHI)',
@@ -252,7 +305,60 @@ export const DICTIONARY = {
     unitLakh: 'இலட்சம்',
     unitMonths: 'மாதங்கள்',
     specialRural: '35% கிராமப்புற சிறப்பு மானியம்',
-    lowInterest: 'குறைந்த வட்டி சலுகை'
+    lowInterest: 'குறைந்த வட்டி சலுகை',
+    heroTitle: 'AI-இயங்கும் அரசு திட்டக் கண்டுபிடிப்பு & மூலதன மானிய பொருத்தம்',
+    heroSubtitle: 'விளிம்புநிலை நிறுவனர்கள், மாணவர்கள் மற்றும் குறுந்தொழில் முனைவோருக்கான மத்திய மற்றும் மாநில அரசு நிதி உதவி திட்டங்கள்.',
+    instantCheckTitle: 'உடனடி தகுதி சரிபார்ப்பு',
+    instantCheckSubtitle: '30 வினாடிகளில் உங்களுக்கான திட்டங்கள் மற்றும் மானியங்களை கண்டறியவும்',
+    btnAnalyzeSchemes: 'பொருத்தமான திட்டங்களை பகுப்பாய்வு செய்க',
+    liveAiBadge: 'நேரலை AI இன்ஜின்',
+    tailoredFor: 'முன்னுரிமை பயனாளிகளுக்கான திட்டம்',
+    scStFounders: 'SC/ST தொழில்முனைவோர்',
+    womenEntrepreneurs: 'பெண் தொழில்முனைவோர்',
+    minorityCommunities: 'சிறுபான்மையினர்',
+    streetVendors: 'தெருவோர வியாபாரிகள்',
+    traditionalArtisans: 'பாரம்பரிய கைவினைஞர்கள்',
+    differentlyAbled: 'மாற்றுத்திறனாளிகள் (திவ்யாங்ஜன்)',
+    statCentralState: 'மத்திய & மாநில திட்டங்கள்',
+    statSubsidies: 'அதிகபட்ச மானியம்',
+    statLanguages: 'பிராந்திய மொழிகள்',
+    statIntegrity: 'விதிமுறை சரிபார்ப்பு நம்பகத்தன்மை',
+    workflowTitle: 'திட்டம் சாதி எவ்வாறு செயல்படுகிறது',
+    workflowSubtitle: 'சுயவிவரம் முதல் வங்கி அனுமதி வரையிலான 4-படி வெளிப்படையான செயல்முறை',
+    step1WorkflowTitle: 'சுயவிவரம் & தேவைகள் பதிவு',
+    step1WorkflowDesc: 'உங்கள் கல்வி அல்லது வணிக இலக்குகள், சமூகப் பிரிவு மற்றும் நிதித் தேவைகளை வழங்கவும்.',
+    step2WorkflowTitle: 'துல்லியமான விதிமுறை சரிபார்ப்பு',
+    step2WorkflowDesc: 'அதிகாரப்பூர்வ அரசு விதிகளின்படி நிகழ்நேர தகுதி மதிப்பீடு.',
+    step3WorkflowTitle: 'OCR ஆவண முன்சரிபார்ப்பு',
+    step3WorkflowDesc: 'தனியுரிமை பாதுகாப்புடன் தானியங்கி ஆவண சரிபார்ப்பு.',
+    step4WorkflowTitle: 'வங்கி கிளைகளுக்கு அனுப்புதல்',
+    step4WorkflowDesc: 'அருகிலுள்ள முதன்மை வங்கிகள் மற்றும் தொழில் மையங்களுக்கு நேரடி விண்ணப்ப பரிமாற்றம்.',
+    featuredSchemesTitle: 'முக்கிய சரிபார்க்கப்பட்ட திட்டங்கள்',
+    featuredSchemesSubtitle: 'முன்னுரிமை பயனாளிகளுக்கான சிறந்த அரசு நிதியுதவி திட்டங்களை ஆராயுங்கள்.',
+    targetMarginalized: 'முன்னுரிமை பயனாளி',
+    maxLoan: 'அதிகபட்ச கடன்',
+    subsidyRate: 'மானிய விகிதம்',
+    tenor: 'திருப்பிச் செலுத்தும் காலம்',
+    viewDetails: 'விவரங்களை காண்க',
+    ctaTitle: 'உங்களுக்கான அரசு திட்டத்தை கண்டறிய தயாரா?',
+    ctaDesc: 'உடனடி திட்டப் பொருத்தம் மற்றும் வெளிப்படையான விதிமுறை விளக்கங்களை அனுபவியுங்கள்.',
+    ctaButton: 'எனது தகுதியை இப்போதே சரிபார்க்கவும்',
+    demographicsTitle: '1. பயனாளி சுயவிவரம் & அடையாளம்',
+    fullName: 'முழு பெயர்',
+    ageYears: 'வயது (ஆண்டுகள்)',
+    femaleOption: 'பெண்',
+    maleOption: 'ஆண்',
+    transgenderOption: 'திருநங்கை',
+    generalCategory: 'பொதுப் பிரிவு',
+    scCategory: 'பட்டியலின சாதி (SC)',
+    stCategory: 'பழங்குடியினர் (ST)',
+    obcCategory: 'இதர பிற்படுத்தப்பட்டோர் (OBC)',
+    minorityCategory: 'சிறுபான்மையினர்',
+    ruralOption: 'கிராமப்புறம் (அதிக மானியம்)',
+    urbanOption: 'நகர்ப்புறம்',
+    businessType: 'தொழில் வகை',
+    saving: 'சேமிக்கிறது...',
+    'confirm & save profile': 'சுயவிவரத்தை உறுதிசெய்து சேமிக்கவும்'
   },
   hi: {
     appName: 'स्कीम साथी (SCHEME SATHI)',
@@ -319,11 +425,63 @@ export const DICTIONARY = {
     docAdmission: 'प्रवेश पत्र (ऑफर लेटर)',
     docFeeStructure: 'फीस संरचना',
     docBank: 'बैंक खाता विवरण',
-    docEdp: 'ईडीपी प्रशिक्षण प्रमाण पत्र',
     unitLakh: 'लाख',
     unitMonths: 'महीने',
     specialRural: '35% विशेष ग्रामीण सब्सिडी',
-    lowInterest: 'रियायती ब्याज दर'
+    lowInterest: 'रियायती ब्याज दर',
+    heroTitle: 'एआई-संचालित योजना खोज एवं पूंजीगत सब्सिडी मिलान',
+    heroSubtitle: 'वंचित उद्यमियों, छात्रों और सूक्ष्म-व्यवसायियों के लिए केंद्र और राज्य सरकार की वित्तीय योजनाएं।',
+    instantCheckTitle: 'त्वरित पात्रता जांच',
+    instantCheckSubtitle: '30 सेकंड में अपने लिए उपयुक्त योजनाएं और सब्सिडी खोजें',
+    btnAnalyzeSchemes: 'संगत योजनाओं का विश्लेषण करें',
+    liveAiBadge: 'लाइव एआई इंजन',
+    tailoredFor: 'प्राथमिकता लाभार्थियों के लिए विशेष योजनाएं',
+    scStFounders: 'अजा/अजजा उद्यमी (SC/ST)',
+    womenEntrepreneurs: 'महिला उद्यमी',
+    minorityCommunities: 'अल्पसंख्यक समुदाय',
+    streetVendors: 'स्ट्रीट वेंडर्स (फेरीवाले)',
+    traditionalArtisans: 'पारंपरिक कारीगर व शिल्पकार',
+    differentlyAbled: 'दिव्यांगजन उद्यमी',
+    statCentralState: 'केंद्रीय व राज्य योजनाएं',
+    statSubsidies: 'अधिकतम सब्सिडी',
+    statLanguages: 'क्षेत्रीय भाषाएं',
+    statIntegrity: 'सत्यापित नियम अखंडता',
+    workflowTitle: 'स्कीम साथी कैसे काम करता है',
+    workflowSubtitle: 'प्रोफ़ाइल से बैंक स्वीकृति तक 4-चरणीय पारदर्शी प्रक्रिया',
+    step1WorkflowTitle: 'प्रोफ़ाइल एवं आवश्यकता विवरण',
+    step1WorkflowDesc: 'अपने शिक्षा या व्यावसायिक लक्ष्य, सामाजिक श्रेणी और आवश्यक ऋण राशि दर्ज करें।',
+    step2WorkflowTitle: 'सटीक राजपत्रित नियम इंजन',
+    step2WorkflowDesc: 'आधिकारिक सरकारी नियमों के अनुसार वास्तविक समय में पात्रता का मूल्यांकन।',
+    step3WorkflowTitle: 'ओसीआर दस्तावेज़ पूर्व-सत्यापन',
+    step3WorkflowDesc: 'गोपनीयता सुरक्षा के साथ स्वचालित दस्तावेज़ सत्यापन और चेकसम।',
+    step4WorkflowTitle: 'बैंक शाखाओं को प्रेषण',
+    step4WorkflowDesc: 'निकटतम नोडल बैंक और उद्योग केंद्रों को सीधे आवेदन भेजना।',
+    featuredSchemesTitle: 'प्रमुख सत्यापित सरकारी योजनाएं',
+    featuredSchemesSubtitle: 'वंचित उद्यमियों के लिए शीर्ष सरकारी वित्तीय योजनाओं का अन्वेषण करें।',
+    targetMarginalized: 'प्राथमिकता लाभार्थी',
+    maxLoan: 'अधिकतम ऋण',
+    subsidyRate: 'सब्सिडी दर',
+    tenor: 'पुनर्भुगतान अवधि',
+    viewDetails: 'विवरण देखें',
+    ctaTitle: 'क्या आप अपनी सरकारी योजना खोजने के लिए तैयार हैं?',
+    ctaDesc: 'तत्काल योजना मिलान और पारदर्शी नियम व्याख्या का अनुभव करें।',
+    ctaButton: 'अपनी पात्रता अभी जांचें',
+    demographicsTitle: '1. लाभार्थी जनसांख्यिकी एवं पहचान',
+    fullName: 'पूरा नाम',
+    ageYears: 'आयु (वर्ष)',
+    femaleOption: 'महिला',
+    maleOption: 'पुरुष',
+    transgenderOption: 'ट्रांसजेंडर',
+    generalCategory: 'सामान्य श्रेणी',
+    scCategory: 'अनुसूचित जाति (SC)',
+    stCategory: 'अनुसूचित जनजाति (ST)',
+    obcCategory: 'अन्य पिछड़ा वर्ग (OBC)',
+    minorityCategory: 'अल्पसंख्यक समुदाय',
+    ruralOption: 'ग्रामीण क्षेत्र (उच्चतम सब्सिडी)',
+    urbanOption: 'शहरी क्षेत्र',
+    businessType: 'व्यवसाय का प्रकार',
+    saving: 'सहेजा जा रहा है...',
+    'confirm & save profile': 'प्रोफ़ाइल की पुष्टि करें और सहेजें'
   },
   te: {
     appName: 'స్కీమ్ సాథి (SCHEME SATHI)',
@@ -872,7 +1030,11 @@ export const LanguageProvider = ({ children }) => {
   const t = (keyOrPhrase, fallback) => {
     if (!keyOrPhrase) return '';
     const textStr = String(keyOrPhrase).trim();
-    if (currentLanguage === 'en') return fallback !== undefined ? fallback : textStr;
+    if (currentLanguage === 'en') {
+      const enDict = DICTIONARY['en'];
+      if (enDict && enDict[textStr]) return enDict[textStr];
+      return fallback !== undefined ? fallback : textStr;
+    }
 
     // 1. Direct dictionary key match
     const langDict = DICTIONARY[currentLanguage];
@@ -887,12 +1049,24 @@ export const LanguageProvider = ({ children }) => {
       return phraseMap[lowerKey];
     }
 
-    // 3. Fallback to Hindi phrase map if available
+    // 3. Match via English dictionary phrase lookup
+    if (DICTIONARY.en && DICTIONARY.en[textStr]) {
+      const enValLower = DICTIONARY.en[textStr].toLowerCase();
+      if (phraseMap && phraseMap[enValLower]) {
+        return phraseMap[enValLower];
+      }
+      if (PHRASE_MAP.hi && PHRASE_MAP.hi[enValLower]) {
+        return PHRASE_MAP.hi[enValLower];
+      }
+      return DICTIONARY.en[textStr];
+    }
+
+    // 4. Fallback to Hindi phrase map if available
     if (PHRASE_MAP.hi && PHRASE_MAP.hi[lowerKey] && currentLanguage !== 'en') {
       return PHRASE_MAP.hi[lowerKey];
     }
 
-    // 4. Default fallback
+    // 5. Default fallback
     return fallback !== undefined ? fallback : textStr;
   };
 
