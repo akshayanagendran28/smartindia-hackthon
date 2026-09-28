@@ -301,21 +301,29 @@ export const ApplicationProvider = ({ children }) => {
   };
 
   const selectScheme = (scheme) => {
+    const sType = scheme?.purpose_type ? scheme.purpose_type.toUpperCase() : (scheme?.purposeType ? scheme.purposeType.toUpperCase() : null);
     setApplication(prev => ({
       ...prev,
-      selectedScheme: scheme
+      selectedScheme: scheme,
+      purpose_type: sType || prev.purpose_type,
+      purposeType: sType || prev.purposeType,
     }));
     setWorkflowStage(WORKFLOW_STAGES.SCHEME_SELECTED);
   };
 
+  const currentPType = (application.purpose_type || application.purposeType || 'EDUCATION').toUpperCase();
+  const validSelectedScheme = (application.selectedScheme && (application.selectedScheme.purpose_type || '').toUpperCase() === currentPType)
+    ? application.selectedScheme
+    : null;
+
   return (
     <ApplicationContext.Provider value={{
       application,
-      purposeType: application.purpose_type || application.purposeType || 'EDUCATION',
+      purposeType: currentPType,
       loanAmount: application.loanAmount || 450000,
       workflowStage,
       isProfileConfirmed: application.isProfileConfirmed,
-      selectedScheme: application.selectedScheme,
+      selectedScheme: validSelectedScheme,
       verifiedDocKeys: application.verifiedDocKeys || [],
       allDocumentsVerified: application.allDocumentsVerified || false,
       updatePurposeType,

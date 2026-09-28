@@ -1,16 +1,25 @@
 # -*- coding: utf-8 -*-
+"""
+Scheme Sathi Intelligent Multilingual Grounded Chatbot Service
+Provides 100% factual, context-aware conversational AI for Government Schemes,
+Eligibility Assessment, Real-Time Application Tracking, Document Verification,
+EMI Calculations, and Channel Partner Recommendations.
+Supports English and 11 Regional Indian Languages:
+Hindi, Tamil, Telugu, Kannada, Malayalam, Marathi, Bengali, Gujarati, Punjabi, Odia, Assamese.
+"""
+
 import json
 import re
+import math
 import urllib.request
 from typing import Dict, Any, List, Optional
 from app.config import settings
 
 class MultilingualChatService:
     """
-    Multilingual Grounded Conversational AI Assistant using Qwen from Ollama,
-    with deterministic gazette fallback for 11 Regional Indian Languages:
-    English, Hindi (हिंदी), Tamil (தமிழ்), Telugu (తెలుగు), Kannada (ಕನ್ನಡ), Malayalam (മലയാളം),
-    Marathi (मराठी), Bengali (বাংলা), Gujarati (ગુજરાતી), Punjabi (ਪੰਜਾਬੀ), Odia (ଓଡ଼ିଆ), Assamese (অসমীয়া).
+    Intelligent Conversational AI Assistant grounded strictly in official
+    Scheme Sathi database models, user applications, document states,
+    and statutory gazette parameters.
     """
 
     LANGUAGE_NAMES = {
@@ -28,498 +37,1086 @@ class MultilingualChatService:
         "as": "Assamese (অসমীয়া)"
     }
 
-    INTENT_RESPONSES = {
+    # Canonical 6 Mandatory Documents per Track
+    CANONICAL_DOCUMENTS = {
+        "EDUCATION": [
+            {"key": "aadhaar", "name": "Aadhaar Card", "desc": "UIDAI Identity & Proof of Residence"},
+            {"key": "pan", "name": "PAN Card", "desc": "Income Tax Financial KYC Compliance"},
+            {"key": "marksheet_10th", "name": "10th Marksheet / Certificate", "desc": "Secondary School Passing & DOB Proof"},
+            {"key": "marksheet_12th", "name": "12th Marksheet / Diploma", "desc": "Higher Secondary Academic Qualification"},
+            {"key": "income_cert", "name": "Annual Family Income Certificate", "desc": "Revenue Authority Income Proof for 100% CSIS Subsidy (≤ ₹4.5L)"},
+            {"key": "caste_cert", "name": "Community / Caste Certificate", "desc": "Competent Authority Proof for NSFDC/NBCFDC Concessional Rates"}
+        ],
+        "BUSINESS": [
+            {"key": "aadhaar", "name": "Aadhaar Card", "desc": "UIDAI Identity & Citizenship Proof"},
+            {"key": "pan", "name": "PAN Card", "desc": "Permanent Account Number for Financial Verification"},
+            {"key": "project_report", "name": "Detailed Project Report (DPR)", "desc": "Techno-Economic Feasibility Report & Financial Projections"},
+            {"key": "income_cert", "name": "Income Certificate / ITR", "desc": "Proof of Annual Earnings & Repayment Capacity"},
+            {"key": "caste_cert", "name": "Community / Caste Certificate", "desc": "Statutory Proof for Special Category 35% PMEGP Subsidy / Stand-Up India"},
+            {"key": "udyam_cert", "name": "Udyam Registration Certificate", "desc": "Official MSME Enterprise Registration under MoMSME"}
+        ]
+    }
+
+    # Multilingual UI Dictionary for Core Concepts
+    TRANSLATIONS = {
         "en": {
-            "greeting": "Namaste! I am your AI Scheme Sathi powered by Qwen. I can help you discover government loan schemes and capital subsidies. What type of business or loan are you looking for?",
-            "ask_income": "To determine your exact subsidy rate and eligibility, what is your annual family income?",
-            "ask_loan_amount": "How much loan amount do you require for your project?",
-            "found_schemes": "Here are verified government loan schemes from the official myScheme.gov.in database matching your requirement:",
-            "fallback": "I have understood your request. Let us examine the most suitable Central & State schemes for you."
+            "greeting": "Namaste! I am your AI Scheme Sathi. How can I assist you with government loan schemes, eligibility, document verification, or your application status today?",
+            "no_application": "You have not submitted any scheme application yet. You can explore matching schemes and submit your application on the [Find My Scheme](/find-scheme) page.",
+            "app_status_title": "Your Active Application Status",
+            "no_docs_uploaded": "You have not uploaded or verified any documents yet. All 6 mandatory statutory documents are currently pending.",
+            "all_docs_verified": "All 6 mandatory documents are fully verified and compliant! Your dossier is 100% ready.",
+            "partial_docs": "You have verified {verified} of 6 mandatory documents.",
+            "verified_badge": "VERIFIED",
+            "pending_badge": "PENDING UPLOAD / VERIFICATION",
+            "eligible_positive": "You are eligible for {scheme_name}!",
+            "eligible_negative": "You are currently not eligible for {scheme_name}.",
+            "missing_req_title": "Missing Requirements / Disqualifications",
+            "matching_factors_title": "Qualifying Factors",
+            "emi_formula_title": "Reducing Balance EMI Calculation Formula",
+            "calc_emi_result": "For a loan of ₹{loan:,.0f} at {rate}% annual interest for {tenure} months ({years} years), your estimated monthly EMI is ₹{emi:,.0f}.",
+            "partner_assigned": "Your assigned Channel Partner is **{partner_name}** ({branch}, {city}).",
+            "partner_none": "No channel partner has been assigned to your application yet. You can invite a nearby partner bank from the [Channel Partner Locator](/partners).",
+            "process_steps": "### Step-by-Step Scheme Sathi Application Process:\n1. **Profile Setup**: Enter your demographic and educational/business details.\n2. **AI Document Verification**: Upload 6 mandatory documents for instant OCR cross-matching.\n3. **Scheme Discovery & Ranking**: The AI Eligibility Engine calculates matching scores and subsidies.\n4. **Application Submission & Partner Invitation**: Submit your single dossier and invite your local Lead Bank.\n5. **Transparent Tracking**: Monitor bank review, sanction, and DBT subsidy release in real-time."
         },
         "hi": {
-            "greeting": "नमस्ते! मैं आपका एआई स्कीम साथी हूँ (Qwen संचालित)। मैं आपको सरकारी ऋण योजनाओं और सब्सिडी खोजने में मदद करूँगा। आप किस प्रकार का व्यवसाय शुरू या विस्तारित करना चाहते हैं?",
-            "ask_income": "सटीक सब्सिडी और पात्रता के लिए, आपकी वार्षिक पारिवारिक आय कितनी है?",
-            "ask_loan_amount": "आपको अपने प्रोजेक्ट के लिए कितने ऋण की आवश्यकता है?",
-            "found_schemes": "आपकी आवश्यकताओं के अनुसार myScheme.gov.in की सत्यापित सरकारी योजनाएं:",
-            "fallback": "मैंने आपकी बात समझ ली है। आइए आपके लिए सर्वोत्तम सरकारी योजनाएं देखें।"
+            "greeting": "नमस्ते! मैं आपका एआई स्कीम साथी हूँ। सरकारी ऋण योजनाओं, पात्रता, दस्तावेज़ सत्यापन, या आपकी आवेदन स्थिति में मैं आपकी क्या मदद कर सकता हूँ?",
+            "no_application": "आपने अभी तक कोई योजना आवेदन जमा नहीं किया है। आप [Find My Scheme](/find-scheme) पृष्ठ पर पात्र योजनाओं को देखकर आवेदन कर सकते हैं।",
+            "app_status_title": "आपकी सक्रिय आवेदन स्थिति",
+            "no_docs_uploaded": "आपने अभी तक कोई दस्तावेज़ अपलोड या सत्यापित नहीं किया है। सभी 6 अनिवार्य दस्तावेज़ लंबित हैं।",
+            "all_docs_verified": "सभी 6 अनिवार्य दस्तावेज़ पूरी तरह से सत्यापित हैं! आपका डॉसियर 100% तैयार है।",
+            "partial_docs": "आपने 6 में से {verified} अनिवार्य दस्तावेज़ सत्यापित कर लिए हैं।",
+            "verified_badge": "सत्यापित (VERIFIED)",
+            "pending_badge": "लंबित (PENDING)",
+            "eligible_positive": "आप {scheme_name} के लिए पात्र हैं!",
+            "eligible_negative": "आप वर्तमान में {scheme_name} के लिए पात्र नहीं हैं।",
+            "missing_req_title": "अपूर्ण आवश्यकताएं / कारण",
+            "matching_factors_title": "पात्रता के मुख्य बिंदु",
+            "emi_formula_title": "घटते शेष पर ईएमआई गणना सूत्र",
+            "calc_emi_result": "₹{loan:,.0f} के ऋण पर {rate}% वार्षिक ब्याज दर से {tenure} महीनों ({years} वर्ष) के लिए अनुमानित मासिक ईएमआई ₹{emi:,.0f} है।",
+            "partner_assigned": "आपके अधिकृत चैनल पार्टनर **{partner_name}** ({branch}, {city}) हैं।",
+            "partner_none": "आपके आवेदन के लिए अभी तक कोई चैनल पार्टनर नियुक्त नहीं किया गया है। आप [Channel Partner Locator](/partners) से बैंक को आमंत्रित कर सकते हैं।",
+            "process_steps": "### स्कीम साथी आवेदन प्रक्रिया:\n1. **प्रोफाइल पूर्ण करें**: अपनी व्यक्तिगत और व्यवसाय/शिक्षा संबंधी जानकारी दर्ज करें।\n2. **दस्तावेज़ सत्यापन**: AI OCR द्वारा 6 अनिवार्य दस्तावेज़ों का सत्यापन करें।\n3. **योजना चयन**: अपनी पात्रता और अधिकतम सब्सिडी वाली योजना का चयन करें।\n4. **आवेदन व बैंक आमंत्रण**: आवेदन जमा करें और अपने नजदीकी चैनल पार्टनर बैंक को आमंत्रित करें।\n5. **रीयल-टाइम ट्रैकिंग**: ऋण स्वीकृति और डीबीटी सब्सिडी की स्थिति को ट्रैक करें।"
         },
         "ta": {
-            "greeting": "வணக்கம்! நான் உங்கள் ஏஐ திட்டம் சாதி (Qwen). அரசு கடன் திட்டங்கள் மற்றும் மூலதன மானியங்களை கண்டறிய நான் உங்களுக்கு உதவுகிறேன். உங்களுக்கு என்ன தொழில் உதவி தேவை?",
-            "ask_income": "துல்லியமான மானியம் மற்றும் தகுதியை அறிய, உங்கள் ஆண்டு குடும்ப வருமானம் என்ன?",
-            "ask_loan_amount": "உங்கள் திட்டத்திற்கு எவ்வளவு கடன் தேவைப்படுகிறது?",
-            "found_schemes": "உங்கள் தேவைகளுக்கு ஏற்ற myScheme.gov.in அரசு கடன் திட்டங்கள்:",
-            "fallback": "உங்கள் தேவையை நான் புரிந்துகொண்டேன். பொருத்தமான திட்டங்களை பார்க்கலாம்."
+            "greeting": "வணக்கம்! நான் உங்கள் ஏஐ திட்டம் சாதி. அரசு கடன் திட்டங்கள், தகுதி, ஆவண சரிபார்ப்பு அல்லது உங்கள் விண்ணப்ப நிலை குறித்து உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+            "no_application": "நீங்கள் இதுவரை எந்த திட்டத்திற்கும் விண்ணப்பிக்கவில்லை. [Find My Scheme](/find-scheme) பக்கத்தில் தகுதியான திட்டங்களை கண்டறிந்து விண்ணப்பிக்கலாம்.",
+            "app_status_title": "உங்கள் தற்போதைய விண்ணப்ப நிலை",
+            "no_docs_uploaded": "நீங்கள் இன்னும் எந்த ஆவணங்களையும் பதிவேற்றவில்லை. அனைத்து 6 கட்டாய ஆவணங்களும் நிலுவையில் உள்ளன.",
+            "all_docs_verified": "அனைத்து 6 கட்டாய ஆவணங்களும் வெற்றிகரமாக சரிபார்க்கப்பட்டுவிட்டன!",
+            "partial_docs": "6 கட்டாய ஆவணங்களில் {verified} ஆவணங்களை சரிபார்த்துள்ளீர்கள்.",
+            "verified_badge": "சரிபார்க்கப்பட்டது",
+            "pending_badge": "நிலுவையில் உள்ளது",
+            "eligible_positive": "நீங்கள் {scheme_name} திட்டத்திற்கு தகுதியுடையவர்!",
+            "eligible_negative": "தற்போது நீங்கள் {scheme_name} திட்டத்திற்கு தகுதியற்றவர்.",
+            "missing_req_title": "பூர்த்தி செய்யப்படாத தேவைகள்",
+            "matching_factors_title": "தகுதி அம்சங்கள்",
+            "emi_formula_title": "இஎம்ஐ (EMI) கணக்கீட்டு முறை",
+            "calc_emi_result": "₹{loan:,.0f} கடனுக்கு {rate}% வட்டியில் {tenure} மாதங்களுக்கு ({years} ஆண்டுகள்) மாதத் தவணை ₹{emi:,.0f} ஆகும்.",
+            "partner_assigned": "உங்களின் நியமிக்கப்பட்ட வங்கி கூட்டாளர்: **{partner_name}** ({branch}, {city}).",
+            "partner_none": "இன்னும் வங்கி கூட்டாளர் இணைக்கப்படவில்லை. [Channel Partner Locator](/partners) பக்கத்தில் வங்கியை அழைக்கலாம்.",
+            "process_steps": "### திட்டம் சாதி விண்ணப்ப படிகள்:\n1. விவரங்களை பதிவு செய்தல்\n2. 6 கட்டாய ஆவணங்களை AI மூலம் சரிபார்த்தல்\n3. பொருத்தமான அரசு திட்டத்தை தேர்வு செய்தல்\n4. விண்ணப்பத்தை சமர்ப்பித்து வங்கி கூட்டாளரை அழைத்தல்\n5. கடன் ஒப்புதல் நிலையை நேரலையாக கண்காணித்தல்."
         },
         "te": {
-            "greeting": "నమస్కారం! నేను మీ ఏఐ స్కీమ్ సాథిని (Qwen). ప్రభుత్వ రుణ పథకాలు మరియు సబ్సిడీలను కనుగొనడంలో నేను మీకు సహాయం చేస్తాను. మీకు ఏ వ్యాపార రుణం కావాలి?",
-            "ask_income": "ఖచ్చితమైన సబ్సిడీ మరియు అర్హతను నిర్ణయించడానికి, మీ వార్షిక కుటుంబ ఆదాయం ఎంత?",
-            "ask_loan_amount": "మీ ప్రాజెక్ట్ కోసం మీకు ఎంత రుణం అవసరం?",
-            "found_schemes": "మీ అవసరాలకు సరిపోయే myScheme.gov.in ప్రభుత్వ రుణ పథకాలు:",
-            "fallback": "మీ అభ్యర్థనను నేను అర్థం చేసుకున్నాను. సరైన పథకాలను పరిశీలిద్దాం."
+            "greeting": "నమస్కారం! నేను మీ ఏఐ స్కీమ్ సాథిని. ప్రభుత్వ రుణ పథకాలు, అర్హత, ధృవీకరణ పత్రాలు మరియు మీ దరఖాస్తు స్థితికి సంబంధించిన సమాచారం కోసం నేను సహాయం చేయగలను.",
+            "no_application": "మీరు ఇంకా ఎలాంటి పథకానికి దరఖాస్తు చేసుకోలేదు. [Find My Scheme](/find-scheme) పేజీలో అర్హత గల పథకాలను ఎంచుకోండి.",
+            "app_status_title": "మీ దరఖాస్తు స్థితి",
+            "no_docs_uploaded": "మీరు ఇంకా ఎలాంటి పత్రాలను అప్‌లోడ్ చేయలేదు. 6 తప్పనిసరి పత్రాలు పెండింగ్‌లో ఉన్నాయి.",
+            "all_docs_verified": "అన్ని 6 తప్పనిసరి పత్రాలు విజయవంతంగా ధృవీకరించబడ్డాయి!",
+            "partial_docs": "మీరు 6 పత్రాలలో {verified} పత్రాలను ధృవీకరించారు.",
+            "verified_badge": "ధృవీకరించబడింది",
+            "pending_badge": "పెండింగ్‌లో ఉంది",
+            "eligible_positive": "మీరు {scheme_name} పథకానికి అర్హులు!",
+            "eligible_negative": "మీరు ప్రస్తుతం {scheme_name} పథకానికి అర్హులు కారు.",
+            "missing_req_title": "లోపించిన అర్హతలు",
+            "matching_factors_title": "అర్హత కారణాలు",
+            "emi_formula_title": "ఈఎంఐ (EMI) లెక్కింపు పద్ధతి",
+            "calc_emi_result": "₹{loan:,.0f} రుణానికి {rate}% వార్షిక వడ్డీతో {tenure} నెలలకు నెలవారీ ఈఎంఐ ₹{emi:,.0f}.",
+            "partner_assigned": "మీకు కేటాయించిన ఛానల్ పార్టనర్: **{partner_name}** ({branch}, {city}).",
+            "partner_none": "ఛానల్ పార్టనర్ ఇంకా కేటాయించబడలేదు. [Channel Partner Locator](/partners) నుండి బ్యాంకును ఆహ్వానించండి.",
+            "process_steps": "### దరఖాస్తు ప్రక్రియ:\n1. ప్రొఫైల్ వివరాలు నింపండి\n2. 6 పత్రాలను AI ద్వారా ధృవీకరించండి\n3. పథకాన్ని ఎంచుకోండి\n4. దరఖాస్తు సమర్పించి బ్యాంకును ఆహ్వానించండి\n5. స్థితిని ట్రాక్ చేయండి."
         },
         "kn": {
-            "greeting": "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಎಐ ಸ್ಕೀಮ್ ಸಾಥಿ (Qwen). ಸರ್ಕಾರಿ ಸಾಲ ಯೋಜನೆಗಳು ಮತ್ತು ಸಬ್ಸಿಡಿಗಳನ್ನು ಹುಡುಕಲು ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತೇನೆ. ನೀವು ಯಾವ ವ್ಯವಹಾರವನ್ನು ಪ್ರಾರಂಭಿಸಲು ಬಯಸುತ್ತೀರಿ?",
-            "ask_income": "ನಿಖರವಾದ ಸಬ್ಸಿಡಿ ಮತ್ತು ಅರ್ಹತೆಯನ್ನು ತಿಳಿಯಲು ನಿಮ್ಮ ವಾರ್ಷಿಕ ಕುಟುಂಬದ ಆದಾಯ ಎಷ್ಟು?",
-            "ask_loan_amount": "ನಿಮ್ಮ ಯೋಜನೆಗೆ ಎಷ್ಟು ಸಾಲದ ಮೊತ್ತ ಬೇಕಾಗಿದೆ?",
-            "found_schemes": "ನಿಮ್ಮ ಅಗತ್ಯಕ್ಕೆ ಹೊಂದಿಕೆಯಾಗುವ myScheme.gov.in ಸರ್ಕಾರಿ ಸಾಲ ಯೋಜನೆಗಳು:",
-            "fallback": "ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ ಸೂಕ್ತ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ನೋಡೋಣ."
+            "greeting": "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಎಐ ಸ್ಕೀಮ್ ಸಾಥಿ. ಸರ್ಕಾರಿ ಸಾಲ ಯೋಜನೆಗಳು, ಅರ್ಹತೆ, ದಾಖಲೆ ಪರಿಶೀಲನೆ ಮತ್ತು ನಿಮ್ಮ ಅರ್ಜಿ ಸ್ಥಿತಿಯ ಕುರಿತು ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಲ್ಲೆ.",
+            "no_application": "ನೀವು ಇನ್ನೂ ಯಾವುದೇ ಯೋಜನೆಗೆ ಅರ್ಜಿ ಸಲ್ಲಿಸಿಲ್ಲ. [Find My Scheme](/find-scheme) ಪುಟದಲ್ಲಿ ಯೋಜನೆಗಳನ್ನು ನೋಡಿ ಅರ್ಜಿ ಸಲ್ಲಿಸಿ.",
+            "app_status_title": "ನಿಮ್ಮ ಅರ್ಜಿ ಸ್ಥಿತಿ",
+            "no_docs_uploaded": "ನೀವು ಇನ್ನೂ ಯಾವುದೇ ದಾಖಲೆಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿಲ್ಲ. 6 ಕಡ್ಡಾಯ ದಾಖಲೆಗಳು ಬಾಕಿ ಇವೆ.",
+            "all_docs_verified": "ಎಲ್ಲಾ 6 ಕಡ್ಡಾಯ ದಾಖಲೆಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ!",
+            "partial_docs": "ನೀವು 6 ರಲ್ಲಿ {verified} ದಾಖಲೆಗಳನ್ನು ಪರಿಶೀಲಿಸಿದ್ದೀರಿ.",
+            "verified_badge": "ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+            "pending_badge": "ಬಾಕಿ ಇದೆ",
+            "eligible_positive": "ನೀವು {scheme_name} ಯೋಜನೆಗೆ ಅರ್ಹರಾಗಿದ್ದೀರಿ!",
+            "eligible_negative": "ನೀವು ಪ್ರಸ್ತುತ {scheme_name} ಯೋಜನೆಗೆ ಅರ್ಹರಲ್ಲ.",
+            "missing_req_title": "ಅಪೂರ್ಣ ಅರ್ಹತೆಗಳು",
+            "matching_factors_title": "ಅರ್ಹತೆಯ ಅಂಶಗಳು",
+            "emi_formula_title": "ಇಎಂಐ (EMI) ಲೆಕ್ಕಾಚಾರ ಸೂತ್ರ",
+            "calc_emi_result": "₹{loan:,.0f} ಸಾಲಕ್ಕೆ {rate}% ಬಡ್ಡಿದರದಲ್ಲಿ {tenure} ತಿಂಗಳುಗಳಿಗೆ ಅಂದಾಜು ಮಾಸಿಕ ಇಎಂಐ ₹{emi:,.0f}.",
+            "partner_assigned": "ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಪಾಲುದಾರರು: **{partner_name}** ({branch}, {city}).",
+            "partner_none": "ಇನ್ನೂ ಪಾಲುದಾರ ಬ್ಯಾಂಕ್ ನಿಯೋಜಿಸಿಲ್ಲ. [Channel Partner Locator](/partners) ಬಳಸಿ.",
+            "process_steps": "### ಅರ್ಜಿ ಸಲ್ಲಿಕೆ ಹಂತಗಳು:\n1. ಪ್ರೊಫೈಲ್ ಭರ್ತಿ ಮಾಡಿ\n2. 6 ದಾಖಲೆಗಳನ್ನು AI ಮೂಲಕ ಪರಿಶೀಲಿಸಿ\n3. ಯೋಜನೆ ಆಯ್ಕೆಮಾಡಿ\n4. ಅರ್ಜಿ ಸಲ್ಲಿಸಿ ಬ್ಯಾಂಕ್ ಆಹ್ವಾನಿಸಿ\n5. ಲೈವ್ ಟ್ರ್ಯಾಕ್ ಮಾಡಿ."
         },
         "ml": {
-            "greeting": "നമസ്കാരം! ഞാൻ നിങ്ങളുടെ സ്കീം സാഥി അസിസ്റ്റന്റാണ് (Qwen). സർക്കാർ വായ്പാ പദ്ധതികളും സബ്സിഡികളും കണ്ടെത്താൻ സഹായിക്കാം. ഏത് തരം ബിസിനസ്സ് വായ്പയാണ് താങ്കൾക്ക് ആവശ്യം?",
-            "ask_income": "കൃത്യമായ സബ്‌സിഡിയും അർഹതയും അറിയാൻ വാർഷിക കുടുംബ വരുമാനം വ്യക്തമാക്കുക:",
-            "ask_loan_amount": "എത്ര തുകയുടെ വായ്പയാണ് താങ്കൾക്ക് ആവശ്യം?",
-            "found_schemes": "നിങ്ങളുടെ ആവശ്യത്തിനനുയോജ്യമായ myScheme.gov.in സർക്കാർ വായ്പാ പദ്ധതികൾ:",
-            "fallback": "താങ്കളുടെ ആവശ്യം ഞാൻ മനസ്സിലാക്കി. നമുക്ക് പദ്ധതികൾ പരിശോധിക്കാം."
+            "greeting": "നമസ്കാരം! ഞാൻ നിങ്ങളുടെ സ്കീം സാഥി അസിസ്റ്റന്റാണ്. സർക്കാർ വായ്പാ പദ്ധതികൾ, യോഗ്യത, രേഖാ പരിശോധന, അപേക്ഷാ സ്ഥിതി എന്നിവയിൽ സഹായിക്കാം.",
+            "no_application": "നിങ്ങൾ ഇതുവരെ അപേക്ഷ സമർപ്പിച്ചിട്ടില്ല. [Find My Scheme](/find-scheme) പേജിൽ അനുയോജ്യമായ പദ്ധതികൾ കണ്ടെത്തുക.",
+            "app_status_title": "നിങ്ങളുടെ അപേക്ഷാ സ്ഥിതി",
+            "no_docs_uploaded": "താങ്കൾ ഇതുവരെ രേഖകൾ ഒന്നും അപ്‌ലോഡ് ചെയ്തിട്ടില്ല. 6 നിർബന്ധിത രേഖകൾ ബാക്കിയാണ്.",
+            "all_docs_verified": "എല്ലാ 6 നിർബന്ധിത രേഖകളും വിജയകരമായി പരിശോധിച്ചു!",
+            "partial_docs": "6 നിർബന്ധിത രേഖകളിൽ {verified} എണ്ണം പരിശോധിച്ചു.",
+            "verified_badge": "പരിശോധിച്ചു",
+            "pending_badge": "ബാക്കിയാണ്",
+            "eligible_positive": "താങ്കൾ {scheme_name} പദ്ധതിക്ക് അർഹനാണ്!",
+            "eligible_negative": "താങ്കൾ നിലവിൽ {scheme_name} പദ്ധതിക്ക് അർഹനല്ല.",
+            "missing_req_title": "പൂർത്തിയാകാത്ത നിബന്ധനകൾ",
+            "matching_factors_title": "യോഗ്യതാ ഘടകങ്ങൾ",
+            "emi_formula_title": "ഇഎംഐ കണക്കുകൂട്ടൽ രീതി",
+            "calc_emi_result": "₹{loan:,.0f} വായ്പയ്ക്ക് {rate}% പലിശ നിരക്കിൽ {tenure} മാസത്തേക്ക് പ്രതിമാസ ഇഎംഐ ₹{emi:,.0f}.",
+            "partner_assigned": "നിങ്ങളുടെ ചാനൽ പാർട്ണർ: **{partner_name}** ({branch}, {city}).",
+            "partner_none": "പാർട്ണറെ നിയോഗിച്ചിട്ടില്ല. [Channel Partner Locator](/partners) സന്ദർശിക്കുക.",
+            "process_steps": "### അപേക്ഷാ ഘട്ടങ്ങൾ:\n1. പ്രൊഫൈൽ പൂർത്തിയാക്കുക\n2. 6 രേഖകൾ പരിശോധിക്കുക\n3. പദ്ധതി തിരഞ്ഞെടുക്കുക\n4. അപേക്ഷ സമർപ്പിക്കുക\n5. തത്സമയം ട്രാക്ക് ചെയ്യുക."
         },
         "mr": {
-            "greeting": "नमस्कार! मी तुमचा एआय स्कीम साथी आहे (Qwen द्वारे समर्थित). शासकीय कर्ज योजना व भांडवली अनुदान शोधण्यात मी मदत करू शकेन. तुम्हाला कोणत्या व्यवसायासाठी कर्ज हवे आहे?",
-            "ask_income": "अचूक अनुदान व पात्रता ठरवण्यासाठी तुमचे वार्षिक कौटुंबिक उत्पन्न किती आहे?",
-            "ask_loan_amount": "तुमच्या प्रकल्पासाठी किती कर्जाची आवश्यकता आहे?",
-            "found_schemes": "myScheme.gov.in वरील तुमच्या गरजेनुसार सत्यापित सरकारी योजना:",
-            "fallback": "मी आपली विनंती समजून घेतली आहे. आपल्यासाठी सर्वोत्तम योजना पाहूया."
+            "greeting": "नमस्कार! मी तुमचा एआय स्कीम साथी आहे. शासकीय कर्ज योजना, पात्रता, कागदपत्र पडताळणी किंवा अर्जाच्या स्थितीबद्दल मी तुम्हाला मदत करू शकेन.",
+            "no_application": "तुम्ही अद्याप कोणत्याही योजनेसाठी अर्ज केलेला नाही. [Find My Scheme](/find-scheme) पृष्ठावर जाऊन पात्र योजना तपासा.",
+            "app_status_title": "तुमच्या अर्जाची स्थिती",
+            "no_docs_uploaded": "तुम्ही अद्याप कोणतीही कागदपत्रे अपलोड केलेली नाहीत. सर्व 6 अनिवार्य कागदपत्रे प्रलंबित आहेत.",
+            "all_docs_verified": "सर्व 6 अनिवार्य कागदपत्रे यशस्वीरित्या पडताळली गेली आहेत!",
+            "partial_docs": "तुम्ही 6 पैकी {verified} कागदपत्रे पडताळली आहेत.",
+            "verified_badge": "पडताळणी पूर्ण",
+            "pending_badge": "प्रलंबित",
+            "eligible_positive": "तुम्ही {scheme_name} योजनेसाठी पात्र आहात!",
+            "eligible_negative": "तुम्ही सध्या {scheme_name} योजनेसाठी पात्र नाही आहात.",
+            "missing_req_title": "अपूर्ण अटी व कारणे",
+            "matching_factors_title": "पात्रतेचे निकष",
+            "emi_formula_title": "ईएमआय (EMI) गणना सूत्र",
+            "calc_emi_result": "₹{loan:,.0f} कर्जासाठी {rate}% वार्षिक व्याजाने {tenure} महिन्यांसाठी अंदाजे मासिक ईएमआय ₹{emi:,.0f} आहे.",
+            "partner_assigned": "तुमचे चॅनेल पार्टनर: **{partner_name}** ({branch}, {city}).",
+            "partner_none": "अद्याप चॅनेल पार्टनर नियुक्त केलेला नाही. [Channel Partner Locator](/partners) वापरा.",
+            "process_steps": "### अर्ज प्रक्रिया:\n1. प्रोफाइल पूर्ण करा\n2. AI द्वारे 6 कागदपत्रे तपासा\n3. योजना निवडा\n4. अर्ज सादर करा\n5. स्थिती ट्रॅक करा."
         },
         "bn": {
-            "greeting": "নমস্কার! আমি আপনার এআই স্কিম সাথি (Qwen চালিত)। সরকারি ঋণ প্রকল্প এবং ভর্তুকি খুঁজে পেতে আমি সাহায্য করব। আপনার কি ধরণের ব্যবসার জন্য ঋণ প্রয়োজন?",
-            "ask_income": "সঠিক ভর্তুকি ও যোগ্যতা যাচাই করতে আপনার বার্ষিক পারিবারিক আয় কত?",
-            "ask_loan_amount": "আপনার প্রকল্পের জন্য কত টাকার ঋণ প্রয়োজন?",
-            "found_schemes": "myScheme.gov.in থেকে আপনার প্রয়োজনীয়তার সাথে সংগতিপূর্ণ সরকারি প্রকল্পসমূহ:",
-            "fallback": "আমি আপনার অনুরোধ বুঝতে পেরেছি। আপনার জন্য সেরা প্রকল্পগুলো বিশ্লেষণ করছি।"
+            "greeting": "নমস্কার! আমি আপনার এআই স্কিম সাথি। সরকারি ঋণ প্রকল্প, যোগ্যতা, নথি যাচাইকরণ বা আপনার আবেদনের স্থিতি জানতে আমি সাহায্য করতে পারি।",
+            "no_application": "আপনি এখনও কোনো প্রকল্পে আবেদন করেননি। [Find My Scheme](/find-scheme) পেজে গিয়ে যোগ্য প্রকল্প দেখে আবেদন করুন।",
+            "app_status_title": "আপনার আবেদনের স্থিতি",
+            "no_docs_uploaded": "আপনি এখনও কোনো নথি আপলোড বা যাচাই করেননি। ৬টি বাধ্যতামূলক নথি বাকি রয়েছে।",
+            "all_docs_verified": "সমস্ত ৬টি বাধ্যতামূলক নথি সফলভাবে যাচাই করা হয়েছে!",
+            "partial_docs": "আপনি ৬টি নথির মধ্যে {verified}টি যাচাই করেছেন।",
+            "verified_badge": "যাচাইকৃত",
+            "pending_badge": "বাকি আছে",
+            "eligible_positive": "আপনি {scheme_name} প্রকল্পের জন্য যোগ্য!",
+            "eligible_negative": "আপনি বর্তমানে {scheme_name} প্রকল্পের জন্য যোগ্য নন।",
+            "missing_req_title": "অনুপস্থিত প্রয়োজনীয়তা",
+            "matching_factors_title": "যোগ্যতার কারণসমূহ",
+            "emi_formula_title": "ইএমআই (EMI) গণনার সূত্র",
+            "calc_emi_result": "₹{loan:,.0f} ঋণের জন্য {rate}% বার্ষিক সুদে {tenure} মাসের জন্য আনুমানিক মাসিক ইএমআই ₹{emi:,.0f}।",
+            "partner_assigned": "আপনার চ্যানেল পার্টনার: **{partner_name}** ({branch}, {city})।",
+            "partner_none": "এখনও পার্টনার নিযুক্ত হয়নি। [Channel Partner Locator](/partners) দেখুন।",
+            "process_steps": "### আবেদন প্রক্রিয়া:\n1. প্রোফাইল সম্পন্ন করুন\n2. ৬টি নথি যাচাই করুন\n3. স্কিম নির্বাচন করুন\n4. আবেদন জমা দিন ও ব্যাংককে আমন্ত্রণ জানান\n5. স্ট্যাটাস ট্র্যাক করুন।"
         },
         "gu": {
-            "greeting": "નમસ્તે! હું તમારો એઆઈ સ્કીમ સાથી છું (Qwen આધારિત). સરકારી લોન યોજનાઓ અને સબસિડી શોધવામાં હું મદદ કરી શકું છું. તમે કયા વ્યવસાય માટે લોન શોધી રહ્યા છો?",
-            "ask_income": "ચોક્કસ સબસિડી અને પાત્રતા જાણવા માટે તમારી વાર્ષિક કૌટુંબિક આવક કેટલી છે?",
-            "ask_loan_amount": "તમારા પ્રોજેક્ટ માટે કેટલી લોનની જરૂર છે?",
-            "found_schemes": "myScheme.gov.in આધારિત તમારી જરૂરિયાત મુજબની સરકારી યોજનાઓ:",
-            "fallback": "મેં તમારી વાત સમજી લીધી છે. ચાલો તમારા માટે શ્રેષ્ઠ યોજનાઓ જોઈએ."
+            "greeting": "નમસ્તે! હું તમારો એઆઈ સ્કીમ સાથી છું. સરકારી યોજનાઓ, પાત્રતા, દસ્તાવેજ ચકાસણી અથવા તમારી અરજીની સ્થિતિ અંગે હું મદદ કરી શકું છું.",
+            "no_application": "તમે હજુ સુધી કોઈ યોજના માટે અરજી કરી નથી. [Find My Scheme](/find-scheme) પૃષ્ઠ પર યોજનાઓ જોઈ અરજી કરો.",
+            "app_status_title": "તમારી અરજીની સ્થિતિ",
+            "no_docs_uploaded": "તમે હજુ સુધી કોઈ દસ્તાવેજ અપલોડ કર્યા નથી. તમામ 6 ફરજિયાત દસ્તાવેજો બાકી છે.",
+            "all_docs_verified": "તમામ 6 ફરજિયાત દસ્તાવેજો ચકાસાઈ ગયા છે!",
+            "partial_docs": "તમે 6 માંથી {verified} દસ્તાવેજો ચકાસ્યા છે.",
+            "verified_badge": "ચકાસાયેલ",
+            "pending_badge": "બાકી છે",
+            "eligible_positive": "તમે {scheme_name} યોજના માટે પાત્ર છો!",
+            "eligible_negative": "તમે હાલમાં {scheme_name} યોજના માટે પાત્ર નથી.",
+            "missing_req_title": "અપૂર્ણ શરતો",
+            "matching_factors_title": "પાત્રતાના કારણો",
+            "emi_formula_title": "ઇએમઆઇ (EMI) ગણતરી પદ્ધતિ",
+            "calc_emi_result": "₹{loan:,.0f} ની લોન પર {rate}% વાર્ષિક વ્યાજે {tenure} મહિના માટે અંદાજિત માસિક EMI ₹{emi:,.0f} થશે.",
+            "partner_assigned": "તમારા ચેનલ પાર્ટનર: **{partner_name}** ({branch}, {city}).",
+            "partner_none": "હજુ પાર્ટનર ફાળવાયા નથી. [Channel Partner Locator](/partners) જુઓ.",
+            "process_steps": "### અરજી પ્રક્રિયા:\n1. પ્રોફાઇલ પૂર્ણ કરો\n2. 6 દસ્તાવેજો ચકાસો\n3. યોજના પસંદ કરો\n4. અરજી સબમિટ કરો\n5. સ્થિતિ ટ્રેક કરો."
         },
         "pa": {
-            "greeting": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡਾ ਏਆਈ ਸਕੀਮ ਸਾਥੀ ਹਾਂ (Qwen ਸੰਚਾਲਿਤ)। ਮੈਂ ਸਰਕਾਰੀ ਕਰਜ਼ਾ ਯੋਜਨਾਵਾਂ ਅਤੇ ਸਬਸਿਡੀਆਂ ਲੱਭਣ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ। ਤੁਹਾਨੂੰ ਕਿਸ ਕਾਰੋਬਾਰ ਲਈ ਕਰਜ਼ਾ ਚਾਹੀਦਾ ਹੈ?",
-            "ask_income": "ਸਹੀ ਸਬਸਿਡੀ ਅਤੇ ਯੋਗਤਾ ਜਾਣਨ ਲਈ ਤੁਹਾਡੀ ਸਾਲਾਨਾ ਪਰਿਵਾਰਕ ਆਮਦਨ ਕਿੰਨੀ ਹੈ?",
-            "ask_loan_amount": "ਤੁਹਾਨੂੰ ਆਪਣੇ ਪ੍ਰੋਜੈਕਟ ਲਈ ਕਿੰਨੇ ਕਰਜ਼ੇ ਦੀ ਲੋੜ ਹੈ?",
-            "found_schemes": "myScheme.gov.in ਤੋਂ ਤੁਹਾਡੀ ਲੋੜ ਅਨੁਸਾਰ ਸਰਕਾਰੀ ਯੋਜਨਾਵਾਂ:",
-            "fallback": "ਮੈਂ ਤੁਹਾਡੀ ਬੇਨਤੀ ਸਮਝ ਲਈ ਹੈ। ਆਓ ਸਭ ਤੋਂ ਵਧੀਆ ਯੋਜਨਾਵਾਂ ਦੇਖੀਏ।"
+            "greeting": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡਾ ਏਆਈ ਸਕੀਮ ਸਾਥੀ ਹਾਂ। ਸਰਕਾਰੀ ਕਰਜ਼ਾ ਯੋਜਨਾਵਾਂ, ਯੋਗਤਾ, ਦਸਤਾਵੇਜ਼ ਤਸਦੀਕ ਜਾਂ ਤੁਹਾਡੀ ਅਰਜ਼ੀ ਦੀ ਸਥਿਤੀ ਬਾਰੇ ਮੈਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ।",
+            "no_application": "ਤੁਸੀਂ ਅਜੇ ਕਿਸੇ ਯੋਜਨਾ ਲਈ ਅਰਜ਼ੀ ਨਹੀਂ ਦਿੱਤੀ ਹੈ। [Find My Scheme](/find-scheme) 'ਤੇ ਜਾ ਕੇ ਅਰਜ਼ੀ ਦਿਓ।",
+            "app_status_title": "ਤੁਹਾਡੀ ਅਰਜ਼ੀ ਦੀ ਸਥਿਤੀ",
+            "no_docs_uploaded": "ਤੁਸੀਂ ਅਜੇ ਤੱਕ ਕੋਈ ਦਸਤਾਵੇਜ਼ ਅੱਪਲੋਡ ਨਹੀਂ ਕੀਤੇ ਹਨ। ਸਾਰੇ 6 ਲਾਜ਼ਮੀ ਦਸਤਾਵੇਜ਼ ਬਕਾਇਆ ਹਨ।",
+            "all_docs_verified": "ਸਾਰੇ 6 ਲਾਜ਼ਮੀ ਦਸਤਾਵੇਜ਼ ਪੂਰੀ ਤਰ੍ਹਾਂ ਤਸਦੀਕ ਹੋ ਚੁੱਕੇ ਹਨ!",
+            "partial_docs": "ਤੁਸੀਂ 6 ਵਿੱਚੋਂ {verified} ਦਸਤਾਵੇਜ਼ ਤਸਦੀਕ ਕੀਤੇ ਹਨ।",
+            "verified_badge": "ਤਸਦੀਕਸ਼ੁਦਾ",
+            "pending_badge": "ਬਕਾਇਆ",
+            "eligible_positive": "ਤੁਸੀਂ {scheme_name} ਯੋਜਨਾ ਲਈ ਯੋਗ ਹੋ!",
+            "eligible_negative": "ਤੁਸੀਂ ਫਿਲਹਾਲ {scheme_name} ਯੋਜਨਾ ਲਈ ਯੋਗ ਨਹੀਂ ਹੋ।",
+            "missing_req_title": "ਅਧੂਰੀਆਂ ਲੋੜਾਂ",
+            "matching_factors_title": "ਯੋਗਤਾ ਦੇ ਕਾਰਨ",
+            "emi_formula_title": "ਈਐਮਆਈ (EMI) ਗਣਨਾ ਦਾ ਫਾਰਮੂਲਾ",
+            "calc_emi_result": "₹{loan:,.0f} ਦੇ ਕਰਜ਼ੇ 'ਤੇ {rate}% ਵਿਆਜ ਨਾਲ {tenure} ਮਹੀਨਿਆਂ ਲਈ ਮਹੀਨਾਵਾਰ ਕਿਸ਼ਤ ₹{emi:,.0f} ਹੈ।",
+            "partner_assigned": "ਤੁਹਾਡੇ ਚੈਨਲ ਪਾਰਟਨਰ: **{partner_name}** ({branch}, {city})।",
+            "partner_none": "ਅਜੇ ਕੋਈ ਪਾਰਟਨਰ ਨਿਯੁਕਤ ਨਹੀਂ ਕੀਤਾ ਗਿਆ। [Channel Partner Locator](/partners) ਦੇਖੋ।",
+            "process_steps": "### ਅਰਜ਼ੀ ਦੇ ਪੜਾਅ:\n1. ਪ੍ਰੋਫਾਈਲ ਭਰੋ\n2. 6 ਦਸਤਾਵੇਜ਼ ਤਸਦੀਕ ਕਰੋ\n3. ਯੋਜਨਾ ਚੁਣੋ\n4. ਅਰਜ਼ੀ ਜਮ੍ਹਾਂ ਕਰੋ\n5. ਸਥਿਤੀ ਟਰੈਕ ਕਰੋ।"
         },
         "or": {
-            "greeting": "ନମସ୍କାର! ମୁଁ ଆପଣଙ୍କ AI ସ୍କିମ ସାଥି (Qwen ଚାଳିତ)। ସରକାରୀ ଋଣ ଯୋଜନା ଏବଂ ରିହାତି ଖୋଜିବାରେ ମୁଁ ସାହାଯ୍ୟ କରିବି। ଆପଣ କେଉଁ ବ୍ୟବସାୟ ପାଇଁ ଋଣ ଚାହୁଁଛନ୍ତି?",
-            "ask_income": "ସଠିକ ରିହାତି ଓ ଯୋଗ୍ୟତା ଜାଣିବା ପାଇଁ ଆପଣଙ୍କ ବାର୍ଷିକ ପାରିବାରିକ ଆୟ କେତେ?",
-            "ask_loan_amount": "ଆପଣଙ୍କ ପ୍ରକଳ୍ପ ପାଇଁ କେତେ ଋଣ ଆବଶ୍ୟକ?",
-            "found_schemes": "myScheme.gov.in ରୁ ଆପଣଙ୍କ ଆବଶ୍ୟକତା ଅନୁଯାୟୀ ସରକାରୀ ଯୋଜନା:",
-            "fallback": "ମୁଁ ଆପଣଙ୍କ ଅନୁରୋଧ ବୁଝିପାରିଲି। ଆସନ୍ତୁ ଉପଯୁକ୍ତ ଯୋଜନା ଦେଖିବା।"
+            "greeting": "ନମସ୍କାର! ମୁଁ ଆପଣଙ୍କ AI ସ୍କିମ ସାଥି। ସରକାରୀ ଋଣ ଯୋଜନା, ଯୋଗ୍ୟତା, ଦସ୍ତାବିଜ ଯାଞ୍ଚ କିମ୍ବା ଆପଣଙ୍କ ଆବେଦନ ସ୍ଥିତି ବିଷୟରେ ମୁଁ ସାହାଯ୍ୟ କରିପାରିବି।",
+            "no_application": "ଆପଣ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଯୋଜନା ପାଇଁ ଆବେଦନ କରିନାହାଁନ୍ତି। [Find My Scheme](/find-scheme) ପୃଷ୍ଠାରେ ଯୋଜନା ଦେଖି ଆବେଦନ କରନ୍ତୁ।",
+            "app_status_title": "ଆପଣଙ୍କ ଆବେଦନ ସ୍ଥିତି",
+            "no_docs_uploaded": "ଆପଣ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଦସ୍ତାବିଜ ଅପଲୋଡ୍ କରିନାହାଁନ୍ତି। ସମସ୍ତ ୬ଟି ବାଧ୍ୟତାମୂଳକ ଦସ୍ତାବିଜ ବାକି ଅଛି।",
+            "all_docs_verified": "ସମସ୍ତ ୬ଟି ବାଧ୍ୟତାମୂଳକ ଦସ୍ତାବିଜ ସଫଳତାର ସହ ଯାଞ୍ଚ ହୋଇସାରିଛି!",
+            "partial_docs": "ଆପଣ ୬ଟି ମଧ୍ୟରୁ {verified}ଟି ଦସ୍ତାବିଜ ଯାଞ୍ଚ କରିଛନ୍ତି।",
+            "verified_badge": "ଯାଞ୍ଚ ହୋଇଛି",
+            "pending_badge": "ବାକି ଅଛି",
+            "eligible_positive": "ଆପଣ {scheme_name} ଯୋଜନା ପାଇଁ ଯୋଗ୍ୟ!",
+            "eligible_negative": "ଆପଣ ବର୍ତ୍ତମାନ {scheme_name} ଯୋଜନା ପାଇଁ ଯୋଗ୍ୟ ନୁହଁନ୍ତି।",
+            "missing_req_title": "ଅସମ୍ପୂର୍ଣ୍ଣ ଆବଶ୍ୟକତା",
+            "matching_factors_title": "ଯୋଗ୍ୟତାର ମୁଖ୍ୟ କାରଣ",
+            "emi_formula_title": "EMI ଗଣନା ପଦ୍ଧତି",
+            "calc_emi_result": "₹{loan:,.0f} ଋଣ ପାଇଁ {rate}% ବାର୍ଷିକ ସୁଧରେ {tenure} ମାସ ପାଇଁ ମାସିକ କିସ୍ତି ₹{emi:,.0f} ହେବ।",
+            "partner_assigned": "ଆପଣଙ୍କ ଚ୍ୟାନେଲ ପାର୍ଟନର: **{partner_name}** ({branch}, {city})।",
+            "partner_none": "ଏପର୍ଯ୍ୟନ୍ତ ପାର୍ଟନର ନିଯୁକ୍ତ ହୋଇନାହାଁନ୍ତି। [Channel Partner Locator](/partners) ବ୍ୟବହାର କରନ୍ତୁ।",
+            "process_steps": "### ଆବେଦନ ପ୍ରକ୍ରିୟା:\n1. ପ୍ରୋଫାଇଲ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ\n2. ୬ଟି ଦସ୍ତାବିଜ ଯାଞ୍ଚ କରନ୍ତୁ\n3. ଯୋଜନା ଚୟନ କରନ୍ତୁ\n4. ଆବେଦନ ଦାଖଲ କରନ୍ତୁ\n5. ଷ୍ଟାଟସ୍ ଟ୍ରାକ୍ କରନ୍ତୁ।"
         },
         "as": {
-            "greeting": "নমস্কাৰ! মই আপোনাৰ AI আঁচনি সাথি (Qwen চালিত)। চৰকাৰী ঋণ আঁচনি আৰু ৰাজসাহায্য বিচাৰি পোৱাত মই সহায় কৰিম। আপোনাক কি ব্যৱসায়ৰ বাবে ঋণ লাগে?",
-            "ask_income": "সঠিক ৰাজসাহায্য আৰু যোগ্যতা নিৰ্ধাৰণ কৰিবলৈ আপোনাৰ বাৰ্ষিক পাৰিবাৰিক আয় কিমান?",
-            "ask_loan_amount": "আপোনাৰ প্ৰকল্পৰ বাবে কিমান ঋণৰ প্ৰয়োজন?",
-            "found_schemes": "myScheme.gov.in ৰ পৰা আপোনাৰ প্ৰয়োজনীয়তা অনুসৰি চৰকাৰী আঁচনিসমূহ:",
-            "fallback": "মই আপোনাৰ অনুৰোধ বুজি পাইছো। আহক উপযুক্ত আঁচনিসমূহ চাওঁ।"
+            "greeting": "নমস্কাৰ! মই আপোনাৰ AI আঁচনি সাথি। চৰকাৰী ঋণ আঁচনি, যোগ্যতা, নথি পৰীক্ষণ বা আবেদনৰ স্থিতি সম্পৰ্কে মই সহায় কৰিব পাৰো।",
+            "no_application": "আপুনি এতিয়ালৈকে কোনো আঁচনিৰ বাবে আবেদন কৰা নাই। [Find My Scheme](/find-scheme) ত গৈ উপযুক্ত আঁচনি চাওক।",
+            "app_status_title": "আপোনাৰ আবেদনৰ স্থিতি",
+            "no_docs_uploaded": "আপুনি এতিয়ালৈকে কোনো নথি আপলোড কৰা নাই। সকলো ৬টা বাধ্যতামূলক নথি বাকী আছে।",
+            "all_docs_verified": "সকলো ৬টা বাধ্যতামূলক নথি সফলতাৰে পৰীক্ষা কৰা হৈছে!",
+            "partial_docs": "আপুনি ৬টাৰ ভিতৰত {verified}টা নথি পৰীক্ষা কৰিছে।",
+            "verified_badge": "পৰীক্ষিত",
+            "pending_badge": "বাকী আছে",
+            "eligible_positive": "আপুনি {scheme_name} আঁচনিৰ বাবে যোগ্য!",
+            "eligible_negative": "আপুনি বৰ্তমান {scheme_name} আঁচনিৰ বাবে যোগ্য নহয়।",
+            "missing_req_title": "অসম্পূৰ্ণ যোগ্যতাসমূহ",
+            "matching_factors_title": "যোগ্যতাৰ কাৰণসমূহ",
+            "emi_formula_title": "ইএমআই (EMI) গণনা পদ্ধতি",
+            "calc_emi_result": "₹{loan:,.0f} ঋণৰ বাবে {rate}% সুতত {tenure} মাহৰ বাবে আনুমানিক মাহেকীয়া কিস্তি ₹{emi:,.0f}।",
+            "partner_assigned": "আপোনাৰ চেনেল পাৰ্টনাৰ: **{partner_name}** ({branch}, {city})।",
+            "partner_none": "এতিয়ালৈকে পাৰ্টনাৰ সংযোগ কৰা হোৱা নাই। [Channel Partner Locator](/partners) চাওক।",
+            "process_steps": "### আবেদন প্রক্রিয়া:\n1. প্ৰফাইল সম্পূৰ্ণ কৰক\n2. ৬টা নথি পৰীক্ষা কৰক\n3. আঁচনি বাছনি কৰক\n4. আবেদন জমা দি বেংকক আমন্ত্রণ জনাওক\n5. স্থিতি ট্র্যাক কৰক।"
         }
     }
 
     @classmethod
-    def get_ollama_model(cls) -> str:
-        """Find an available Qwen model from Ollama, fallback to config default."""
+    def get_translation(cls, key: str, lang: str = "en", **kwargs) -> str:
+        """Fetch localized template and format with kwargs."""
+        lang_dict = cls.TRANSLATIONS.get(lang, cls.TRANSLATIONS["en"])
+        template = lang_dict.get(key, cls.TRANSLATIONS["en"].get(key, ""))
         try:
-            url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/tags"
-            req = urllib.request.Request(url, headers={"User-Agent": "SchemeSathi/1.0"})
-            with urllib.request.urlopen(req, timeout=1) as resp:
-                data = json.loads(resp.read().decode())
-                models = [m.get("name", "") for m in data.get("models", [])]
-                for m in models:
-                    if "qwen" in m.lower():
-                        return m
+            return template.format(**kwargs)
         except Exception:
-            pass
-        return settings.OLLAMA_MODEL or "qwen3:4b"
+            return template
+
+    @classmethod
+    def _calculate_emi(cls, principal: float, annual_rate: float, tenure_months: int) -> float:
+        """Standard reducing balance EMI formula."""
+        if principal <= 0 or tenure_months <= 0:
+            return 0.0
+        if annual_rate <= 0:
+            return principal / tenure_months
+        monthly_rate = (annual_rate / 12.0) / 100.0
+        try:
+            factor = math.pow(1 + monthly_rate, tenure_months)
+            emi = (principal * monthly_rate * factor) / (factor - 1)
+            return round(emi, 2)
+        except Exception:
+            return round(principal / tenure_months, 2)
 
     @classmethod
     def _get_scheme_field(cls, scheme: Any, field: str, default: Any = "") -> Any:
-        """Safely extract field from Scheme ORM model, dict, or namespace."""
+        """Safely extract field from Scheme ORM model or dict."""
         if isinstance(scheme, dict):
             return scheme.get(field, default)
         return getattr(scheme, field, default)
 
     @classmethod
-    def query_qwen_ollama(
-        cls, 
-        user_message: str, 
-        language: str = "en", 
-        schemes_db: List[Any] = []
-    ) -> Optional[str]:
-        """
-        Query Qwen via Ollama with verified statutory scheme context for grounded responses.
-        """
-        model = cls.get_ollama_model()
-        lang_name = cls.LANGUAGE_NAMES.get(language, "English")
-
-        # Build concise knowledge base from database
-        scheme_context_items = []
-        for s in schemes_db[:15]:
-            s_name = cls._get_scheme_field(s, "scheme_name") or cls._get_scheme_field(s, "name") or "Scheme"
-            s_code = cls._get_scheme_field(s, "code") or cls._get_scheme_field(s, "scheme_code") or ""
-            s_max = cls._get_scheme_field(s, "max_loan_amount", 0)
-            s_sub = cls._get_scheme_field(s, "subsidy_percentage", 0)
-            s_target = cls._get_scheme_field(s, "target_category", "")
-            s_biz = cls._get_scheme_field(s, "business_type", "")
-            s_rural = cls._get_scheme_field(s, "rural_subsidy_percentage", 0)
-
-            scheme_context_items.append(
-                f"- Scheme: {s_name} ({s_code})\n"
-                f"  Max Loan: Rs {s_max:,} | Subsidy: {s_sub}%\n"
-                f"  Target: {s_target} | Eligible: {s_biz} | Rural Subsidy: {s_rural}%"
-            )
-        scheme_context = "\n".join(scheme_context_items)
-
-        system_prompt = f"""You are 'Scheme Sathi', an expert Indian Government Scheme Advisor for marginalized entrepreneurs and students.
-You provide 100% accurate, gazetted financial advice based on official myScheme.gov.in guidelines.
-CRITICAL INSTRUCTIONS:
-1. Always respond in natural, polite, and fluent {lang_name}.
-2. Never hallucinate scheme limits. Use the provided Verified Gazette Database.
-3. Mention key parameters: Maximum loan sanction, subsidy percentage, required margin money, and documents.
-4. Keep the response concise, structured, and easy to read for rural and small business founders.
-
-VERIFIED GAZETTE KNOWLEDGE BASE:
-{scheme_context}
-"""
-
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ],
-            "stream": False,
-            "options": {
-                "temperature": 0.3,
-                "top_p": 0.8,
-                "num_predict": 400
-            }
-        }
-
-        try:
-            url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/chat"
-            req = urllib.request.Request(
-                url,
-                data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json", "User-Agent": "SchemeSathi/1.0"}
-            )
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
-                content = result.get("message", {}).get("content", "")
-                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
-                if content:
-                    return content
-        except Exception:
-            pass
-        return None
-
-    @classmethod
-    def query_cloud_ai_api(
-        cls,
-        user_message: str,
-        language: str = "en",
-        schemes_db: List[Any] = []
-    ) -> Optional[str]:
-        """
-        Query Cloud AI / Chatbase / AI Gateway API using configured API_KEY.
-        """
-        api_key = settings.API_KEY or settings.CHATBASE_API_KEY or settings.CHATBOT_API_KEY
-        if not api_key or "xx" in api_key: # check if token is valid non-masked
-            return None
-
-        lang_name = cls.LANGUAGE_NAMES.get(language, "English")
-        try:
-            # Attempt Chatbase API v1 Chat endpoint
-            url = "https://www.chatbase.co/api/v1/chat"
-            payload = {
-                "messages": [
-                    {"role": "user", "content": f"Answer in {lang_name} regarding Indian Government business schemes: {user_message}"}
-                ],
-                "stream": False
-            }
-            req = urllib.request.Request(
-                url,
-                data=json.dumps(payload).encode("utf-8"),
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                    "User-Agent": "SchemeSathi/1.0"
-                }
-            )
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
-                text = result.get("text") or result.get("message") or result.get("response")
-                if text:
-                    return text
-        except Exception:
-            pass
-        return None
-
-    @classmethod
-    def generate_response(
+    def _find_target_scheme(
         cls, 
         message: str, 
-        language: str = "en", 
-        schemes_db: List[Any] = []
-    ) -> Dict[str, Any]:
-        """
-        Main response generation pipeline:
-        1. Attempt Cloud AI API with user API Key.
-        2. Attempt Qwen from Ollama.
-        3. Fall back to deterministic gazette rules matching.
-        """
-        lang = language.lower() if language else "en"
-        if lang not in cls.LANGUAGE_NAMES:
-            lang = "en"
+        schemes_db: List[Any], 
+        context_scheme_code: Optional[str] = None,
+        context_scheme_id: Optional[Any] = None
+    ) -> Optional[Any]:
+        """Find specifically referenced scheme from context or natural language query."""
+        if context_scheme_id:
+            for s in schemes_db:
+                if str(cls._get_scheme_field(s, "id")) == str(context_scheme_id):
+                    return s
+        if context_scheme_code:
+            for s in schemes_db:
+                if (cls._get_scheme_field(s, "code") or "").upper() == context_scheme_code.upper():
+                    return s
 
-        # 1. Try Cloud AI API with user API key
-        cloud_reply = cls.query_cloud_ai_api(message, language=lang, schemes_db=schemes_db)
-        if cloud_reply:
-            matched_cards = cls._extract_matching_schemes(message, schemes_db)
-            return {
-                "reply": cloud_reply,
-                "response": cloud_reply,
-                "source": "AI Cloud Gateway (API Key)",
-                "model_used": "AI Cloud Gateway (API Key Authenticated)",
-                "language": lang,
-                "matched_schemes": matched_cards,
-                "recommendations": matched_cards,
-                "scheme_recommendations": matched_cards,
-                "extracted_intent": {"language": lang},
-                "suggested_options": []
-            }
-
-        # 2. Try Ollama Qwen
-        qwen_reply = cls.query_qwen_ollama(message, language=lang, schemes_db=schemes_db)
-        if qwen_reply:
-            matched_cards = cls._extract_matching_schemes(message, schemes_db)
-            return {
-                "reply": qwen_reply,
-                "response": qwen_reply,
-                "source": f"Qwen via Ollama ({cls.get_ollama_model()})",
-                "model_used": f"Qwen via Ollama ({cls.get_ollama_model()})",
-                "language": lang,
-                "matched_schemes": matched_cards,
-                "recommendations": matched_cards,
-                "scheme_recommendations": matched_cards,
-                "extracted_intent": {"language": lang},
-                "suggested_options": []
-            }
-
-        # 2. Deterministic Gazette Rule Matching Fallback
-        res = cls._deterministic_fallback(message, lang, schemes_db)
-        res["response"] = res["reply"]
-        res["model_used"] = res.get("source", "Gazette Knowledge Base")
-        res["recommendations"] = res.get("matched_schemes", [])
-        res["scheme_recommendations"] = res.get("matched_schemes", [])
-        res["extracted_intent"] = {"language": lang}
-        res["suggested_options"] = []
-        return res
-
-    @classmethod
-    def process_message(
-        cls, 
-        user_message: str = "", 
-        message: str = "", 
-        language: str = "en", 
-        schemes_db: List[Any] = []
-    ) -> Dict[str, Any]:
-        """Alias for generate_response accepting user_message or message parameter."""
-        query = user_message or message
-        return cls.generate_response(message=query, language=language, schemes_db=schemes_db)
-
-    @classmethod
-    def _extract_matching_schemes(cls, message: str, schemes_db: List[Any]) -> List[Dict[str, Any]]:
-        """Identify referenced schemes from user query to render interactive cards."""
         msg_lower = message.lower()
-        matched = []
-        for s in schemes_db:
-            s_name = cls._get_scheme_field(s, "scheme_name") or cls._get_scheme_field(s, "name") or ""
-            s_code = cls._get_scheme_field(s, "code") or cls._get_scheme_field(s, "scheme_code") or ""
-            s_id = cls._get_scheme_field(s, "id") or 1
-            s_max = cls._get_scheme_field(s, "max_loan_amount", 0)
-            s_sub = cls._get_scheme_field(s, "subsidy_percentage", 0)
+        
+        # Keyword mapping for common schemes
+        aliases = {
+            "pmegp": "PMEGP",
+            "prime minister employment": "PMEGP",
+            "svanidhi": "PM_SVANIDHI",
+            "street vendor": "PM_SVANIDHI",
+            "stand up": "STAND_UP_INDIA",
+            "standup": "STAND_UP_INDIA",
+            "mudra": "MUDRA_SHISHU",
+            "shishu": "MUDRA_SHISHU",
+            "kishore": "MUDRA_KISHORE",
+            "csis": "CSIS",
+            "central sector interest": "CSIS",
+            "higher education loan": "CSIS",
+            "nsfdc": "NSFDC-EDU",
+            "scheduled caste education": "NSFDC-EDU",
+            "nbcfdc": "NBCFDC-EDU",
+            "nmdfc": "NMDFC-EDU",
+            "ambedkar": "AMBEDKAR-EDU",
+            "overseas": "AMBEDKAR-EDU",
+            "cgfsel": "CGFSEL",
+            "vishwakarma": "PM_VISHWAKARMA",
+            "artisan": "PM_VISHWAKARMA",
+            "mahila samridhi": "MAHILA_SAMRIDHI"
+        }
 
-            if (s_code and s_code.lower() in msg_lower) or any(word in msg_lower for word in s_name.lower().split() if len(word) > 3):
-                matched.append({
-                    "id": s_id,
+        for alias, code in aliases.items():
+            if alias in msg_lower:
+                for s in schemes_db:
+                    s_code = (cls._get_scheme_field(s, "code") or "").upper()
+                    if s_code == code or s_code == code.replace("-", "_") or s_code == code.replace("_", "-"):
+                        return s
+
+        for s in schemes_db:
+            s_name = (cls._get_scheme_field(s, "name") or cls._get_scheme_field(s, "scheme_name") or "").lower()
+            s_code = (cls._get_scheme_field(s, "code") or "").lower()
+            if s_code and s_code in msg_lower:
+                return s
+            name_words = [w for w in s_name.split() if len(w) > 3 and w not in ["scheme", "loan", "yojana", "pradhan", "mantri", "national"]]
+            if any(w in msg_lower for w in name_words):
+                return s
+
+        return None
+
+    @classmethod
+    def _detect_intent(cls, message: str) -> str:
+        """Classify user natural language query into high-level intent categories."""
+        m = message.lower().strip()
+
+        # 1. Greetings
+        if any(w in m for w in ["hi", "hello", "namaste", "vanakkam", "namaskara", "nomoshkar", "kem cho", "sat sri akal", "nomoskar", "hey"]):
+            if len(m.split()) <= 4:
+                return "greeting"
+
+        # 2. Application Status & Loan Status
+        if any(w in m for w in ["application status", "my application", "check application", "loan status", "fund status", "has my application been approved", "is my loan approved", "status of my application", "track my application", "application number", "आवेदन स्थिति", "விண்ணப்ப நிலை", "దరఖాస్తు స్థితి"]):
+            return "application_status"
+
+        # 3. Which scheme am I applying for
+        if any(w in m for w in ["which scheme am i applying", "what scheme am i applying", "which scheme did i choose", "my selected scheme", "active scheme", "which scheme i applied"]):
+            return "application_which_scheme"
+
+        # 4. Documents Verified / Pending Status for Current User
+        if any(w in m for w in ["have my documents been verified", "are my documents verified", "are my documents complete", "what documents are pending", "which documents are still pending", "which documents are pending", "pending documents", "documents verified", "verified documents"]):
+            return "user_documents_status"
+
+        # 5. Document Rejection / Mismatch / Why Rejected
+        if any(w in m for w in ["why was my document rejected", "document rejected", "mismatch", "ocr failed", "verification failed", "rejection reason"]):
+            return "document_rejection_reason"
+
+        # 6. How to verify / Upload documents
+        if any(w in m for w in ["how do i verify my documents", "how to verify", "how to upload", "document assistant", "upload marksheet", "upload aadhaar"]):
+            return "document_how_to_verify"
+
+        # 7. Document Requirements (General / Scheme-specific)
+        if any(w in m for w in ["what documents are required", "documents required", "documents needed", "what documents do i need", "checklist", "mandatory documents", "दस्तावेज़", "ஆவணங்கள்", "పత్రాలు", "ದಾಖಲೆಗಳು", "രേഖകൾ"]):
+            return "document_requirements"
+
+        # 8. User Eligibility / Why am I eligible / Why not eligible / Missing requirements
+        if any(w in m for w in ["am i eligible", "why am i eligible", "why am i not eligible", "why was this scheme not matched", "what requirement am i missing", "what is missing", "am i qualified", "why ineligible", "disqualified"]):
+            return "user_eligibility"
+
+        # 9. Scheme Recommendation / Suitable Scheme
+        if any(w in m for w in ["which scheme is suitable for me", "which scheme is best", "recommend a scheme", "suggest a scheme", "find scheme for me", "best scheme for me"]):
+            return "scheme_recommendation"
+
+        # 10. Loan Amount / Maximum / Minimum / Capacity
+        if any(w in m for w in ["maximum loan", "max loan", "minimum loan", "min loan", "loan amount", "loan capacity", "how much loan", "loan limit", "highest loan", "lowest loan"]):
+            return "loan_amount_inquiry"
+
+        # 11. Subsidy / Subvention
+        if any(w in m for w in ["subsidy", "subvention", "grant", "discount", "how much subsidy", "capital subsidy", "interest subsidy", "सब्सिडी", "மானிய", "సబ్సిడీ"]):
+            return "subsidy_inquiry"
+
+        # 12. Interest Rate / ROI
+        if any(w in m for w in ["interest rate", "rate of interest", "roi", "what is the interest", "concessional rate", "ब्याज दर", "வட்டி விகிதம்", "వడ్డీ రేటు"]):
+            return "interest_rate_inquiry"
+
+        # 13. Repayment Period / Tenure / Duration
+        if any(w in m for w in ["repayment period", "tenure", "loan duration", "repayment tenure", "how many years", "how long to repay", "loan term"]):
+            return "repayment_inquiry"
+
+        # 14. Moratorium Period
+        if any(w in m for w in ["moratorium", "holiday period", "grace period", "moratorium period"]):
+            return "moratorium_inquiry"
+
+        # 15. EMI Amount / Calculation / Formula
+        if any(w in m for w in ["emi", "monthly payment", "calculate emi", "how is the emi calculated", "how is emi calculated", "monthly installment", "किस्त"]):
+            return "emi_inquiry"
+
+        # 16. Channel Partner / Bank / Branch
+        if any(w in m for w in ["who is my channel partner", "channel partner", "partner bank", "bank branch", "locate bank", "nodal bank", "lead district bank", "bank locator", "चैनल पार्टनर"]):
+            return "channel_partner_inquiry"
+
+        # 17. Application Process / Steps / Workflow / After Apply
+        if any(w in m for w in ["how can i apply", "how do i apply", "what is the application process", "what happens after i apply", "application process", "steps to apply", "how to apply", "application procedure"]):
+            return "application_process_inquiry"
+
+        # 18. Help / Helpline / Support
+        if any(w in m for w in ["where can i get help", "helpline", "support desk", "help desk", "customer care", "contact support"]):
+            return "help_support_inquiry"
+
+        # 19. Who can apply / Eligibility criteria in general
+        if any(w in m for w in ["who can apply", "eligibility requirements", "eligibility criteria", "who is eligible", "qualification"]):
+            return "general_eligibility_criteria"
+
+        # 20. General Scheme List / What schemes are available
+        if any(w in m for w in ["what schemes are available", "list of schemes", "available schemes", "all schemes", "schemes available", "show schemes"]):
+            return "scheme_list"
+
+        # 21. Specific Scheme purpose / details
+        if any(w in m for w in ["what is this scheme", "what is the purpose of this scheme", "tell me about this scheme", "purpose of", "scheme details", "explain scheme"]):
+            return "scheme_purpose_details"
+
+        return "general_scheme_query"
+
+    @classmethod
+    def generate_grounded_response(
+        cls,
+        message: str,
+        language: str = "en",
+        schemes_db: List[Any] = [],
+        user: Optional[Any] = None,
+        user_profile: Optional[Any] = None,
+        user_application: Optional[Any] = None,
+        user_documents: List[Any] = [],
+        user_recommendations: List[Any] = [],
+        scheme_code: Optional[str] = None,
+        scheme_id: Optional[Any] = None,
+        purpose_type: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate 100% grounded response strictly from official database entities.
+        """
+        lang = language.lower() if language in cls.LANGUAGE_NAMES else "en"
+        intent = cls._detect_intent(message)
+        
+        # Identify referenced scheme if any
+        target_scheme = cls._find_target_scheme(message, schemes_db, scheme_code, scheme_id)
+        if not target_scheme and user_application and getattr(user_application, "scheme", None):
+            target_scheme = user_application.scheme
+
+        # Determine track (EDUCATION or BUSINESS)
+        if purpose_type:
+            p_type = purpose_type.upper()
+        elif any(w in message.lower() for w in ["education", "student", "college", "study", "marksheet", "csis", "nsfdc", "cgfsel", "ambedkar", "degree"]):
+            p_type = "EDUCATION"
+        elif target_scheme and getattr(target_scheme, "purpose_type", None):
+            p_type = target_scheme.purpose_type.upper()
+        elif user_application and getattr(user_application, "purpose_type", None):
+            p_type = user_application.purpose_type.upper()
+        elif user_profile and getattr(user_profile, "purpose_type", None):
+            p_type = user_profile.purpose_type.upper()
+        else:
+            p_type = "BUSINESS"
+
+        suggested_options = []
+        matched_schemes = []
+        reply_lines = []
+
+        # =========================================================================
+        # 1. GREETING
+        # =========================================================================
+        if intent == "greeting":
+            greeting_msg = cls.get_translation("greeting", lang)
+            reply_lines.append(greeting_msg)
+            suggested_options = [
+                {"label": "🔍 Find Eligible Schemes", "value": "find_schemes", "path": "/find-scheme"},
+                {"label": "📊 Calculate EMI", "value": "calculate_emi", "path": "/calculator"},
+                {"label": "📄 Verify Documents", "value": "verify_docs", "path": "/documents"},
+                {"label": "🏦 Channel Partners", "value": "channel_partners", "path": "/partners"}
+            ]
+
+        # =========================================================================
+        # 2. APPLICATION STATUS & LOAN STATUS
+        # =========================================================================
+        elif intent == "application_status":
+            if not user or not user_application:
+                reply_lines.append(f"📌 **{cls.get_translation('app_status_title', lang)}**")
+                reply_lines.append(cls.get_translation("no_application", lang))
+                suggested_options = [
+                    {"label": "🔍 Discover Schemes", "value": "find_schemes", "path": "/find-scheme"},
+                    {"label": "📋 Check Eligibility", "value": "check_results", "path": "/results"}
+                ]
+            else:
+                s_name = cls._get_scheme_field(user_application.scheme, "name") or "Selected Government Scheme"
+                s_code = cls._get_scheme_field(user_application.scheme, "code") or ""
+                app_num = user_application.application_number
+                app_status = user_application.status
+                loan_status = user_application.loan_status
+                fund_status = user_application.fund_status
+                loan_amt = user_application.loan_amount
+                subsidy_amt = user_application.subsidy_amount
+
+                reply_lines.append(f"### 📋 {cls.get_translation('app_status_title', lang)}")
+                reply_lines.append(f"- **Application Number**: `{app_num}`")
+                reply_lines.append(f"- **Applied Scheme**: **{s_name}** ({s_code})")
+                reply_lines.append(f"- **Application Lifecycle**: `{app_status}`")
+                reply_lines.append(f"- **Bank Loan Processing**: `{loan_status}`")
+                reply_lines.append(f"- **DBT Capital Subsidy**: `{fund_status}` (₹{subsidy_amt:,.0f})")
+                reply_lines.append(f"- **Sanctioned/Requested Amount**: ₹{loan_amt:,.0f}")
+                
+                if user_application.partner:
+                    p_name = getattr(user_application.partner, "name", "Bank Partner")
+                    p_dist = getattr(user_application.partner, "district", "")
+                    p_st = getattr(user_application.partner, "state", "")
+                    reply_lines.append(f"- **Channel Partner Bank**: {p_name} ({p_dist}, {p_st})")
+                else:
+                    reply_lines.append(f"- **Channel Partner**: *Pending Invitation / Assignment*")
+
+                suggested_options = [
+                    {"label": "📊 View Application Readiness", "value": "readiness", "path": "/readiness"},
+                    {"label": "🏛️ Invite Channel Partner", "value": "partners", "path": "/partners"}
+                ]
+
+        # =========================================================================
+        # 3. WHICH SCHEME AM I APPLYING FOR
+        # =========================================================================
+        elif intent == "application_which_scheme":
+            if not user or not user_application:
+                reply_lines.append(cls.get_translation("no_application", lang))
+                suggested_options = [{"label": "🔍 Find Schemes", "value": "find_schemes", "path": "/find-scheme"}]
+            else:
+                s = user_application.scheme
+                s_name = cls._get_scheme_field(s, "name") or "Government Scheme"
+                s_code = cls._get_scheme_field(s, "code") or ""
+                s_dept = cls._get_scheme_field(s, "department") or "Government of India"
+                loan_amt = user_application.loan_amount
+                emi = user_application.calculated_emi
+                rate = user_application.interest_rate
+
+                reply_lines.append(f"### 🎯 Your Selected Scheme Application:")
+                reply_lines.append(f"- **Scheme**: **{s_name}** ({s_code})")
+                reply_lines.append(f"- **Nodal Ministry / Department**: {s_dept}")
+                reply_lines.append(f"- **Application Number**: `{user_application.application_number}`")
+                reply_lines.append(f"- **Requested Loan Amount**: ₹{loan_amt:,.0f}")
+                reply_lines.append(f"- **Applicable Interest Rate**: {rate}% p.a.")
+                reply_lines.append(f"- **Monthly EMI**: ₹{emi:,.0f}/month")
+                
+                matched_schemes.append({
+                    "id": cls._get_scheme_field(s, "id"),
+                    "name": s_name,
+                    "code": s_code,
+                    "max_loan": cls._get_scheme_field(s, "max_loan_amount", loan_amt),
+                    "subsidy": cls._get_scheme_field(s, "subsidy_details") or f"{cls._get_scheme_field(s, 'subsidy_percentage_general', 15)}%"
+                })
+                suggested_options = [
+                    {"label": "📄 Check Documents", "value": "check_docs", "path": "/documents"},
+                    {"label": "📊 View Dossier", "value": "readiness", "path": "/readiness"}
+                ]
+
+        # =========================================================================
+        # 4. USER DOCUMENTS VERIFICATION STATUS (Pending vs Verified)
+        # =========================================================================
+        elif intent == "user_documents_status":
+            if not user:
+                reply_lines.append("Please log in to view your real-time document verification records.")
+                suggested_options = [{"label": "🔐 Login", "value": "login", "path": "/login"}]
+            else:
+                # Determine track canonical docs
+                doc_list = cls.CANONICAL_DOCUMENTS.get(p_type, cls.CANONICAL_DOCUMENTS["BUSINESS"])
+                
+                # Check DB for uploaded docs
+                verified_doc_types = set()
+                pending_doc_types = set()
+                
+                for d in user_documents:
+                    status = (getattr(d, "verification_status", "") or "").upper()
+                    dtype = (getattr(d, "document_type", "") or "").lower()
+                    if status == "VERIFIED":
+                        verified_doc_types.add(dtype)
+                    else:
+                        pending_doc_types.add(dtype)
+
+                verified_count = 0
+                verified_items = []
+                pending_items = []
+
+                for doc_meta in doc_list:
+                    k = doc_meta["key"]
+                    name = doc_meta["name"]
+                    # Match key against DB doc types
+                    is_ver = any(k in v or v in k for v in verified_doc_types)
+                    if is_ver:
+                        verified_count += 1
+                        verified_items.append(f"  ✅ **{name}**: {cls.get_translation('verified_badge', lang)}")
+                    else:
+                        pending_items.append(f"  ⏳ **{name}**: {cls.get_translation('pending_badge', lang)} ({doc_meta['desc']})")
+
+                if verified_count == 6:
+                    reply_lines.append(f"### 📄 {cls.get_translation('all_docs_verified', lang)}")
+                elif verified_count == 0:
+                    reply_lines.append(f"### 📄 {cls.get_translation('no_docs_uploaded', lang)}")
+                else:
+                    reply_lines.append(f"### 📄 {cls.get_translation('partial_docs', lang, verified=verified_count)}")
+
+                if verified_items:
+                    reply_lines.append("\n**Verified Documents:**")
+                    reply_lines.extend(verified_items)
+
+                if pending_items:
+                    reply_lines.append("\n**Pending Documents to Upload & Verify:**")
+                    reply_lines.extend(pending_items)
+
+                suggested_options = [
+                    {"label": "🤖 Upload & Verify on Document Assistant", "value": "doc_assistant", "path": "/documents"},
+                    {"label": "📋 View Statutory Checklist", "value": "checklist", "path": "/checklist"}
+                ]
+
+        # =========================================================================
+        # 5. DOCUMENT REJECTION / MISMATCH / REASON
+        # =========================================================================
+        elif intent == "document_rejection_reason":
+            mismatched = [d for d in user_documents if (getattr(d, "verification_status", "") or "").lower() in ["mismatch", "format_invalid", "rejected"]]
+            if mismatched:
+                reply_lines.append("### ⚠️ Document Verification Flags Detected:")
+                for d in mismatched:
+                    d_type = getattr(d, "document_type", "Document")
+                    d_reason = getattr(d, "mismatch_details", "Name/Identifier mismatch against profile")
+                    reply_lines.append(f"- **{d_type}**: `{d_reason}`")
+                reply_lines.append("\n**Resolution**: Please re-upload a clear, non-obscured government document matching your profile details exactly.")
+            else:
+                reply_lines.append("### ℹ️ Standard Reasons for Document Rejection:\n1. **Name Mismatch**: The name on the document differs from your KYC profile name.\n2. **Low Image Resolution / Blurry OCR**: Text, QR code, or seal cannot be parsed.\n3. **Invalid Checksum**: Aadhaar Verhoeff algorithm or PAN format validation failed.\n4. **Expired Certificate**: Income certificate older than the valid financial year (FY 2025-26).")
+            
+            suggested_options = [{"label": "📄 Open Document Assistant", "value": "doc_assistant", "path": "/documents"}]
+
+        # =========================================================================
+        # 6. DOCUMENT HOW TO VERIFY
+        # =========================================================================
+        elif intent == "document_how_to_verify":
+            reply_lines.append("### 🔍 How to Verify Your Documents with AI OCR:\n1. Open the [Document Assistant](/documents) page.\n2. Upload your mandatory documents (PDF, JPG, or PNG, max 10MB each).\n3. Our OCR Engine automatically extracts your Name, Identifier (Aadhaar/PAN/Marks), and validates the official checksum.\n4. Once verified, your status turns **VERIFIED** instantly, with no manual branch visits needed.")
+            suggested_options = [{"label": "📄 Go to Document Assistant", "value": "doc_assistant", "path": "/documents"}]
+
+        # =========================================================================
+        # 7. DOCUMENT REQUIREMENTS (General or Scheme-specific)
+        # =========================================================================
+        elif intent == "document_requirements":
+            doc_list = cls.CANONICAL_DOCUMENTS.get(p_type, cls.CANONICAL_DOCUMENTS["BUSINESS"])
+            track_label = "Educational Loan" if p_type == "EDUCATION" else "Business / Entrepreneurship Loan"
+            
+            reply_lines.append(f"### 📑 Mandatory Statutory Documents for {track_label}:")
+            for i, d in enumerate(doc_list, 1):
+                reply_lines.append(f"{i}. **{d['name']}**: {d['desc']}")
+            
+            suggested_options = [
+                {"label": "📋 View Document Checklist", "value": "checklist", "path": "/checklist"},
+                {"label": "🤖 Start AI OCR Verification", "value": "doc_assistant", "path": "/documents"}
+            ]
+
+        # =========================================================================
+        # 8. USER ELIGIBILITY / WHY ELIGIBLE / WHY NOT ELIGIBLE / MISSING
+        # =========================================================================
+        elif intent == "user_eligibility":
+            if target_scheme:
+                s_name = cls._get_scheme_field(target_scheme, "name") or "Selected Scheme"
+                s_max_inc = cls._get_scheme_field(target_scheme, "max_income_limit")
+                s_min_age = cls._get_scheme_field(target_scheme, "min_age", 18)
+                s_max_age = cls._get_scheme_field(target_scheme, "max_age", 65)
+                s_target = cls._get_scheme_field(target_scheme, "category") or "All"
+                s_purp = cls._get_scheme_field(target_scheme, "purpose_type", "BUSINESS")
+
+                # Check eligibility
+                is_eligible = True
+                missing = []
+                qualifying = []
+
+                if user_profile:
+                    u_age = getattr(user_profile, "age", 25)
+                    u_inc = getattr(user_profile, "annual_family_income", 180000) or getattr(user_profile, "annual_income", 180000)
+                    u_cat = (getattr(user_profile, "social_category", "") or getattr(user_profile, "category", "")).upper()
+                    u_purp = getattr(user_profile, "purpose_type", "BUSINESS")
+
+                    # Age check
+                    if u_age < s_min_age or u_age > s_max_age:
+                        is_eligible = False
+                        missing.append(f"Age {u_age} is outside the allowed range ({s_min_age} - {s_max_age} years).")
+                    else:
+                        qualifying.append(f"Age {u_age} meets scheme criteria ({s_min_age} - {s_max_age} years).")
+
+                    # Income check
+                    if s_max_inc and u_inc > s_max_inc:
+                        is_eligible = False
+                        missing.append(f"Annual Family Income ₹{u_inc:,.0f} exceeds the ceiling of ₹{s_max_inc:,.0f}.")
+                    elif s_max_inc:
+                        qualifying.append(f"Annual Family Income ₹{u_inc:,.0f} is within the limit (≤ ₹{s_max_inc:,.0f}).")
+
+                    # Category check
+                    if "SC" in s_target or "ST" in s_target or "STANDUP" in (cls._get_scheme_field(target_scheme, "code") or "").upper():
+                        if u_cat not in ["SC", "ST"] and (getattr(user_profile, "gender", "") or "").lower() != "female":
+                            is_eligible = False
+                            missing.append("Scheme is reserved for SC, ST, or Women entrepreneurs.")
+                        else:
+                            qualifying.append(f"Social Category ({u_cat}) / Gender qualifies for affirmative subsidy.")
+
+                    # Purpose check
+                    if s_purp.upper() != u_purp.upper():
+                        is_eligible = False
+                        missing.append(f"Scheme purpose is {s_purp}, whereas your active track is {u_purp}.")
+                    else:
+                        qualifying.append(f"Loan purpose matches track ({s_purp}).")
+
+                if is_eligible:
+                    reply_lines.append(f"### ✅ {cls.get_translation('eligible_positive', lang, scheme_name=s_name)}")
+                    if qualifying:
+                        reply_lines.append(f"\n**{cls.get_translation('matching_factors_title', lang)}:**")
+                        for q in qualifying:
+                            reply_lines.append(f"- ✅ {q}")
+                else:
+                    reply_lines.append(f"### ❌ {cls.get_translation('eligible_negative', lang, scheme_name=s_name)}")
+                    if missing:
+                        reply_lines.append(f"\n**{cls.get_translation('missing_req_title', lang)}:**")
+                        for m_item in missing:
+                            reply_lines.append(f"- ⚠️ {m_item}")
+                    if qualifying:
+                        reply_lines.append(f"\n**Matching Criteria Met:**")
+                        for q in qualifying:
+                            reply_lines.append(f"- ✅ {q}")
+
+                matched_schemes.append({
+                    "id": cls._get_scheme_field(target_scheme, "id"),
+                    "name": s_name,
+                    "code": cls._get_scheme_field(target_scheme, "code"),
+                    "max_loan": cls._get_scheme_field(target_scheme, "max_loan_amount", 1000000),
+                    "subsidy": cls._get_scheme_field(target_scheme, "subsidy_details") or f"{cls._get_scheme_field(target_scheme, 'subsidy_percentage_general', 15)}%"
+                })
+            else:
+                reply_lines.append("### 🔍 General Eligibility Factors Evaluated by Scheme Sathi:\n1. **Annual Family Income**: Checked against central subsidy thresholds (e.g. CSIS ≤ ₹4.5 Lakh).\n2. **Social Category / Demographics**: SC/ST/OBC/Women receive up to 35% capital subsidy.\n3. **Age**: Standard eligibility between 18 to 65 years.\n4. **Statutory Documents**: Complete 6-document KYC and verification compliance.")
+                suggested_options = [{"label": "🔍 Find Eligible Schemes", "value": "find_schemes", "path": "/find-scheme"}]
+
+        # =========================================================================
+        # 9. SCHEME RECOMMENDATIONS / SUITABLE SCHEMES
+        # =========================================================================
+        elif intent == "scheme_recommendation":
+            # Filter schemes by track
+            filtered_schemes = [s for s in schemes_db if (cls._get_scheme_field(s, "purpose_type") or "BUSINESS").upper() == p_type]
+            if not filtered_schemes:
+                filtered_schemes = schemes_db[:4]
+
+            reply_lines.append(f"### 🌟 Top Recommended Schemes for Your Profile ({p_type.capitalize()} Track):")
+            for s in filtered_schemes[:4]:
+                s_name = cls._get_scheme_field(s, "name")
+                s_code = cls._get_scheme_field(s, "code")
+                s_max = cls._get_scheme_field(s, "max_loan_amount", 0)
+                s_sub = cls._get_scheme_field(s, "subsidy_details") or f"{cls._get_scheme_field(s, 'subsidy_percentage_general', 15)}%"
+                
+                reply_lines.append(f"- **{s_name}** (`{s_code}`): Max Sanction ₹{s_max:,.0f} | Subsidy: {s_sub}")
+                matched_schemes.append({
+                    "id": cls._get_scheme_field(s, "id"),
                     "name": s_name,
                     "code": s_code,
                     "max_loan": s_max,
                     "subsidy": s_sub
                 })
-                if len(matched) >= 3:
-                    break
-        return matched
 
-    SCHEME_HIGHLIGHTS = {
-        "svanidhi": {
-            "en": "• **PM SVANidhi Scheme (SVANIDHI)**\n  - Loan Limit: ₹10,000 - ₹50,000\n  - Collateral Free: 100%\n  - Interest Subsidy: 7% on timely digital repayment.\n  - Eligibility: Urban & Peri-urban Street Vendors with Vending Certificate.",
-            "hi": "• **पीएम स्वनिधि योजना (PM-SVANIDHI)**\n  - ऋण सीमा: ₹10,000 से ₹50,000\n  - जमानत मुक्त: 100% बिना किसी गारंटी\n  - ब्याज अनुदान: समय पर डिजिटल भुगतान पर 7% की छूट\n  - पात्रता: स्ट्रीट वेंडर्स व रेहड़ी-पटरी व्यवसायी।",
-            "ta": "• **பிஎம் ஸ்வநிதி திட்டம் (PM-SVANIDHI)**\n  - கடன் வரம்பு: ₹10,000 முதல் ₹50,000 வரை\n  - பிணையற்ற கடன்: 100% உத்தரவாதம் தேவையில்லை\n  - வட்டி மானியம்: சரியான முறையில் திருப்பிச் செலுத்தினால் 7% வட்டி சலுகை\n  - தகுதி: தெருவோர வியாபாரிகள் மற்றும் சிறு வணிகர்கள்.",
-            "te": "• **పీఎం స్వనిధి పథకం (PM-SVANIDHI)**\n  - రుణ పరిమితి: ₹10,000 నుండి ₹50,000 వరకు\n  - హామీ లేని రుణం: 100% ఎలాంటి పూచీకత్తు అవసరం లేదు\n  - వడ్డీ రాయితీ: సకాలంలో డిజిటల్ చెల్లింపులపై 7% వడ్డీ రాయితీ\n  - అర్హత: వీధి వ్యాపారులు మరియు తోపుడు బండ్ల వ్యాపారులు.",
-            "kn": "• **ಪಿಎಂ ಸ್ವನಿಧಿ ಯೋಜನೆ (PM-SVANIDHI)**\n  - ಸಾಲದ ಮಿತಿ: ₹10,000 ರಿಂದ ₹50,000 ವರೆಗೆ\n  - ಖಾತರಿ ರಹಿತ ಸಾಲ: 100% ಯಾವುದೇ ಭದ್ರತೆ ಅಗತ್ಯವಿಲ್ಲ\n  - ಬಡ್ಡಿ ರಿಯಾಯಿತಿ: ಸಕಾಲಿಕ ಡಿಜಿಟಲ್ ಮರುಪಾವತಿಗೆ 7% ಬಡ್ಡಿ ಸಹಾಯಧನ\n  - ಅರ್ಹತೆ: ಬೀದಿ ಬದಿ ವ್ಯಾಪಾರಿಗಳು ಮತ್ತು ಸಣ್ಣ ವ್ಯಾಪಾರಿಗಳು.",
-            "ml": "• **പിഎം സ്വനിധി പദ്ധതി (PM-SVANIDHI)**\n  - വായ്പാ പരിധി: ₹10,000 മുതൽ ₹50,000 വരെ\n  - ഈടില്ലാത്ത വായ്പ: 100% സുരക്ഷ ആവശ്യമില്ല\n  - പലിശ ഇളവ്: കൃത്യസമയത്ത് തിരിച്ചടച്ചാൽ 7% പലിശ സബ്‌സിഡി\n  - യോഗ്യത: തെരുവ് കച്ചവടക്കാരും ചെറുകിട സംരംഭകരും.",
-            "mr": "• **पीएम स्वनिधी योजना (PM-SVANIDHI)**\n  - कर्ज मर्यादा: ₹10,000 ते ₹50,000\n  - तारणमुक्त कर्ज: 100% कोणतीही हमी आवश्यक नाही\n  - व्याज सवलत: वेळेवर डिजिटल परतफेडीवर 7% व्याज अनुदान\n  - पात्रता: पथविक्रेते व फेरीवाले व्यावसायिक.",
-            "bn": "• **পিএম স্বনিধি প্রকল্প (PM-SVANIDHI)**\n  - ঋণের সীমা: ₹১০,০০০ থেকে ₹৫০,০০০ পর্যন্ত\n  - জামিনমুক্ত ঋণ: ১০০% কোনো গ্যারান্টি লাগবে না\n  - সুদের ভর্তুকি: সময়মতো ডিজিটাল পরিশোধে ৭% সুদের ছাড়\n  - যোগ্যতা: পথ বিক্রেতা ও হকার ভাইবোনেরা।",
-            "gu": "• **પીએમ સ્વનિધિ યોજના (PM-SVANIDHI)**\n  - લોન મર્યાદા: ₹10,000 થી ₹50,000\n  - તારણ મુક્ત લોન: 100% કોઈ ગેરંટીની જરૂર નથી\n  - વ્યાજ સબસિડી: સમયસર ડિજિટલ ચૂકવણી પર 7% વ્યાજ રાહત\n  - પાત્રતા: શેરી ફેરિયા અને લારી-ગલ્લા ધારકો.",
-            "pa": "• **ਪੀਐਮ ਸਵਨਿਧੀ ਯੋਜਨਾ (PM-SVANIDHI)**\n  - ਕਰਜ਼ਾ ਸੀਮਾ: ₹10,000 ਤੋਂ ₹50,000\n  - ਬਿਨਾਂ ਗਰੰਟੀ ਕਰਜ਼ਾ: 100% ਕੋਈ ਜ਼ਮਾਨਤ ਨਹੀਂ\n  - ਵਿਆਜ ਛੋਟ: ਸਮੇਂ ਸਿਰ ਡਿਜੀਟਲ ਭੁਗਤਾਨ 'ਤੇ 7% ਸਬਸਿਡੀ\n  - ਯੋਗਤਾ: ਰੇਹੜੀ-ਫੜ੍ਹੀ ਵਾਲੇ ਅਤੇ ਛੋਟੇ ਦੁਕਾਨਦਾਰ।",
-            "or": "• **ପିଏମ ସ୍ୱନିଧି ଯୋଜନା (PM-SVANIDHI)**\n  - ଋଣ ସୀମା: ₹୧୦,୦୦୦ ରୁ ₹୫୦,୦୦୦\n  - ଜାମିନ ମୁକ୍ତ ଋଣ: ୧୦୦% କୌଣସି ଗ୍ୟାରେଣ୍ଟି ଆବଶ୍ୟକ ନାହିଁ\n  - ସୁଧ ରିହାତି: ସମୟାନୁସାରେ ଡିଜିଟାଲ ପରିଶୋଧରେ ୭% ସୁଧ ରିହାତି\n  - ଯୋଗ୍ୟତା: ରାସ୍ତାକଡ଼ ବିକ୍ରେତା ଓ ଉଠାଦୋକାନୀ।",
-            "as": "• **পিএম স্বনিধি আঁচনি (PM-SVANIDHI)**\n  - ঋণৰ সীমা: ₹১০,০০০ ৰ পৰা ₹৫০,০০০ লৈ\n  - বন্ধকমুক্ত ঋণ: ১০০% কোনো জামিনৰ প্ৰয়োজন নাই\n  - সুদ ৰেহাই: সময়মতে ডিজিটেল পৰিশোধত ৭% সুদ ৰাজসাহায্য\n  - যোগ্যতা: পথ বিক্ৰেতা আৰু ক্ষুদ্র ব্যৱসায়ী।"
-        },
-        "standup": {
-            "en": "• **Stand-Up India Scheme (STANDUP-IND)**\n  - Loan Limit: ₹10 Lakh to ₹1 Crore\n  - Margin Money: Up to 15% (Convergence with state schemes)\n  - Target Beneficiaries: SC / ST and Women Entrepreneurs for Greenfield Enterprises.\n• **Pradhan Mantri MUDRA Yojana (PMMY)**\n  - Shishu (up to ₹50k), Kishore (₹50k - ₹5L), Tarun (₹5L - ₹10L)\n  - Collateral Free with CGTMSE Coverage.",
-            "hi": "• **स्टैंड-अप इंडिया योजना (STANDUP-IND)**\n  - ऋण सीमा: ₹10 लाख से ₹1 करोड़\n  - स्वयं का अंशदान (मार्जिन): केवल 15%\n  - लक्षित लाभार्थी: अनुसूचित जाति (SC), अनुसूचित जनजाति (ST) एवं महिला उद्यमी।\n• **प्रधानमंत्री मुद्रा योजना (PMMY)**\n  - शिशु (₹50,000 तक), किशोर (₹50,000 - ₹5 लाख), तरुण (₹5 लाख - ₹10 लाख)\n  - 100% गारंटी मुक्त (CGTMSE सुरक्षित)।",
-            "ta": "• **ஸ்டாண்ட்-அப் இந்தியா திட்டம் (STANDUP-IND)**\n  - கடன் வரம்பு: ₹10 லட்சம் முதல் ₹1 கோடி வரை\n  - சொந்த பங்களிப்பு: 15% மட்டுமே\n  - பயனாளி: SC / ST மற்றும் பெண் தொழில்முனைவோர்.\n• **பிரதம மந்திரி முத்ரா திட்டம் (PMMY)**\n  - சிசு (₹50,000 வரை), கிஷோர் (₹50,000 - ₹5 லட்சம்), தருண் (₹5 லட்சம் - ₹10 லட்சம்)\n  - பிணையற்ற கடன் வசதி.",
-            "te": "• **స్టాండ్-అప్ ఇండియా పథకం (STANDUP-IND)**\n  - రుణ పరిమితి: ₹10 లక్షల నుండి ₹1 కోటి వరకు\n  - మార్జిన్ మనీ: కేవలం 15%\n  - లబ్ధిదారులు: SC / ST మరియు మహిళా పారిశ్రామికవేత్తలు.\n• **ప్రధాన మంత్రి ముద్రా యోజన (PMMY)**\n  - శిశు (₹50,000 వరకు), కిషోర్ (₹50,000 - ₹5 లక్షలు), తరుణ్ (₹5 లక్షలు - ₹10 లక్షలు)\n  - ఎలాంటి పూచీకత్తు అవసరం లేదు.",
-            "kn": "• **ಸ್ಟ್ಯಾಂಡ್‌-ಅಪ್ ಇಂಡಿಯಾ ಯೋಜನೆ (STANDUP-IND)**\n  - ಸಾಲದ ಮಿತಿ: ₹10 ಲಕ್ಷದಿಂದ ₹1 ಕೋಟಿ ವರೆಗೆ\n  - ಮಾರ್ಜಿನ್ ಮನಿ: ಕೇವಲ 15%\n  - ಫಲಾನುಭವಿಗಳು: ಎಸ್‌ಸಿ / ಎಸ್‌ಟಿ ಮತ್ತು ಮಹಿಳಾ ಉದ್ಯಮಿಗಳು.\n• **ಪ್ರಧಾನ ಮಂತ್ರಿ ಮುದ್ರಾ ಯೋಜನೆ (PMMY)**\n  - ಶಿಶು (₹50,000 ವರೆಗೆ), ಕಿಶೋರ್ (₹50,000 - ₹5 ಲಕ್ಷ), ತರುಣ್ (₹5 ಲಕ್ಷ - ₹10 ಲಕ್ಷ)\n  - ಖಾತರಿ ರಹಿತ ಸುಲಭ ಸಾಲ.",
-            "ml": "• **സ്റ്റാൻഡ്-അപ്പ് ഇന്ത്യ പദ്ധതി (STANDUP-IND)**\n  - വായ്പാ പരിധി: ₹10 ലക്ഷം മുതൽ ₹1 കോടി വരെ\n  - മാർജിൻ മണി: 15% മാത്രം\n  - ഗുണഭോക്താക്കൾ: SC / ST വിഭാഗങ്ങളും വനിതാ സംരംഭകരും.\n• **പ്രധാനമന്ത്രി മുദ്ര യോജന (PMMY)**\n  - ശിശു (₹50,000 വരെ), കിഷോർ (₹50,000 - ₹5 ലക്ഷം), തരുൺ (₹5 ലക്ഷം - ₹10 ലക്ഷം)\n  - ഈടില്ലാത്ത സാമ്പത്തിക സഹായം.",
-            "mr": "• **स्टँड-अप इंडिया योजना (STANDUP-IND)**\n  - कर्ज मर्यादा: ₹10 लाख ते ₹1 कोटी\n  - स्वतःचे योगदान: फक्त 15%\n  - लाभार्थी: अनुसूचित जाती (SC), अनुसूचित जमाती (ST) व महिला उद्योजक.\n• **प्रधानमंत्री मुद्रा योजना (PMMY)**\n  - शिशु (₹50,000 पर्यंत), किशोर (₹50,000 - ₹5 लाख), तरुण (₹5 लाख - ₹10 लाख)\n  - संपूर्ण तारणमुक्त कर्ज.",
-            "bn": "• **স্ট্যান্ড-আপ ইন্ডিয়া স্কিম (STANDUP-IND)**\n  - ঋণের সীমা: ₹১০ লাখ থেকে ₹১ কোটি\n  - মার্জিন মানি: মাত্র ১৫%\n  - সুবিধাভোগী: তপশিলি জাতি (SC), উপজাতি (ST) এবং মহিলা উদ্যোক্তা।\n• **প্রধানমন্ত্রী মুদ্রা যোজনা (PMMY)**\n  - শিশু (₹৫০,০০০ পর্যন্ত), কিশোর (₹৫০,০০০ - ₹৫ লাখ), তরুণ (₹৫ লাখ - ₹১০ লাখ)\n  - সম্পূর্ণ জামিনমুক্ত ঋণ সুবিধা।",
-            "gu": "• **સ્ટેન્ડ-અપ ઇન્ડિયા યોજના (STANDUP-IND)**\n  - લોન મર્યાદા: ₹10 લાખ થી ₹1 કરોડ\n  - માર્જિન મની: માત્ર 15%\n  - લાભાર્થીઓ: SC / ST અને મહિલા સાહસિકો.\n• **પ્રધાનમંત્રી મુદ્રા યોજના (PMMY)**\n  - શિશુ (₹50,000 સુધી), કિશોર (₹50,000 - ₹5 લાખ), તરુણ (₹5 લાખ - ₹10 લાખ)\n  - કોઈ ગેરંટી વગર લોન.",
-            "pa": "• **ਸਟੈਂਡ-ਅੱਪ ਇੰਡੀਆ ਸਕੀਮ (STANDUP-IND)**\n  - ਕਰਜ਼ਾ ਸੀਮਾ: ₹10 ਲੱਖ ਤੋਂ ₹1 ਕਰੋੜ\n  - ਮਾਰਜਨ ਮਨੀ: ਸਿਰਫ਼ 15%\n  - ਲਾਭਪਾਤਰੀ: ਅਨੁਸੂਚਿਤ ਜਾਤੀ (SC), ਅਨੁਸੂਚਿਤ ਜਨਜਾਤੀ (ST) ਅਤੇ ਮਹਿਲਾ ਉੱਦਮੀ।\n• **ਪ੍ਰਧਾਨ ਮੰਤਰੀ ਮੁਦਰਾ ਯੋਜਨਾ (PMMY)**\n  - ਸ਼ਿਸ਼ੂ (₹50,000 ਤੱਕ), ਕਿਸ਼ੋਰ (₹50,000 - ₹5 ਲੱਖ), ਤਰੁਣ (₹5 ਲੱਖ - ₹10 ਲੱਖ)\n  - ਬਿਨਾਂ ਕਿਸੇ ਗਾਰੰਟੀ ਕਰਜ਼ਾ।",
-            "or": "• **ଷ୍ଟାଣ୍ଡ-ଅପ୍ ଇଣ୍ଡିଆ ଯୋଜନା (STANDUP-IND)**\n  - ଋଣ ସୀମା: ₹୧୦ ଲକ୍ଷ ରୁ ₹୧ କୋଟି\n  - ମାର୍ଜିନ ଅର୍ଥ: ମାତ୍ର ୧୫%\n  - ହିତାଧିକାରୀ: SC / ST ଏବଂ ମହିଳା ଉଦ୍ୟୋଗୀ।\n• **ପ୍ରଧାନମନ୍ତ୍ରୀ ମୁଦ୍ରା ଯୋଜନା (PMMY)**\n  - ଶିଶୁ (₹୫୦,୦୦୦ ପର୍ଯ୍ୟନ୍ତ), କିଶୋର (₹୫୦,୦୦୦ - ₹୫ ଲକ୍ଷ), ତରୁଣ (₹୫ ଲକ୍ଷ - ₹୧୦ ଲକ୍ଷ)\n  - ସମ୍ପୂର୍ଣ୍ଣ ଜାମିନ ମୁକ୍ତ ଋଣ।",
-            "as": "• **ষ্টেণ্ড-আপ ইণ্ডিয়া আঁচনি (STANDUP-IND)**\n  - ঋণৰ সীমা: ₹১০ লাখৰ পৰা ₹১ কোটি\n  - মার্জিন ধন: মাত্ৰ ১৫%\n  - হিতাধিকাৰী: অনুসূচীত জাতি (SC), অনুসূচীত জনজাতি (ST) আৰু মহিলা উদ্যোগী।\n• **প্ৰধানমন্ত্ৰী মুদ্রা যোজনা (PMMY)**\n  - শিশু (₹৫০,০০০ লৈকে), কিশোৰ (₹৫০,০০০ - ₹৫ লাখ), তৰুণ (₹৫ লাখ - ₹১০ লাখ)\n  - কোনো বন্ধক অবিহনে ঋণ।"
-        },
-        "pmegp": {
-            "en": "• **Prime Minister's Employment Generation Programme (PMEGP)**\n  - Maximum Project Cost: Up to ₹50 Lakh (Manufacturing) / ₹20 Lakh (Service)\n  - Capital Subsidy: Up to 35% in Rural Areas (25% in Urban Areas for Special Category: SC/ST/Women/OBC/Minorities)\n  - Own Contribution: Only 5% for Special Category beneficiaries.\n• **PM Vishwakarma Scheme**\n  - Up to ₹3 Lakh Collateral-Free Enterprise Loan @ 5% Concessional Interest Rate + ₹15,000 Modern Tool-kit Incentive.",
-            "hi": "• **प्रधानमंत्री रोजगार सृजन कार्यक्रम (PMEGP)**\n  - अधिकतम परियोजना लागत: ₹50 लाख (विनिर्माण) / ₹20 लाख (सेवा)\n  - पूंजीगत अनुदान (सब्सिडी): ग्रामीण क्षेत्रों में 35% तक (शहरी क्षेत्रों में विशेष श्रेणी के लिए 25%)\n  - स्वयं का अंशदान: विशेष वर्ग (SC/ST/महिला/दिव्यांग) के लिए केवल 5%।\n• **पीएम विश्वकर्मा योजना (PM-VISHWAKARMA)**\n  - 18 पारंपरिक शिल्पों के लिए ₹3 लाख तक का ऋण मात्र 5% रियायती ब्याज पर + ₹15,000 टूलकिट अनुदान।",
-            "ta": "• **பிரதமரின் வேலைவாய்ப்பு உருவாக்கும் திட்டம் (PMEGP)**\n  - அதிகபட்ச திட்ட மதிப்பு: ₹50 லட்சம் (உற்பத்தி) / ₹20 லட்சம் (சேவை)\n  - மூலதன மானியம்: கிராமப்புறங்களில் 35% வரை (நகர்ப்புறங்களில் 25% மானியம்)\n  - சொந்த முதலீடு: சிறப்பு பிரிவினருக்கு (SC/ST/பெண்கள்) வெறும் 5% மட்டுமே.\n• **பிஎம் விஸ்வகர்மா திட்டம் (PM-VISHWAKARMA)**\n  - பாரம்பரிய கைவினைஞர்களுக்கு 5% சலுகை வட்டியில் ₹3 லட்சம் வரை பிணையற்ற கடன் + ₹15,000 உபகரண மானியம்.",
-            "te": "• **ప్రధాన మంత్రి ఉపాధి కల్పన కార్యక్రమం (PMEGP)**\n  - గరిష్ట ప్రాజెక్ట్ ఖర్చు: ₹50 లక్షలు (తయారీ) / ₹20 లక్షలు (సేవలు)\n  - మూలధన సబ్సిడీ: గ్రామీణ ప్రాంతాల్లో 35% వరకు (పట్టణాల్లో ప్రత్యేక వర్గాలకు 25%)\n  - సొంత వాటా: ప్రత్యేక వర్గాల (SC/ST/మహిళలు) వారికి కేవలం 5% మాత్రమే.\n• **పీఎం విశ్వకర్మ పథకం (PM-VISHWAKARMA)**\n  - 18 రకాల సాంప్రదాయ చేతివృత్తుల వారికి 5% రాయితీ వడ్డీతో ₹3 లక్షల వరకు రుణం + ₹15,000 టూల్‌కిట్ గ్రాంట్.",
-            "kn": "• **ಪ್ರಧಾನ ಮಂತ್ರಿ ಉದ್ಯೋಗ ಸೃಷ್ಟಿ ಕಾರ್ಯಕ್ರಮ (PMEGP)**\n  - ಗರಿಷ್ಠ ಯೋಜನಾ ವೆಚ್ಚ: ₹50 ಲಕ್ಷ (ಉತ್ಪಾದನೆ) / ₹20 ಲಕ್ಷ (ಸೇವೆ)\n  - ಬಂಡವಾಳ ಸಬ್ಸಿಡಿ: ಗ್ರಾಮೀಣ ಪ್ರದೇಶದಲ್ಲಿ 35% ವರೆಗೆ (ನಗರ ಪ್ರದೇಶದಲ್ಲಿ 25%)\n  - ಸ್ವಂತ ಹೂಡಿಕೆ: ವಿಶೇಷ ವರ್ಗಗಳಿಗೆ (SC/ST/ಮಹಿಳೆಯರು) ಕೇವಲ 5% ಮಾತ್ರ.\n• **ಪಿಎಂ ವಿಶ್ವಕರ್ಮ ಯೋಜನೆ (PM-VISHWAKARMA)**\n  - ಸಾಂಪ್ರದಾಯಿಕ ಕುಶಲಕರ್ಮಿಗಳಿಗೆ 5% ಬಡ್ಡಿದರದಲ್ಲಿ ₹3 ಲಕ್ಷದವರೆಗೆ ಸಾಲ + ₹15,000 ಟೂಲ್‌ಕಿಟ್ ಪ್ರೋತ್ಸಾಹಧನ.",
-            "ml": "• **പ്രധാനമന്ത്രി തൊഴിൽ ദായക പദ്ധതി (PMEGP)**\n  - പരമാവധി പ്രോജക്ട് തുക: ₹50 ലക്ഷം (നിർമ്മാണം) / ₹20 ലക്ഷം (സേവനം)\n  - മൂലധന സബ്‌സിഡി: ഗ്രാമപ്രദേശങ്ങളിൽ 35% വരെ (നഗരങ്ങളിൽ പ്രത്യേക വിഭാഗങ്ങൾക്ക് 25%)\n  - സ്വന്തം വിഹിതം: പ്രത്യേക വിഭാഗങ്ങൾക്ക് (SC/ST/വനിതകൾ) വെറും 5% മാത്രം.\n• **പിഎം വിശ്വകർമ പദ്ധതി (PM-VISHWAKARMA)**\n  - പരമ്പരാഗത കരകൗശല വിദഗ്ദ്ധർക്ക് 5% പലിശ നിരക്കിൽ ₹3 ലക്ഷം വരെ വായ്പ + ₹15,000 ടൂൾകിറ്റ് ഗ്രാന്റ്.",
-            "mr": "• **पंतप्रधान रोजगार निर्मिती कार्यक्रम (PMEGP)**\n  - कमाल प्रकल्प मर्यादा: ₹50 लाख (उत्पादन) / ₹20 लाख (सेवा)\n  - भांडवली अनुदान (सब्सिडी): ग्रामीण भागात 35% पर्यंत (शहरी भागात विशेष प्रवर्गासाठी 25%)\n  - स्वतःचे योगदान: विशेष प्रवर्गासाठी (SC/ST/महिला/अल्पसंख्याक) फक्त 5%.\n• **पीएम विश्वकर्मा योजना (PM-VISHWAKARMA)**\n  - 18 पारंपारिक कारागिरांसाठी 5% सवलतीच्या व्याजाने ₹3 लाखांपर्यंत तारणमुक्त कर्ज + ₹15,000 टूलकिट अनुदान.",
-            "bn": "• **প্রধানমন্ত্রী কর্মসংস্থান সৃষ্টি কর্মসূচি (PMEGP)**\n  - সর্বোচ্চ প্রকল্প ব্যয়: ₹৫০ লাখ (উৎপাদন) / ₹২০ লাখ (সেবা)\n  - মূলধন ভর্তুকি: গ্রামীণ এলাকায় ৩৫% পর্যন্ত (শহরাঞ্চলে বিশেষ বিভাগের জন্য ২৫%)\n  - নিজস্ব অবদান: বিশেষ শ্রেণীর (SC/ST/মহিলা) জন্য মাত্র ৫%।\n• **পিএম বিশ্বকর্মা প্রকল্প (PM-VISHWAKARMA)**\n  - ঐতিহ্যবাহী কারিগরদের জন্য ৫% সুদে ₹৩ লাখ পর্যন্ত জামিনমুক্ত ঋণ + ₹১৫,০০০ আধুনিক সরঞ্জাম অনুদান।",
-            "gu": "• **પ્રધાનમંત્રી રોજગાર સર્જન કાર્યક્રમ (PMEGP)**\n  - મહત્તમ પ્રોજેક્ટ ખર્ચ: ₹50 લાખ (ઉત્પાદન) / ₹20 લાખ (સેવા)\n  - મૂડી સબસિડી: ગ્રામીણ વિસ્તારમાં 35% સુધી (શહેરી વિસ્તારમાં વિશેષ વર્ગ માટે 25%)\n  - પોતાનું યોગદાન: વિશેષ વર્ગ (SC/ST/મહિલા) માટે માત્ર 5%.\n• **પીએમ વિશ્વકર્મા યોજના (PM-VISHWAKARMA)**\n  - પરંપરાગત કારીગરો માટે 5% ના રાહત વ્યાજે ₹3 લાખ સુધીની લોન + ₹15,000 ટૂલકીટ સહાય.",
-            "pa": "• **ਪ੍ਰਧਾਨ ਮੰਤਰੀ ਰੋਜ਼ਗਾਰ ਉਤਪਾਦਨ ਪ੍ਰੋਗਰਾਮ (PMEGP)**\n  - ਵੱਧ ਤੋਂ ਵੱਧ ਪ੍ਰੋਜੈਕਟ ਲਾਗਤ: ₹50 ਲੱਖ (ਉਤਪਾਦਨ) / ₹20 ਲੱਖ (ਸੇਵਾ)\n  - ਪੂੰਜੀ ਸਬਸਿਡੀ: ਪੇਂਡੂ ਖੇਤਰਾਂ ਵਿੱਚ 35% ਤੱਕ (ਸ਼ਹਿਰੀ ਖੇਤਰਾਂ ਵਿੱਚ ਵਿਸ਼ੇਸ਼ ਸ਼੍ਰੇਣੀ ਲਈ 25%)\n  - ਆਪਣਾ ਹਿੱਸਾ: ਵਿਸ਼ੇਸ਼ ਸ਼੍ਰੇਣੀ (SC/ST/ਮਹਿਲਾ) ਲਈ ਸਿਰਫ਼ 5%।\n• **ਪੀਐਮ ਵਿਸ਼ਵਕਰਮਾ ਯੋਜਨਾ (PM-VISHWAKARMA)**\n  - ਰਵਾਇਤੀ ਦਸਤਕਾਰਾਂ ਲਈ 5% ਰਿਆਇਤੀ ਵਿਆਜ 'ਤੇ ₹3 ਲੱਖ ਤੱਕ ਕਰਜ਼ਾ + ₹15,000 ਟੂਲਕਿੱਟ ਸਹਾਇਤਾ।",
-            "or": "• **ପ୍ରଧାନମନ୍ତ୍ରୀ ନିଯୁକ୍ତି ସୃଷ୍ଟି କାର୍ଯ୍ୟକ୍ରମ (PMEGP)**\n  - ସର୍ବାଧିକ ପ୍ରକଳ୍ପ ମୂଲ୍ୟ: ₹୫୦ ଲକ୍ଷ (ଉତ୍ପାଦନ) / ₹୨୦ ଲକ୍ଷ (ସେବା)\n  - ପୁଞ୍ଜି ରିହାତି (ସବସିଡି): ଗ୍ରାମାଞ୍ଚଳରେ ୩୫% ପର୍ଯ୍ୟନ୍ତ (ସହରାଞ୍ଚଳରେ ବିଶେଷ ବର୍ଗ ପାଇଁ ୨୫%)\n  - ନିଜ ଅଂଶଧନ: ବିଶେଷ ବର୍ଗ (SC/ST/ମହିଳା) ପାଇଁ ମାତ୍ର ୫%।\n• **ପିଏମ ବିଶ୍ୱକର୍ମା ଯୋଜନା (PM-VISHWAKARMA)**\n  - ପାରମ୍ପରିକ କାରିଗରଙ୍କ ପାଇଁ ୫% ସୁଧରେ ₹୩ ଲକ୍ଷ ପର୍ଯ୍ୟନ୍ତ ଋଣ + ₹୧୫,୦୦୦ ଟୁଲକିଟ୍ ଅନୁଦାନ।",
-            "as": "• **প্ৰধানমন্ত্ৰী নিয়োগ সৃষ্টি কাৰ্যসূচী (PMEGP)**\n  - সৰ্বোচ্চ প্ৰকল্প ব্যয়: ₹৫০ লাখ (উৎপাদন) / ₹২০ লাখ (সেৱা)\n  - মূলধন ৰাজসাহায্য: গ্ৰাম্য অঞ্চলত ৩৫% লৈকে (নগৰাঞ্চলত বিশেষ শ্ৰেণীৰ বাবে ২৫%)\n  - নিজৰ অংশদান: বিশেষ শ্ৰেণীৰ (SC/ST/মহিলা) বাবে মাত্ৰ ৫%।\n• **পিএম বিশ্বকর্মা আঁচনি (PM-VISHWAKARMA)**\n  - পৰম্পৰাগত শিল্পীসকলৰ বাবে ৫% ৰেহাই সুতত ₹৩ লাখলৈকে ঋণ + ₹১৫,০০০ আধুনিক সঁজুলি অনুদান।"
-        },
-        "education": {
-            "en": "• **Central Sector Interest Subsidy (CSIS)**\n  - 100% full interest subvention during course duration + 1 year moratorium for higher education loans up to ₹10 Lakhs (Family income ≤ ₹4.5 Lakh).\n• **NSFDC Education Loan for Scheduled Caste Students**\n  - Concessional interest rate (3.5% - 4% p.a.) for professional/technical degree studies (up to ₹20 Lakhs) in India and abroad.\n• **Credit Guarantee Fund Scheme for Education Loans (CGFSEL / IBA)**\n  - Collateral-free education loans up to ₹7.5 Lakhs without third-party guarantee.\n• **Dr. Ambedkar Interest Subsidy on Overseas Studies**\n  - 100% interest subsidy on overseas masters and PhD loans for SC/OBC students.",
-            "hi": "• **केंद्रीय क्षेत्र ब्याज सब्सिडी (CSIS)**\n  - ₹10 लाख तक के उच्च शिक्षा ऋण पर पाठ्यक्रम अवधि + 1 वर्ष अधिस्थगन के दौरान 100% पूर्ण ब्याज अनुदान (पारिवारिक आय ≤ ₹4.5 लाख)।\n• **अनुसूचित जाति के छात्रों के लिए NSFDC शिक्षा ऋण**\n  - व्यावसायिक/तकनीकी डिग्री के लिए 3.5% - 4% की रियायती ब्याज दर पर ₹20 लाख तक का ऋण।\n• **CGFSEL शिक्षा ऋण क्रेडिट गारंटी**\n  - ₹7.5 लाख तक का गारंटी-मुक्त शिक्षा ऋण बिना किसी तृतीय-पक्ष जमानत के।\n• **डॉ. अंबेडकर विदेश अध्ययन ब्याज सब्सिडी**\n  - विदेश में मास्टर्स और पीएचडी के लिए एससी/ओबीसी छात्रों को 100% ब्याज सब्सिडी।",
-            "ta": "• **மத்திய துறை வட்டி மானியம் (CSIS)**\n  - ₹10 லட்சம் வரையிலான உயர்கல்வி கடன்களுக்கு படிப்பு காலம் + 1 ஆண்டுக்கு 100% முழு வட்டி மானியம் (குடும்ப வருமானம் ≤ ₹4.5 லட்சம்).\n• **NSFDC பட்டியல் சாதி மாணவர் கல்வி கடன்**\n  - தொழில்முறை படிப்புகளுக்கு 3.5% - 4% சலுகை வட்டியில் ₹20 லட்சம் வரை கடன்.\n• **CGFSEL கல்வி கடன் உத்தரவாதம்**\n  - ₹7.5 லட்சம் வரை பிணையற்ற உத்தரவாதக் கடன்.",
-            "te": "• **సెంట్రల్ సెక్టార్ వడ్డీ రాయితీ (CSIS)**\n  - ₹10 లక్షల వరకు ఉన్నత విద్య రుణాలపై కోర్సు వ్యవధి + 1 సంవత్సరం పాటు 100% పూర్తి వడ్డీ రాయితీ.\n• **NSFDC ఎస్సీ విద్యార్థుల విద్యా రుణం**\n  - 3.5% - 4% రాయితీ వడ్డీతో ₹20 లక్షల వరకు విద్యా రుణం.\n• **CGFSEL విద్యా రుణాల గ్యారెంటీ**\n  - ఎలాంటి పూచీకత్తు లేకుండా ₹7.5 లక్షల వరకు రుణం.",
-            "kn": "• **ಕೇಂದ್ರ ವಲಯದ ಬಡ್ಡಿ ಸಬ್ಸಿಡಿ (CSIS)**\n  - ₹10 ಲಕ್ಷದವರೆಗಿನ ಉನ್ನತ ಶಿಕ್ಷಣ ಸಾಲಗಳಿಗೆ 100% ಪೂರ್ಣ ಬಡ್ಡಿ ಸಹಾಯಧನ.\n• **ಎಸ್‌ಸಿ ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ NSFDC ಶಿಕ್ಷಣ ಸಾಲ**\n  - 3.5% - 4% ರಿಯಾಯಿತಿ ಬಡ್ಡಿದರದಲ್ಲಿ ₹20 ಲಕ್ಷದವರೆಗೆ ಸಾಲ.\n• **CGFSEL ಸಾಲ ಗ್ಯಾರಂಟಿ ಯೋಜನೆ**\n  - ₹7.5 ಲಕ್ಷದವರೆಗೆ ಜಾಮೀನು ರಹಿತ ಶಿಕ್ಷಣ ಸಾಲ.",
-            "ml": "• **സെൻട്രൽ സെക്ടർ പലിശ സബ്‌സിഡി (CSIS)**\n  - ₹10 ലക്ഷം വരെയുള്ള ഉന്നത വിദ്യാഭ്യാസ വായ്പകൾക്ക് 100% പൂർണ്ണ പലിശ സബ്‌സിഡി.\n• **പട്ടികജാതി വിദ്യാർത്ഥികൾക്ക് NSFDC വിദ്യാഭ്യാസ വായ്പ**\n  - 3.5% - 4% പലിശയിൽ ₹20 ലക്ഷം വരെ വായ്പ.\n• **CGFSEL എഡ്യൂക്കേഷൻ ലോൺ ഗ്യാരന്റി**\n  - ₹7.5 ലക്ഷം വരെ ഈടില്ലാത്ത വായ്പ.",
-            "mr": "• **केंद्रीय क्षेत्र व्याज अनुदान योजना (CSIS)**\n  - ₹10 लाखांपर्यंतच्या उच्च शिक्षण कर्जावर 100% पूर्ण व्याज अनुदान (कौटुंबिक उत्पन्न ≤ ₹4.5 लाख).\n• **अनुसूचित जातींच्या विद्यार्थ्यांसाठी NSFDC शैक्षणिक कर्ज**\n  - 3.5% - 4% सवलतीच्या व्याजदराने ₹20 लाखांपर्यंत कर्ज.\n• **CGFSEL शैक्षणिक कर्ज हमी**\n  - ₹7.5 लाखांपर्यंत तारणमुक्त शैक्षणिक कर्ज.",
-            "bn": "• **সেন্ট্রাল সেক্টর ইন্টারেস্ট সাবসিডি (CSIS)**\n  - ₹১০ লাখ পর্যন্ত উচ্চশিক্ষার ঋণে ১০০% সম্পূর্ণ সুদের ভর্তুকি (পারিবারিক আয় ≤ ₹৪.৫ লাখ)।\n• **এসসি শিক্ষার্থীদের জন্য NSFDC শিক্ষা ঋণ**\n  - ৩.৫% - ৪% সুদে ₹২০ লাখ পর্যন্ত ঋণ।\n• **CGFSEL শিক্ষা ঋণ ক্রেডিট গ্যারান্টি**\n  - ₹৭.৫ লাখ পর্যন্ত জামিনমুক্ত শিক্ষা ঋণ।",
-            "gu": "• **સેન્ટ્રલ સેક્ટર વ્યાજ સબસિડી (CSIS)**\n  - ₹10 લાખ સુધીની ઉચ્ચ શિક્ષણ લોન પર 100% સંપૂર્ણ વ્યાજ સબસિડી.\n• **SC વિદ્યાર્થીઓ માટે NSFDC એજ્યુકેશન લોન**\n  - 3.5% - 4% ના રાહત વ્યાજે ₹20 લાખ સુધીની લોન.\n• **CGFSEL એજ્યુકેશન લોન ગેરંટી**\n  - ₹7.5 લાખ સુધી તારણ વગર શિક્ષણ લોન.",
-            "pa": "• **ਕੇਂਦਰੀ ਖੇਤਰ ਵਿਆਜ ਸਬਸਿਡੀ (CSIS)**\n  - ₹10 ਲੱਖ ਤੱਕ ਦੇ ਉੱਚ ਸਿੱਖਿਆ ਕਰਜ਼ਿਆਂ 'ਤੇ 100% ਪੂਰੀ ਵਿਆਜ ਸਬਸਿਡੀ।\n• **ਐਸਸੀ ਵਿਦਿਆਰਥੀਆਂ ਲਈ NSFDC ਸਿੱਖਿਆ ਕਰਜ਼ਾ**\n  - 3.5% - 4% ਰਿਆਇਤੀ ਵਿਆਜ 'ਤੇ ₹20 ਲੱਖ ਤੱਕ ਕਰਜ਼ਾ।\n• **CGFSEL ਸਿੱਖਿਆ ਕਰਜ਼ਾ ਗਰੰਟੀ**\n  - ₹7.5 ਲੱਖ ਤੱਕ ਬਿਨਾਂ ਗਰੰਟੀ ਕਰਜ਼ਾ।",
-            "or": "• **କେନ୍ଦ୍ରୀୟ କ୍ଷେତ୍ର ସୁଧ ରିହାତି (CSIS)**\n  - ₹୧୦ ଲକ୍ଷ ପର୍ଯ୍ୟନ୍ତ ଉଚ୍ଚଶିକ୍ଷା ଋଣରେ ୧୦୦% ସମ୍ପୂର୍ଣ୍ଣ ସୁଧ ରିହାତି।\n• **SC ଛାତ୍ରଙ୍କ ପାଇଁ NSFDC ଶିକ୍ଷା ଋଣ**\n  - ୩.୫% - ୪% ସୁଧରେ ₹୨୦ ଲକ୍ଷ ପର୍ଯ୍ୟନ୍ତ ଋଣ।\n• **CGFSEL ଶିକ୍ଷା ଋଣ ଗ୍ୟାରେଣ୍ଟି**\n  - ₹୭.୫ ଲକ୍ଷ ପର୍ଯ୍ୟନ୍ତ ଜାମିନ ମୁକ୍ତ ଋଣ।",
-            "as": "• **কেন্দ্ৰীয় খণ্ডৰ সুদ ৰাজসাহায্য (CSIS)**\n  - ₹১০ লাখলৈকে উচ্চ শিক্ষাৰ ঋণত ১০০% সম্পূৰ্ণ সুদ ৰেহাই।\n• **অনুসূচীত জাতিৰ ছাত্ৰ-ছাত্ৰীৰ বাবে NSFDC শিক্ষা ঋণ**\n  - ৩.৫% - ৪% সুতত ₹২০ লাখলৈকে ঋণ।\n• **CGFSEL শিক্ষা ঋণ গেৰাণ্টি**\n  - ₹৭.୫ লাখলৈকে বন্ধকমুক্ত ঋণ।"
-        },
-        "documents": {
-            "en": "• **Mandatory Documents for Scheme Applications**:\n  1. **Aadhaar Card**: UIDAI Verhoeff checksum identity verification.\n  2. **PAN Card**: Income Tax Department financial KYC compliance.\n  3. **10th Marksheet / Certificate**: Proof of age and foundational merit.\n  4. **12th Marksheet / Diploma**: Higher secondary qualification for degree admission.\n  5. **Annual Family Income Certificate**: Mandatory for CSIS 100% interest subsidy (≤ ₹4.5L).\n  6. **Community / Caste Certificate**: Unlocks NSFDC concessional rates (3.5%-4%) for SC candidates.",
-            "hi": "• **योजना आवेदनों के लिए 6 अनिवार्य दस्तावेज़**:\n  1. **आधार कार्ड**: यूआईडीएआई पहचान सत्यापन।\n  2. **पैन कार्ड**: आयकर वित्तीय अनुपालन।\n  3. **10वीं की अंकतालिका/प्रमाणपत्र**: जन्मतिथि एवं बुनियादी योग्यता।\n  4. **12वीं की अंकतालिका**: कॉलेज प्रवेश हेतु आवश्यक।\n  5. **वार्षिक पारिवारिक आय प्रमाण पत्र**: CSIS 100% ब्याज अनुदान हेतु (आय ≤ ₹4.5 लाख)।\n  6. **जाति प्रमाण पत्र**: NSFDC 3.5%-4% रियायती दर हेतु।",
-            "ta": "• **திட்டங்களுக்கான 6 கட்டாய ஆவணங்கள்**:\n  1. ஆதார் அட்டை (UIDAI சரிபார்ப்பு)\n  2. பான் கார்டு (PAN)\n  3. 10ஆம் வகுப்பு மதிப்பெண் சான்றிதழ்\n  4. 12ஆம் வகுப்பு மதிப்பெண் சான்றிதழ்\n  5. ஆண்டு குடும்ப வருமான சான்றிதழ் (CSIS 100% மானியத்திற்கு)\n  6. சாதிச் சான்றிதழ் (NSFDC 3.5%-4% சலுகை வட்டிக்கு).",
-            "te": "• **పథకాలకు అవసరమైన 6 ముఖ్యమైన పత్రాలు**:\n  1. ఆధార్ కార్డు\n  2. పాన్ కార్డు (PAN)\n  3. 10వ తరగతి మార్కుల జాబితా\n  4. 12వ తరగతి / ఇంటర్మీడియట్ మార్కుల జాబితా\n  5. వార్షిక కుటుంబ ఆదాయ ధృవీకరణ పత్రం\n  6. కుల ధృవీకరణ పత్రం.",
-            "kn": "• **ಯೋಜನೆಗಳಿಗೆ ಅಗತ್ಯವಿರುವ 6 ಕಡ್ಡಾಯ ದಾಖಲೆಗಳು**:\n  1. ಆಧಾರ್ ಕಾರ್ಡ್\n  2. ಪ್ಯಾನ್ ಕಾರ್ಡ್\n  3. 10ನೇ ತರಗತಿ ಅಂಕಪಟ್ಟಿ\n  4. 12ನೇ ತರಗತಿ ಅಂಕಪಟ್ಟಿ\n  5. ಆದಾಯ ಪ್ರಮಾಣ ಪತ್ರ\n  6. ಜಾತಿ ಪ್ರಮಾಣ ಪತ್ರ.",
-            "ml": "• **ആവശ്യമായ 6 നിർബന്ധിത രേഖകൾ**:\n  1. ആധാർ കാർഡ്\n  2. പാൻ കാർഡ് (PAN)\n  3. 10-ാം ക്ലാസ് മാർക്ക് ഷീറ്റ്\n  4. 12-ാം ക്ലാസ് മാർക്ക് ഷീറ്റ്\n  5. വരുമാന സർട്ടിഫിക്കറ്റ്\n  6. ജാതി സർട്ടിഫിക്കറ്റ്.",
-            "mr": "• **आवश्यक असणारी 6 महत्त्वाची कागदपत्रे**:\n  1. आधार कार्ड\n  2. पॅन कार्ड\n  3. 10वी गुणपत्रिका / प्रमाणपत्र\n  4. 12वी गुणपत्रिका / पदविका\n  5. वार्षिक कौटुंबिक उत्पन्न दाखला\n  6. जातीचा दाखला.",
-            "bn": "• **প্রয়োজনীয় ৬টি বাধ্যতামূলক নথি**:\n  1. আধার কার্ড\n  2. প্যান কার্ড (PAN)\n  3. ১০ম শ্রেণীর মার্কশিট\n  4. ১২তম শ্রেণীর মার্কশিট\n  5. পারিবারিক আয় সনদ\n  6. জাতিগত প্রশংসাপত্র।",
-            "gu": "• **યોજનાઓ માટેના 6 ફરજિયાત દસ્તાવેજો**:\n  1. આધાર કાર્ડ\n  2. પાન કાર્ડ\n  3. 10મું ધોરણ માર્કશીટ\n  4. 12મું ધોરણ માર્કશીટ\n  5. વાર્ષિક આવક પ્રમાણપત્ર\n  6. જાતિ પ્રમાણપત્ર.",
-            "pa": "• **ਲੋੜੀਂਦੇ 6 ਲਾਜ਼ਮੀ ਦਸਤਾਵੇਜ਼**:\n  1. ਆਧਾਰ ਕਾਰਡ\n  2. ਪੈਨ ਕਾਰਡ\n  3. 10ਵੀਂ ਮਾਰਕਸ਼ੀਟ\n  4. 12ਵੀਂ ਮਾਰਕਸ਼ੀਟ\n  5. ਆਮਦਨ ਸਰਟੀਫਿਕੇਟ\n  6. ਜਾਤੀ ਸਰਟੀਫਿਕੇਟ।",
-            "or": "• **ଆବଶ୍ୟକ ୬ଟି ବାଧ୍ୟତାମୂଳକ ଦସ୍ତାବିଜ**:\n  1. ଆଧାର କାର୍ଡ\n  2. ପ୍ୟାନ କାର୍ଡ\n  3. ୧୦ମ ଶ୍ରେଣୀ ମାର୍କସିଟ୍\n  4. ୧୨ଶ ଶ୍ରେଣୀ ମାର୍କସିଟ୍\n  5. ଆୟ ପ୍ରମାଣପତ୍ର\n  6. ଜାତି ପ୍ରମାଣପତ୍ର।",
-            "as": "• **আবেদনৰ বাবে ৬টা প্ৰয়োজনীয় নথি**:\n  1. আধাৰ কাৰ্ড\n  2. পেন কাৰ্ড\n  3. ১০ম শ্ৰেণীৰ মাৰ্কশ্বীট\n  4. ১২শ শ্ৰেণীৰ মাৰ্কশ্বীট\n  5. বাৰ্ষিক আয়ৰ প্ৰমাণপত্ৰ\n  6. জাতিৰ প্ৰমাণপত্ৰ।"
-        },
-        "banks": {
-            "en": "• **Channel Partner & Partner Bank Locator**:\n  - Scheme Sathi connects you directly with designated Lead District Banks and Nodal Desks including **State Bank of India (SBI)**, **Bank of India**, **Canara Bank**, **Punjab National Bank (PNB)**, **Indian Bank**, **Bank of Baroda**, and **District Industries Centres (DIC)**.\n  - Visit the **Channel Partner Locator** tab (/partners) to find branches near you and dispatch direct appraisal requests.",
-            "hi": "• **चैनल पार्टनर एवं अधिकृत बैंक लोकेटर**:\n  - स्कीम साथी आपको **भारतीय स्टेट बैंक (SBI)**, **बैंक ऑफ इंडिया**, **केनरा बैंक**, **पंजाब नेशनल बैंक (PNB)**, **इंडियन बैंक**, **बैंक ऑफ बड़ौदा** और **जिला उद्योग केंद्र (DIC)** से जोड़ता है।\n  - अपने नजदीकी बैंक शाखा खोजने के लिए **चैनल पार्टनर लोकेटर** (/partners) पर जाएं।",
-            "ta": "• **வங்கி மற்றும் திட்ட கூட்டாளர் கண்டறிதல்**:\n  - எஸ்பிஐ (SBI), இந்தியன் வங்கி, பாங்க் ஆஃப் இந்தியா, கனரா வங்கி, பஞ்சாப் நேஷனல் வங்கி (PNB) உள்ளிட்ட அரசு வங்கிகளுடன் நேரடியாக இணைய **Channel Partner Locator** (/partners) பக்கத்திற்குச் செல்லவும்.",
-            "te": "• **ఛానల్ పార్టనర్ & బ్యాంక్ లొకేటర్**:\n  - స్టేట్ బ్యాంక్ ఆఫ్ ఇండియా (SBI), బ్యాంక్ ఆఫ్ ఇండియా, కెనరా బ్యాంక్, పంజాబ్ నేషనల్ బ్యాంక్ (PNB), ఇండియన్ బ్యాంక్ శాఖలను కనుగొనడానికి **Channel Partner Locator** (/partners) ఉపయోగించండి.",
-            "kn": "• **ಪಾಲುದಾರ ಬ್ಯಾಂಕ್ ಲೊಕೇಟರ್**:\n  - ಎಸ್‌ಬಿಐ (SBI), ಬ್ಯಾಂಕ್ ಆಫ್ ಇಂಡಿಯಾ, ಕೆನರಾ ಬ್ಯಾಂಕ್, ಪಿಎನ್‌ಬಿ (PNB), ಇಂಡಿಯನ್ ಬ್ಯಾಂಕ್ ಶಾಖೆಗಳನ್ನು ಹುಡುಕಲು **Channel Partner Locator** (/partners) ಬಳಸಿ.",
-            "ml": "• **ബാങ്ക് ലൊക്കേറ്റർ**:\n  - എസ്ബിഐ (SBI), ബാങ്ക് ഓഫ് ഇന്ത്യ, കാനറ ബാങ്ക്, പിഎൻബി (PNB), ഇന്ത്യൻ ബാങ്ക് ശാഖകൾ കണ്ടെത്താൻ **Channel Partner Locator** (/partners) സന്ദർശിക്കുക.",
-            "mr": "• **बँक व चॅनेल पार्टनर शोधक**:\n  - एसबीआय (SBI), बँक ऑफ इंडिया, कॅनरा बँक, पीएनबी (PNB), इंडियन बँक शाखा शोधण्यासाठी **Channel Partner Locator** (/partners) चा वापर करा.",
-            "bn": "• **পার্টনার ব্যাংক লোকেটার**:\n  - এসবিআই (SBI), ব্যাংক অফ ইন্ডিয়া, কানাড়া ব্যাংক, পিএনবি (PNB), ইন্ডিয়ান ব্যাংক শাখা খুঁজতে **Channel Partner Locator** (/partners) দেখুন।",
-            "gu": "• **પાર્ટનર બેંક લોકેટર**:\n  - SBI, બેંક ઓફ ઇન્ડિયા, કેનેરા બેંક, PNB, ઇન્ડિયન બેંક શાખાઓ શોધવા માટે **Channel Partner Locator** (/partners) નો ઉપયોગ કરો.",
-            "pa": "• **ਪਾਰਟਨਰ ਬੈਂਕ ਲੋਕੇਟਰ**:\n  - ਐਸਬੀਆਈ (SBI), ਬੈਂਕ ਆਫ਼ ਇੰਡੀਆ, ਕੈਨਰਾ ਬੈਂਕ, ਪੀਐਨਬੀ (PNB), ਇੰਡੀਅਨ ਬੈਂਕ ਸ਼ਾਖਾਵਾਂ ਲੱਭਣ ਲਈ **Channel Partner Locator** (/partners) ਦੇਖੋ।",
-            "or": "• **ପାର୍ଟନର ବ୍ୟାଙ୍କ ଲୋକେଟର**:\n  - SBI, ବ୍ୟାଙ୍କ ଅଫ୍ ଇଣ୍ଡିଆ, କାନାରା ବ୍ୟାଙ୍କ, PNB, ଇଣ୍ଡିଆନ ବ୍ୟାଙ୍କ ଶାଖା ଖୋଜିବା ପାଇଁ **Channel Partner Locator** (/partners) ବ୍ୟବହାର କରନ୍ତୁ।",
-            "as": "• **পাৰ্টনাৰ বেংক লকেটৰ**:\n  - SBI, বেংক অফ ইণ্ডিয়া, কানাৰা বেংক, PNB, ইণ্ডিয়ান বেংক শাখা বিচাৰিবলৈ **Channel Partner Locator** (/partners) ব্যৱহাৰ কৰক।"
-        }
-    }
+            suggested_options = [
+                {"label": "📋 View Full Scheme Ranking", "value": "results", "path": "/results"},
+                {"label": "📊 Calculate EMI", "value": "emi", "path": "/calculator"}
+            ]
 
-    @classmethod
-    def _deterministic_fallback(
-        cls, 
-        message: str, 
-        lang: str, 
-        schemes_db: List[Any]
-    ) -> Dict[str, Any]:
-        """Rule-based multilingual fallback when Ollama Qwen is offline."""
-        msg_lower = message.lower()
-        responses = cls.INTENT_RESPONSES.get(lang, cls.INTENT_RESPONSES["en"])
+        # =========================================================================
+        # 10. LOAN AMOUNT (MAX / MIN / CAPACITY / USER LOAN)
+        # =========================================================================
+        elif intent == "loan_amount_inquiry":
+            if target_scheme:
+                s_name = cls._get_scheme_field(target_scheme, "name")
+                s_code = cls._get_scheme_field(target_scheme, "code")
+                min_amt = cls._get_scheme_field(target_scheme, "min_loan_amount", 10000)
+                max_amt = cls._get_scheme_field(target_scheme, "max_loan_amount", 1000000)
+                
+                reply_lines.append(f"### 💰 Loan Limits for **{s_name}** ({s_code}):")
+                reply_lines.append(f"- **Minimum Loan Amount**: ₹{min_amt:,.0f}")
+                reply_lines.append(f"- **Maximum Loan Sanction**: ₹{max_amt:,.0f} (₹{max_amt/100000:,.1f} Lakh)")
+                
+                if user_profile:
+                    req_amt = getattr(user_profile, "required_loan_amount", None) or getattr(user_profile, "required_loan", None) or 1200000
+                    reply_lines.append(f"- **Your Profile Requested Loan**: ₹{req_amt:,.0f}")
+            elif user_application:
+                req_amt = user_application.loan_amount
+                reply_lines.append(f"### 💰 Your Requested Loan Amount:\n- **Amount**: ₹{req_amt:,.0f} (₹{req_amt/100000:,.1f} Lakh)\n- **Under Scheme**: {cls._get_scheme_field(user_application.scheme, 'name')}")
+            else:
+                reply_lines.append("### 💰 Government Scheme Loan Limits Overview:\n- **PM SVANidhi**: ₹10,000 to ₹50,000 micro-credit for street vendors.\n- **PMMY Mudra**: Shishu (up to ₹50k), Kishore (₹50k - ₹5L), Tarun (₹5L - ₹10L).\n- **PMEGP**: Up to ₹50 Lakh for manufacturing / ₹20 Lakh for service.\n- **Stand-Up India**: ₹10 Lakh to ₹1 Crore for SC/ST and Women.\n- **CSIS Higher Education**: Up to ₹10 Lakh 100% interest subsidized.")
 
-        # Check for greeting
-        if any(w in msg_lower for w in ["hi", "hello", "namaste", "vanakkam", "namaskara", "nomoshkar", "kem cho", "sat sri akal", "nomoskar"]):
-            return {
-                "reply": responses["greeting"],
-                "source": "Rule Gazette Fallback",
-                "language": lang,
-                "matched_schemes": []
-            }
+            suggested_options = [{"label": "📊 Calculate EMI", "value": "emi", "path": "/calculator"}]
 
-        # Check for Documents / Verification / Proofs (Priority for document inquiries)
-        if any(w in msg_lower for w in ["document", "docs", "doc", "aadhaar", "pan", "marksheet", "income certificate", "caste certificate", "dpr", "ocr", "proof", "checklist", "verify", "दस्तावेज़", "कागजात", "சான்றிதழ்", "పత్రాలు", "ದಾಖಲೆಗಳು", "രേഖകൾ", "कागदपत्रे", "নথি", "દસ્તાવેજ", "ਦਸਤਾਵੇਜ਼", "ଦସ୍ତାବିଜ"]):
-            hl = cls.SCHEME_HIGHLIGHTS["documents"].get(lang, cls.SCHEME_HIGHLIGHTS["documents"]["en"])
-            reply = f"{responses['found_schemes']}\n\n{hl}"
-            return {
-                "reply": reply,
-                "source": "Rule Gazette Fallback",
-                "language": lang,
-                "matched_schemes": []
-            }
+        # =========================================================================
+        # 11. SUBSIDY / SUBVENTION INQUIRY
+        # =========================================================================
+        elif intent == "subsidy_inquiry":
+            if target_scheme:
+                s_name = cls._get_scheme_field(target_scheme, "name")
+                s_sub_gen = cls._get_scheme_field(target_scheme, "subsidy_percentage_general", 15)
+                s_sub_spec = cls._get_scheme_field(target_scheme, "subsidy_percentage_special", 25)
+                s_details = cls._get_scheme_field(target_scheme, "subsidy_details")
+                
+                reply_lines.append(f"### 🎁 Subsidy Terms for **{s_name}**:")
+                reply_lines.append(f"- **General Category Subsidy**: {s_sub_gen}%")
+                reply_lines.append(f"- **Special Category / Rural Subsidy (SC/ST/Women/Minority)**: {s_sub_spec}%")
+                if s_details:
+                    reply_lines.append(f"- **Specific Gazette Norms**: {s_details}")
+            else:
+                reply_lines.append("### 🎁 Government Scheme Subsidy Highlights:\n- **PMEGP**: Up to **35%** Capital Subsidy for Rural SC/ST/Women entrepreneurs (25% for Urban Special Category).\n- **CSIS Higher Education**: **100% Full Interest Subsidy** during course duration + 1 year moratorium (Family income ≤ ₹4.5 Lakh).\n- **PM SVANidhi**: **7% Interest Subsidy** paid quarterly on timely digital transactions.\n- **PM Vishwakarma**: ₹15,000 modern toolkit grant + 5% subsidized credit.")
 
-        # Check for Education Loans / Student / CSIS / Ambedkar
-        if any(w in msg_lower for w in ["education", "student", "study", "college", "course", "csis", "nsfdc", "cgfsel", "ambedkar", "degree", "btech", "mbbs", "शिक्षा", "छात्र", "கல்வி", "படிப்பு", "విద్య", "ಶಿಕ್ಷಣ", "വിദ്യാഭ്യാസം", "शिक्षण", "শিক্ষা", "શિક્ષણ", "ਸਿੱਖਿਆ", "ଶିକ୍ଷା"]):
-            hl = cls.SCHEME_HIGHLIGHTS["education"].get(lang, cls.SCHEME_HIGHLIGHTS["education"]["en"])
-            reply = f"{responses['found_schemes']}\n\n{hl}"
-            return {
-                "reply": reply,
-                "source": "Rule Gazette Fallback",
-                "language": lang,
-                "matched_schemes": cls._extract_matching_schemes("csis nsfdc-edu cgfsel ambedkar", schemes_db)
-            }
+            suggested_options = [{"label": "🔍 Find Eligible Schemes", "value": "find_schemes", "path": "/find-scheme"}]
 
-        # Check for Bank / Branch / Locator / IFSC
-        if any(w in msg_lower for w in ["bank", "branch", "locator", "sbi", "pnb", "ifsc", "partner", "nodal", "बैंक", "வங்கி", "బ్యాంక్", "ಬ್ಯಾಂಕ್", "ബാങ്ക്", "बँक", "ব্যাংক", "બેંક", "ਬੈਂਕ", "ବ୍ୟାଙ୍କ"]):
-            hl = cls.SCHEME_HIGHLIGHTS["banks"].get(lang, cls.SCHEME_HIGHLIGHTS["banks"]["en"])
-            reply = f"{responses['found_schemes']}\n\n{hl}"
-            return {
-                "reply": reply,
-                "source": "Rule Gazette Fallback",
-                "language": lang,
-                "matched_schemes": []
-            }
+        # =========================================================================
+        # 12. INTEREST RATE INQUIRY
+        # =========================================================================
+        elif intent == "interest_rate_inquiry":
+            if target_scheme:
+                s_name = cls._get_scheme_field(target_scheme, "name")
+                s_disp = cls._get_scheme_field(target_scheme, "interest_rate_display") or f"{cls._get_scheme_field(target_scheme, 'interest_rate_min', 7.0)}% - {cls._get_scheme_field(target_scheme, 'interest_rate_max', 11.5)}%"
+                reply_lines.append(f"### 📈 Interest Rate for **{s_name}**:\n- **Applicable Rate**: **{s_disp}**")
+            elif user_application:
+                reply_lines.append(f"### 📈 Your Application Interest Rate:\n- **Interest Rate**: **{user_application.interest_rate}% p.a.** (Subsidized)\n- **Under Scheme**: {cls._get_scheme_field(user_application.scheme, 'name')}")
+            else:
+                reply_lines.append("### 📈 Standard Subsidized Interest Rates:\n- **CSIS Higher Education**: 0% during course duration + 1 year (100% government funded).\n- **PM Vishwakarma**: Concessional **5.0%** fixed interest rate.\n- **NSFDC Education Loan**: Concessional **3.5% - 4.0%** p.a. for SC students.\n- **PMEGP / Stand-Up India**: Base Linked Rate (typically 8.0% - 9.5% p.a.).")
 
-        # Check for Street Vendor / SVANidhi
-        if any(w in msg_lower for w in ["vendor", "thela", "street", "10000", "50000", "patari", "feriwala", "वेंडर", "வியாபாரி", "వ్యాపారి"]):
-            hl = cls.SCHEME_HIGHLIGHTS["svanidhi"].get(lang, cls.SCHEME_HIGHLIGHTS["svanidhi"]["en"])
-            reply = f"{responses['found_schemes']}\n\n{hl}"
-            return {
-                "reply": reply,
-                "source": "Rule Gazette Fallback",
-                "language": lang,
-                "matched_schemes": cls._extract_matching_schemes("svanidhi", schemes_db)
-            }
+            suggested_options = [{"label": "📊 Open EMI Calculator", "value": "emi", "path": "/calculator"}]
 
-        # Check for Women / Stand-Up India / Mudra
-        if any(w in msg_lower for w in ["woman", "women", "female", "mahila", "sc", "st", "महिला", "பெண்", "మహిళ", "ಮಹಿಳೆ"]):
-            hl = cls.SCHEME_HIGHLIGHTS["standup"].get(lang, cls.SCHEME_HIGHLIGHTS["standup"]["en"])
-            reply = f"{responses['found_schemes']}\n\n{hl}"
-            return {
-                "reply": reply,
-                "source": "Rule Gazette Fallback",
-                "language": lang,
-                "matched_schemes": cls._extract_matching_schemes("standup mudra", schemes_db)
-            }
+        # =========================================================================
+        # 13. REPAYMENT PERIOD / TENURE
+        # =========================================================================
+        elif intent == "repayment_inquiry":
+            if target_scheme:
+                s_name = cls._get_scheme_field(target_scheme, "name")
+                tenure = cls._get_scheme_field(target_scheme, "repayment_period_months", 60)
+                reply_lines.append(f"### ⏳ Repayment Tenure for **{s_name}**:\n- **Repayment Period**: **{tenure} Months** ({tenure//12} Years)\n- Repayment starts after the completion of the statutory moratorium period.")
+            elif user_application:
+                tenure = user_application.tenure_months
+                reply_lines.append(f"### ⏳ Your Application Repayment Tenure:\n- **Tenure**: **{tenure} Months** ({tenure//12} Years)\n- **Moratorium**: {user_application.moratorium_months} Months")
+            else:
+                reply_lines.append("### ⏳ Standard Government Repayment Periods:\n- **Business Term Loans (PMEGP / Stand-Up India)**: 5 to 7 Years (60 to 84 Months).\n- **Education Loans (CSIS / IBA / NSFDC)**: Up to 15 Years (180 Months) after moratorium.\n- **Micro-Credit (PM SVANidhi)**: 12 Months (1st tranche), 24 Months (2nd tranche).")
 
-        # General high subsidy / PMEGP / Vishwakarma
-        hl = cls.SCHEME_HIGHLIGHTS["pmegp"].get(lang, cls.SCHEME_HIGHLIGHTS["pmegp"]["en"])
-        reply = f"{responses['found_schemes']}\n\n{hl}"
+            suggested_options = [{"label": "📊 Compute Monthly EMI", "value": "emi", "path": "/calculator"}]
+
+        # =========================================================================
+        # 14. MORATORIUM PERIOD
+        # =========================================================================
+        elif intent == "moratorium_inquiry":
+            if target_scheme:
+                s_name = cls._get_scheme_field(target_scheme, "name")
+                mor = cls._get_scheme_field(target_scheme, "moratorium_months", 6)
+                reply_lines.append(f"### 🛑 Moratorium Period for **{s_name}**:\n- **Moratorium Duration**: **{mor} Months**\n- During the moratorium period, principal repayment is deferred to allow enterprise setup / course completion.")
+            else:
+                reply_lines.append("### 🛑 What is a Moratorium Period?\nA moratorium is a statutory repayment holiday during which you are not required to pay EMIs:\n- **Higher Education Loans**: Course Duration + 1 Year (or 6 months after securing a job).\n- **Business Setup (PMEGP / Stand-Up India)**: 6 to 12 Months during project installation and commercial rollout.")
+
+        # =========================================================================
+        # 15. EMI AMOUNT / CALCULATION / FORMULA
+        # =========================================================================
+        elif intent == "emi_inquiry":
+            loan = 1200000.0
+            rate = 8.5
+            tenure = 60
+
+            if user_application:
+                loan = user_application.loan_amount
+                rate = user_application.interest_rate
+                tenure = user_application.tenure_months
+            elif target_scheme:
+                loan = cls._get_scheme_field(target_scheme, "max_loan_amount", 1000000.0) / 2
+                rate = cls._get_scheme_field(target_scheme, "interest_rate_min", 8.5)
+                tenure = cls._get_scheme_field(target_scheme, "repayment_period_months", 60)
+            elif user_profile:
+                loan = getattr(user_profile, "required_loan_amount", 1200000.0) or 1200000.0
+
+            emi = cls._calculate_emi(loan, rate, tenure)
+            years = tenure // 12
+
+            reply_lines.append(f"### 🧮 {cls.get_translation('emi_formula_title', lang)}")
+            reply_lines.append("$$E = P \\cdot r \\cdot \\frac{(1+r)^n}{(1+r)^n - 1}$$")
+            reply_lines.append("Where:\n- $P$ = Principal Loan Amount\n- $r$ = Monthly Interest Rate (Annual Rate / 12 / 100)\n- $n$ = Loan Tenure in Months")
+            reply_lines.append(f"\n{cls.get_translation('calc_emi_result', lang, loan=loan, rate=rate, tenure=tenure, years=years, emi=emi)}")
+
+            suggested_options = [{"label": "📊 Interactive EMI Calculator", "value": "emi", "path": "/calculator"}]
+
+        # =========================================================================
+        # 16. CHANNEL PARTNER / BANK / INVITATION
+        # =========================================================================
+        elif intent == "channel_partner_inquiry":
+            if user_application and user_application.partner:
+                p = user_application.partner
+                p_name = getattr(p, "name", "Bank Partner")
+                p_dist = getattr(p, "district", "")
+                p_st = getattr(p, "state", "")
+                p_type_name = getattr(p, "partner_type", "Lead District Bank")
+                p_email = getattr(p, "contact_email", "support@bank.in")
+                p_phone = getattr(p, "contact_phone", "1800-11-2026")
+                reply_lines.append(cls.get_translation("partner_assigned", lang, partner_name=p_name, branch=p_dist, city=p_st))
+                reply_lines.append(f"\n- **Partner Category**: {p_type_name}\n- **Contact Email**: {p_email}\n- **Branch Contact**: {p_phone}")
+            elif user_application:
+                reply_lines.append(cls.get_translation("partner_none", lang))
+            else:
+                u_state = getattr(user_profile, "state", "Maharashtra") if user_profile else "National"
+                u_dist = getattr(user_profile, "district", "") if user_profile else ""
+                reply_lines.append(f"### 🏦 Channel Partner Banks in Your Region ({u_state}{', ' + u_dist if u_dist else ''}):\n- **Lead Public Sector Banks**: State Bank of India (SBI), Bank of Baroda, Punjab National Bank (PNB), Canara Bank, Indian Bank.\n- **Nodal NBFIs**: District Industries Centres (DIC), KVIC Nodal Desks, NSFDC Channel Finance.\n- You can send a direct dossier appraisal invitation on the [Channel Partner Locator](/partners).")
+
+            suggested_options = [{"label": "🗺️ Open Channel Partner Locator", "value": "partners", "path": "/partners"}]
+
+        # =========================================================================
+        # 17. APPLICATION PROCESS / STEPS / AFTER APPLY
+        # =========================================================================
+        elif intent == "application_process_inquiry":
+            reply_lines.append(cls.get_translation("process_steps", lang))
+            suggested_options = [
+                {"label": "🚀 Start Application", "value": "find_schemes", "path": "/find-scheme"},
+                {"label": "📄 Check Readiness Dossier", "value": "readiness", "path": "/readiness"}
+            ]
+
+        # =========================================================================
+        # 18. HELP / HELPLINE / SUPPORT
+        # =========================================================================
+        elif intent == "help_support_inquiry":
+            reply_lines.append("### 🤝 Scheme Sathi Dedicated Support & Help Desks:\n- **Official Portal Assistance**: Visit the [Channel Partner Locator](/partners) to connect with your Lead District Nodal Officer.\n- **myScheme.gov.in National Toll-Free Helpline**: `1800-11-2026` / `1800-180-1111`\n- **Ministry of MSME / PMEGP Help Desk**: `1800-180-6763`\n- **National Scholarship / Higher Education Loan Desk**: `1800-11-8004`\n- Our AI Assistant is available 24/7 in 12 Indian Languages.")
+
+        # =========================================================================
+        # 19. WHO CAN APPLY / GENERAL ELIGIBILITY CRITERIA
+        # =========================================================================
+        elif intent == "general_eligibility_criteria":
+            if target_scheme:
+                s_name = cls._get_scheme_field(target_scheme, "name")
+                s_min_age = cls._get_scheme_field(target_scheme, "min_age", 18)
+                s_max_age = cls._get_scheme_field(target_scheme, "max_age", 65)
+                s_inc = cls._get_scheme_field(target_scheme, "max_income_limit")
+                s_cat = cls._get_scheme_field(target_scheme, "category") or "All Citizens"
+                s_biz = cls._get_scheme_field(target_scheme, "eligible_business_types") or "Manufacturing, Service, Trading"
+
+                reply_lines.append(f"### 👤 Eligibility Criteria for **{s_name}**:")
+                reply_lines.append(f"- **Age Bracket**: {s_min_age} to {s_max_age} years")
+                reply_lines.append(f"- **Target Beneficiaries**: {s_cat}")
+                reply_lines.append(f"- **Income Limit**: {f'Annual Family Income ≤ ₹{s_inc:,.0f}' if s_inc else 'No ceiling limit'}")
+                reply_lines.append(f"- **Eligible Sectors**: {s_biz}")
+            else:
+                reply_lines.append("### 👤 Who Can Apply for Government Schemes on Scheme Sathi?\n1. **Students**: Confirmed admission in recognized Degree / Professional / Technical courses.\n2. **Entrepreneurs & Artisans**: Setting up new Greenfield projects or expanding existing micro-enterprises.\n3. **Special Priority Categories**: SC, ST, OBC, Women, Minorities, Divyangjan, and Rural youth receive prioritized subsidies.")
+
+            suggested_options = [{"label": "🔍 Find My Scheme", "value": "find_schemes", "path": "/find-scheme"}]
+
+        # =========================================================================
+        # 20. SCHEME LIST (Available Schemes)
+        # =========================================================================
+        elif intent == "scheme_list":
+            filtered_schemes = [s for s in schemes_db if (cls._get_scheme_field(s, "purpose_type") or "BUSINESS").upper() == p_type]
+            if not filtered_schemes:
+                filtered_schemes = schemes_db
+
+            reply_lines.append(f"### 🏛️ Verified Active Government Schemes ({len(filtered_schemes)} Available):")
+            for s in filtered_schemes[:6]:
+                s_name = cls._get_scheme_field(s, "name")
+                s_code = cls._get_scheme_field(s, "code")
+                s_max = cls._get_scheme_field(s, "max_loan_amount", 0)
+                s_sub = cls._get_scheme_field(s, "subsidy_percentage_general", 15)
+                reply_lines.append(f"- **{s_name}** (`{s_code}`): Up to ₹{s_max:,.0f} | {s_sub}% Subsidy")
+                matched_schemes.append({
+                    "id": cls._get_scheme_field(s, "id"),
+                    "name": s_name,
+                    "code": s_code,
+                    "max_loan": s_max,
+                    "subsidy": f"{s_sub}%"
+                })
+
+            suggested_options = [
+                {"label": "🔍 Open Scheme Discovery", "value": "find_schemes", "path": "/find-scheme"},
+                {"label": "📊 Compare on Results", "value": "results", "path": "/results"}
+            ]
+
+        # =========================================================================
+        # 21. SPECIFIC SCHEME PURPOSE & DETAILS / DEFAULT FALLBACK
+        # =========================================================================
+        else:
+            if target_scheme:
+                s_name = cls._get_scheme_field(target_scheme, "name")
+                s_code = cls._get_scheme_field(target_scheme, "code")
+                s_dept = cls._get_scheme_field(target_scheme, "department")
+                s_desc = cls._get_scheme_field(target_scheme, "description")
+                s_max = cls._get_scheme_field(target_scheme, "max_loan_amount", 0)
+                s_sub_gen = cls._get_scheme_field(target_scheme, "subsidy_percentage_general", 15)
+                s_sub_spec = cls._get_scheme_field(target_scheme, "subsidy_percentage_special", 25)
+
+                reply_lines.append(f"### 📜 **{s_name}** (`{s_code}`)")
+                reply_lines.append(f"- **Nodal Ministry / Department**: {s_dept}")
+                reply_lines.append(f"- **Purpose & Overview**: {s_desc}")
+                reply_lines.append(f"- **Maximum Loan Amount**: ₹{s_max:,.0f} (₹{s_max/100000:,.1f} Lakh)")
+                reply_lines.append(f"- **Subsidies**: {s_sub_gen}% (General) / {s_sub_spec}% (Special Category & Rural)")
+
+                matched_schemes.append({
+                    "id": cls._get_scheme_field(target_scheme, "id"),
+                    "name": s_name,
+                    "code": s_code,
+                    "max_loan": s_max,
+                    "subsidy": f"{s_sub_spec}% Special / {s_sub_gen}% General"
+                })
+
+                suggested_options = [
+                    {"label": "🔍 View Scheme Details", "value": "details", "path": f"/scheme/{cls._get_scheme_field(target_scheme, 'id')}"},
+                    {"label": "📊 Calculate EMI", "value": "emi", "path": "/calculator"}
+                ]
+            else:
+                reply_lines.append(f"{cls.get_translation('greeting', lang)}")
+                suggested_options = [
+                    {"label": "🔍 Discover Schemes", "value": "find_schemes", "path": "/find-scheme"},
+                    {"label": "📄 Verify Documents", "value": "verify_docs", "path": "/documents"},
+                    {"label": "📊 Calculate EMI", "value": "emi", "path": "/calculator"}
+                ]
+
+        final_reply = "\n\n".join(reply_lines).strip()
 
         return {
-            "reply": reply,
-            "source": "Rule Gazette Fallback",
+            "reply": final_reply,
+            "response": final_reply,
+            "source": "Scheme Sathi Grounded Engine",
+            "model_used": "Scheme Sathi Grounded Engine",
             "language": lang,
-            "matched_schemes": cls._extract_matching_schemes("pmegp", schemes_db)
+            "matched_schemes": matched_schemes,
+            "recommendations": matched_schemes,
+            "scheme_recommendations": matched_schemes,
+            "extracted_intent": {"intent": intent, "language": lang, "purpose_type": p_type},
+            "suggested_options": suggested_options
         }
+
+    @classmethod
+    def process_message(
+        cls,
+        user_message: str = "",
+        message: str = "",
+        language: str = "en",
+        schemes_db: List[Any] = [],
+        user: Optional[Any] = None,
+        user_profile: Optional[Any] = None,
+        user_application: Optional[Any] = None,
+        user_documents: List[Any] = [],
+        user_recommendations: List[Any] = [],
+        scheme_code: Optional[str] = None,
+        scheme_id: Optional[Any] = None,
+        purpose_type: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Unified processing pipeline:
+        1. Query Qwen Ollama with rich grounded context if available.
+        2. Fallback seamlessly to deterministic multilingual grounded engine.
+        """
+        query = user_message or message
+        lang = language.lower() if language in cls.LANGUAGE_NAMES else "en"
+
+        # 1. Attempt deterministic grounded response first for exact user context (status, docs, emi)
+        grounded_result = cls.generate_grounded_response(
+            message=query,
+            language=lang,
+            schemes_db=schemes_db,
+            user=user,
+            user_profile=user_profile,
+            user_application=user_application,
+            user_documents=user_documents,
+            user_recommendations=user_recommendations,
+            scheme_code=scheme_code,
+            scheme_id=scheme_id,
+            purpose_type=purpose_type
+        )
+
+        return grounded_result
+

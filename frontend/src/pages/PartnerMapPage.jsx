@@ -11,6 +11,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { useApplication } from '../context/ApplicationContext';
 import StepProgressIndicator from '../components/StepProgressIndicator';
 import api, { applicationsAPI, schemesAPI, bankingAPI } from '../services/api';
@@ -68,12 +69,13 @@ function ChangeMapView({ coords, zoomLevel = 16 }) {
 
 export default function PartnerMapPage() {
   const { t } = useLanguage();
+  const { user, profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { application, selectedScheme } = useApplication();
 
-  const userDistrict = application.district || 'Tiruvallur';
-  const userState = application.state || 'Tamil Nadu';
+  const userDistrict = application.district || application.location_district || user?.district || profile?.district || '';
+  const userState = application.state || application.location_state || user?.state || profile?.state || '';
 
   const activeSchemeInitial = location.state?.scheme || selectedScheme || (location.state?.schemeCode ? { scheme_code: location.state.schemeCode, scheme_name: location.state.schemeCode } : null);
   const [activeScheme, setActiveScheme] = useState(activeSchemeInitial || { scheme_code: 'PMEGP', scheme_name: 'Prime Minister Employment Generation Programme (PMEGP)' });
@@ -93,6 +95,12 @@ export default function PartnerMapPage() {
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [availableBanks, setAvailableBanks] = useState([]);
   const [availableStates, setAvailableStates] = useState([]);
+
+  useEffect(() => {
+    if (userState && stateFilter === 'all') {
+      setStateFilter(userState);
+    }
+  }, [userState]);
   
   // Modals & Tools
   const [dbtModal, setDbtModal] = useState(false);
@@ -101,7 +109,7 @@ export default function PartnerMapPage() {
   // DBT Verifier State
   const [dbtAccount, setDbtAccount] = useState('');
   const [dbtIfsc, setDbtIfsc] = useState('');
-  const [dbtHolder, setDbtHolder] = useState(application.full_name || 'Citizen Beneficiary');
+  const [dbtHolder, setDbtHolder] = useState(application.full_name || user?.full_name || profile?.full_name || 'Citizen Beneficiary');
   const [dbtLoading, setDbtLoading] = useState(false);
   const [dbtResult, setDbtResult] = useState(null);
   
@@ -150,34 +158,42 @@ export default function PartnerMapPage() {
   // Fetch smart localized suggestions tailored to customer location
   const fetchSuggestions = () => {
     setSuggestionsLoading(true);
+    const activeState = stateFilter !== 'all' ? stateFilter : userState;
     bankingAPI.getSuggestions({
-      state: stateFilter !== 'all' ? stateFilter : userState,
-      district: userDistrict,
+      state: activeState || undefined,
+      district: userDistrict || undefined,
       scheme_code: activeScheme?.scheme_code || 'PMEGP',
       limit: 6
     })
     .then(res => {
       const data = res.data || [];
       setSuggestions(data);
-      if (data.length > 0 && !selectedBranch) {
+      if (data.length > 0) {
         setSelectedBranch(data[0]);
+      } else {
+        setSelectedBranch(null);
       }
     })
-    .catch(err => console.warn('Suggestions load fallback:', err))
+    .catch(err => {
+      console.warn('Suggestions load fallback:', err);
+      setSuggestions([]);
+    })
     .finally(() => setSuggestionsLoading(false));
   };
 
   useEffect(() => {
     fetchSuggestions();
-  }, [stateFilter, activeScheme?.scheme_code]);
+  }, [stateFilter, userState, userDistrict, activeScheme?.scheme_code]);
 
   // Fetch branches from Razorpay IFSC offline-enabled API
   const fetchBranches = () => {
     setLoading(true);
+    const activeState = stateFilter !== 'all' ? stateFilter : (userState || undefined);
     api.get('/banking/branches', {
       params: {
         query: searchQuery || undefined,
-        state: stateFilter !== 'all' ? stateFilter : undefined,
+        state: activeState,
+        district: userDistrict || undefined,
         bank: bankFilter !== 'all' ? bankFilter : undefined,
         scheme_code: schemeFilter !== 'all' ? schemeFilter : undefined,
         limit: 100
@@ -188,17 +204,20 @@ export default function PartnerMapPage() {
       setBranches(data);
       if (data.length > 0 && !selectedBranch) {
         setSelectedBranch(data[0]);
+      } else if (data.length === 0 && !suggestions.length) {
+        setSelectedBranch(null);
       }
     })
     .catch(err => {
       console.warn('API fetch fallback, loading cached offline dataset', err);
+      setBranches([]);
     })
     .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchBranches();
-  }, [stateFilter, bankFilter, schemeFilter]);
+  }, [stateFilter, bankFilter, schemeFilter, userState, userDistrict]);
 
   // Handle direct IFSC lookup
   const handleIfscSearch = (e) => {
@@ -521,7 +540,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
             </div>
             <div>
               <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <span>{t('Smart Channel Partner Suggestions in')} {t(userDistrict)}, {stateFilter !== 'all' ? t(stateFilter) : t(userState)}</span>
+                <span>{t('Smart Channel Partner Suggestions in')} {userDistrict ? `${t(userDistrict)}, ` : ''}{stateFilter !== 'all' ? t(stateFilter) : (userState ? t(userState) : t('Your Location'))}</span>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-mono">
                   {suggestions.length} {t('Matches Found')}
                 </span>
@@ -551,7 +570,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
             </div>
           ) : suggestions.length === 0 ? (
             <div className="col-span-full text-center py-6 text-indigo-300 text-xs bg-slate-800/50 rounded-2xl p-4">
-              <span>{t('No suitable channel partner is currently available')}</span>
+              <span>{t('No channel partner available for your location.')}</span>
             </div>
           ) : (
             suggestions.map((sug) => {
@@ -949,14 +968,19 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
               {t('All Available Bank Branches in Region')} ({branches.length})
             </h4>
             
-            {branches.map((b) => {
-              const isSelected = selectedBranch?.ifsc === b.ifsc;
-              return (
-                <div
-                  key={b.ifsc}
-                  onClick={() => setSelectedBranch(b)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer ${isSelected ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-1 ring-emerald-400' : 'bg-white border-slate-200 hover:border-slate-300'}`}
-                >
+            {branches.length === 0 ? (
+              <div className="p-6 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 text-xs">
+                {t('No channel partner available for your location.')}
+              </div>
+            ) : (
+              branches.map((b) => {
+                const isSelected = selectedBranch?.ifsc === b.ifsc;
+                return (
+                  <div
+                    key={b.ifsc}
+                    onClick={() => setSelectedBranch(b)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${isSelected ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-1 ring-emerald-400' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                  >
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-1.5">
@@ -994,7 +1018,8 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
                   </div>
                 </div>
               );
-            })}
+              })
+            )}
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   User, MapPin, Briefcase, DollarSign, Award, ShieldCheck, 
   CheckCircle2, AlertCircle, Save, Sparkles, Check, ArrowRight, 
-  RefreshCw, TrendingUp, BarChart3, Clock, Landmark
+  RefreshCw, TrendingUp, BarChart3, Clock, Landmark, ChevronRight, X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -26,6 +27,8 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [showSchemeModal, setShowSchemeModal] = useState(false);
+  const [appliedScheme, setAppliedScheme] = useState(null);
 
   // Dynamic States & Districts from backend
   const [statesList, setStatesList] = useState([]);
@@ -37,7 +40,7 @@ export default function UserProfilePage() {
     eligibleCount: 0,
     availableCount: 0,
     maxSubsidy: '0%',
-    subsidySubtitle: 'Evaluate to calculate subsidy',
+    subsidySubtitle: 'Complete profile to calculate subsidy',
     readinessScore: 0,
     readinessSubtitle: 'No documents uploaded',
     partnerBanksCount: 0,
@@ -46,35 +49,35 @@ export default function UserProfilePage() {
   });
 
   const [form, setForm] = useState({
-    full_name: application.full_name || '',
-    age: application.age || 28,
-    gender: application.gender || 'female',
-    social_category: application.social_category || application.category || 'SC',
-    religion: application.religion || 'hindu',
+    full_name: application.full_name || user?.full_name || '',
+    age: application.age || '',
+    gender: application.gender || '',
+    social_category: application.social_category || application.category || '',
+    religion: application.religion || '',
     is_differently_abled: application.is_differently_abled || false,
-    state: application.state || 'Tamil Nadu',
-    district: application.district || 'Tiruvallur',
+    state: application.state || user?.state || '',
+    district: application.district || user?.district || '',
     area_type: application.area_type || 'rural',
-    pincode: application.pincode || '602001',
-    education_qualification: application.education_qualification || 'graduate',
-    has_skill_training: application.has_skill_training !== undefined ? application.has_skill_training : true,
-    skill_training_details: 'EDP 2-week certified',
-    business_type: application.business_type || 'manufacturing',
-    business_stage: application.business_stage || 'new',
-    industry_sector: application.industry_sector || 'food_processing',
-    project_cost: application.project_cost || 1500000,
-    required_loan: application.loanAmount || 1200000,
-    own_contribution: application.own_contribution || 300000,
-    annual_income: application.annual_income || 180000,
-    annual_family_income: application.annual_family_income || 180000,
-    credit_score_range: '700_750',
+    pincode: application.pincode || '',
+    education_qualification: application.education_qualification || '',
+    has_skill_training: application.has_skill_training !== undefined ? application.has_skill_training : false,
+    skill_training_details: application.skill_training_details || '',
+    business_type: application.business_type || '',
+    business_stage: application.business_stage || '',
+    industry_sector: application.industry_sector || '',
+    project_cost: application.project_cost || '',
+    required_loan: application.loanAmount || application.required_loan || '',
+    own_contribution: application.own_contribution || '',
+    annual_income: application.annual_income || '',
+    annual_family_income: application.annual_family_income || '',
+    credit_score_range: application.credit_score_range || '700_750',
     has_existing_bank_account: true,
     has_collateral: false,
     is_artisan: application.is_artisan || false,
     is_street_vendor: application.is_street_vendor || false,
-    has_udyam_registration: application.has_udyam_registration !== undefined ? application.has_udyam_registration : true,
+    has_udyam_registration: application.has_udyam_registration !== undefined ? application.has_udyam_registration : false,
     has_gst: false,
-    purpose: application.purpose || 'Start a Business',
+    purpose: application.purpose || '',
     purpose_type: application.purpose_type || application.purposeType || 'BUSINESS'
   });
 
@@ -114,10 +117,15 @@ export default function UserProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const res = await profileAPI.getProfile();
-        if (res.data) {
-          const d = res.data;
-          setForm({
+        const [profileRes, appRes] = await Promise.allSettled([
+          profileAPI.getProfile(),
+          api.get('/applications/my-applications')
+        ]);
+
+        if (profileRes.status === 'fulfilled' && profileRes.value.data) {
+          const d = profileRes.value.data;
+          setForm(prev => ({
+            ...prev,
             full_name: d.full_name || user?.full_name || '',
             age: d.age || '',
             gender: d.gender || '',
@@ -149,7 +157,35 @@ export default function UserProfilePage() {
             has_gst: d.has_gst || false,
             purpose: d.purpose || (d.purpose_type === 'EDUCATION' ? 'Higher Education' : 'Start a Business'),
             purpose_type: d.purpose_type || (d.purpose === 'Higher Education' ? 'EDUCATION' : 'BUSINESS')
-          });
+          }));
+        }
+
+        if (appRes.status === 'fulfilled' && appRes.value.data) {
+          const apps = Array.isArray(appRes.value.data) ? appRes.value.data : (appRes.value.data.applications || []);
+          if (apps.length > 0) {
+            const activeApp = apps[0];
+            const scId = activeApp.scheme_id || activeApp.scheme_code;
+            if (scId) {
+              try {
+                const scRes = await api.get(`/schemes/${scId}`);
+                if (scRes.data) {
+                  setAppliedScheme(scRes.data);
+                }
+              } catch (e) {
+                setAppliedScheme({
+                  id: activeApp.scheme_id,
+                  code: activeApp.scheme_code,
+                  name: activeApp.scheme_name || activeApp.scheme_title,
+                  description: activeApp.description || activeApp.remarks,
+                  max_loan_amount: activeApp.sanctioned_amount || activeApp.loan_amount
+                });
+              }
+            }
+          } else if (selectedScheme) {
+            setAppliedScheme(selectedScheme);
+          }
+        } else if (selectedScheme) {
+          setAppliedScheme(selectedScheme);
         }
       } catch (err) {
         console.warn('Could not fetch backend profile:', err);
@@ -158,7 +194,7 @@ export default function UserProfilePage() {
       }
     }
     loadProfile();
-  }, [user?.id, user?.email]);
+  }, [user?.id, user?.email, selectedScheme]);
 
   // Recalculate Live KPIs dynamically based on form changes
   useEffect(() => {
@@ -166,20 +202,36 @@ export default function UserProfilePage() {
 
     async function computeRealtimeKpis() {
       try {
+        // If a new customer hasn't completed basic demographic/financial profile yet, do not run fake evaluation or show fake 3+ schemes!
+        if (!form.age || !form.required_loan || !form.state || !form.social_category) {
+          setDynamicKpis({
+            eligibleCount: 0,
+            availableCount: 0,
+            maxSubsidy: '0%',
+            subsidySubtitle: 'Complete profile to calculate subsidy',
+            readinessScore: 0,
+            readinessSubtitle: 'No documents uploaded',
+            partnerBanksCount: 0,
+            partnerSubtitle: form.district ? `District: ${form.district}` : 'Select location to find branches',
+            loadingKpis: false
+          });
+          return;
+        }
+
         const effPurpose = (form.purpose_type || 'BUSINESS').toUpperCase();
         const evalPayload = {
           purpose_type: effPurpose,
-          loan_amount: form.required_loan || 1200000,
-          required_loan: form.required_loan || 1200000,
-          required_loan_amount: form.required_loan || 1200000,
-          annual_income: form.annual_family_income || 180000,
-          annual_family_income: form.annual_family_income || 180000,
-          category: form.social_category || 'SC',
-          social_category: form.social_category || 'SC',
+          loan_amount: Number(form.required_loan) || 0,
+          required_loan: Number(form.required_loan) || 0,
+          required_loan_amount: Number(form.required_loan) || 0,
+          annual_income: Number(form.annual_family_income || form.annual_income) || 0,
+          annual_family_income: Number(form.annual_family_income || form.annual_income) || 0,
+          category: form.social_category,
+          social_category: form.social_category,
           gender: form.gender || 'female',
-          age: form.age || 28,
-          state: form.state || 'Tamil Nadu',
-          district: form.district || 'Tiruvallur',
+          age: Number(form.age) || 0,
+          state: form.state,
+          district: form.district || '',
           area_type: form.area_type || 'rural',
           purpose: form.purpose || 'Start a Business',
           business_type: form.business_type || 'manufacturing',
@@ -226,7 +278,7 @@ export default function UserProfilePage() {
           }
         }
 
-        const mandatoryDocsCount = effPurpose === 'EDUCATION' ? 5 : (effPurpose === 'SELF_EMPLOYMENT' ? 3 : 4);
+        const mandatoryDocsCount = effPurpose === 'EDUCATION' ? 6 : (effPurpose === 'SELF_EMPLOYMENT' ? 4 : 6);
         const verifiedCount = verifiedDocKeys ? (Array.isArray(verifiedDocKeys) ? verifiedDocKeys.length : Object.keys(verifiedDocKeys).length) : 0;
         const missingCount = Math.max(0, mandatoryDocsCount - verifiedCount);
         
@@ -241,11 +293,11 @@ export default function UserProfilePage() {
         }
 
         let partnerBanksCount = 0;
-        let partnerSubtitle = `Within ${form.district} jurisdiction`;
+        let partnerSubtitle = `Within ${form.district || 'district'} jurisdiction`;
         if (branchRes.status === 'fulfilled' && branchRes.value.data) {
           const branchData = branchRes.value.data;
           partnerBanksCount = branchData.total_branches ?? branchData.total ?? (branchData.branches?.length || 0);
-          partnerSubtitle = `${partnerBanksCount} active branches in ${form.district}`;
+          partnerSubtitle = `${partnerBanksCount} active branches in ${form.district || 'area'}`;
         }
 
         setDynamicKpis({
@@ -359,7 +411,7 @@ export default function UserProfilePage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-emerald-300 transition-all">
           <div className="space-y-1">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('eligible schemes')}</p>
-            <h3 className="text-2xl font-black text-slate-900">{dynamicKpis.eligibleCount}+</h3>
+            <h3 className="text-2xl font-black text-slate-900">{dynamicKpis.eligibleCount > 0 ? dynamicKpis.eligibleCount : 0}</h3>
             <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> {t('100% rule verified')}
             </span>
@@ -826,6 +878,63 @@ export default function UserProfilePage() {
           )}
         </div>
 
+        {/* Bottom Section: Active / Matched Statutory Scheme */}
+        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-black text-slate-900">{t('Selected / Matched Statutory Scheme')}</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {appliedScheme
+                  ? t('Official government scheme mapped to your profile parameters.')
+                  : t('No scheme has been applied or matched yet.')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSchemeModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all shrink-0"
+            >
+              <span>{t('View Scheme')}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {appliedScheme ? (
+            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-black px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    {appliedScheme.code || appliedScheme.scheme_code}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-800">
+                    {appliedScheme.category || appliedScheme.purpose_type || 'CENTRAL / STATE'}
+                  </span>
+                </div>
+                <h4 className="font-bold text-slate-900 text-sm">{appliedScheme.name || appliedScheme.scheme_name}</h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSchemeModal(true)}
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 shrink-0"
+              >
+                <span>{t('View Details')}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 flex items-center justify-between">
+              <span>{t('No scheme has been applied or matched yet.')}</span>
+              <Link
+                to="/find-scheme"
+                className="font-bold text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1"
+              >
+                <span>{t('Find Schemes')}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
+        </div>
+
         {/* Submit & Next Step Action */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
           <button
@@ -849,6 +958,106 @@ export default function UserProfilePage() {
         </div>
 
       </form>
+
+      {/* Scheme Modal Popup */}
+      {showSchemeModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  {appliedScheme ? t('Scheme Information') : t('Scheme Status')}
+                </span>
+                <h3 className="text-lg font-black text-slate-900 mt-1">
+                  {appliedScheme ? (appliedScheme.name || appliedScheme.scheme_name) : t('No Scheme Selected')}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowSchemeModal(false)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {appliedScheme ? (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-bold">{t('Scheme Code')}:</span>
+                    <span className="font-mono font-black text-slate-900">{appliedScheme.code || appliedScheme.scheme_code}</span>
+                  </div>
+                  {appliedScheme.max_loan_amount && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 font-bold">{t('Max Loan Quantum')}:</span>
+                      <span className="font-mono font-bold text-emerald-700">₹{Number(appliedScheme.max_loan_amount).toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  {appliedScheme.category && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 font-bold">{t('Category / Focus')}:</span>
+                      <span className="font-bold text-slate-800">{appliedScheme.category}</span>
+                    </div>
+                  )}
+                </div>
+
+                {appliedScheme.description && (
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {appliedScheme.description}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowSchemeModal(false)}
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800"
+                  >
+                    {t('Close')}
+                  </button>
+                  <Link
+                    to={`/scheme/${appliedScheme.code || appliedScheme.id || appliedScheme.scheme_code}`}
+                    onClick={() => setShowSchemeModal(false)}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition-all inline-flex items-center gap-1.5"
+                  >
+                    <span>{t('Visit Scheme Details')}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 text-center py-4">
+                <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                  <Award className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-800">{t('No scheme has been applied or matched yet.')}</p>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    {t('Complete your profile questionnaire or explore statutory schemes to find eligible grants and loans.')}
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowSchemeModal(false)}
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl"
+                  >
+                    {t('Close')}
+                  </button>
+                  <Link
+                    to="/find-scheme"
+                    onClick={() => setShowSchemeModal(false)}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition-all inline-flex items-center gap-1.5"
+                  >
+                    <span>{t('Find Schemes')}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -687,7 +687,7 @@ export default function FindMySchemePage() {
                   <span>
                     {purposeType === 'EDUCATION'
                       ? t('You will verify your 10th & 12th marksheets, Admission Offer Letter, Institutional Fee Schedule, and Income Certificate.')
-                      : t('You will verify your Detailed Project Report (DPR), PAN Card, Income Certificate, and Caste Certificate.')}
+                      : t('You will verify your Aadhaar Card, PAN Card, Detailed Project Report (DPR), Income Certificate, Caste Certificate, and Udyam MSME Certificate.')}
                   </span>
                 </div>
               </div>

@@ -17,7 +17,13 @@ export default function SchemeResultsPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [evaluation, setEvaluation] = useState(location.state?.evaluationResult || null);
+  const currentPurpose = (purposeType || application.purpose_type || 'EDUCATION').toUpperCase();
+
+  const initialEvaluation = (location.state?.evaluationResult && (location.state.evaluationResult.purpose_type || '').toUpperCase() === currentPurpose)
+    ? location.state.evaluationResult
+    : null;
+
+  const [evaluation, setEvaluation] = useState(initialEvaluation);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('eligible'); // 'eligible' or 'available'
   const [sortBy, setSortBy] = useState('score'); // 'score', 'loan_asc', 'loan_desc'
@@ -25,8 +31,6 @@ export default function SchemeResultsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedIneligible, setExpandedIneligible] = useState(true);
-
-  const currentPurpose = (purposeType || application.purpose_type || 'EDUCATION').toUpperCase();
 
   const getFocusChips = () => {
     if (currentPurpose === 'EDUCATION') {
@@ -104,7 +108,7 @@ export default function SchemeResultsPage() {
       })
       .catch(err => {
         console.error('Scheme evaluation error:', err);
-        if (location.state?.evaluationResult) {
+        if (location.state?.evaluationResult && (location.state.evaluationResult.purpose_type || '').toUpperCase() === effPurpose) {
           setEvaluation(location.state.evaluationResult);
         }
       })
@@ -115,8 +119,16 @@ export default function SchemeResultsPage() {
   const rawAvailable = evaluation?.available_schemes || evaluation?.ineligible_schemes || [];
 
   const filterAndSort = (schemesList) => {
-    return schemesList
+    return (schemesList || [])
       .filter(scheme => {
+        // 1. Strict Loan-Type / Purpose Track filter:
+        // Educational Loan must show ONLY Educational Schemes.
+        // Business Loan must show ONLY Business Schemes.
+        const schemePurpose = (scheme.purpose_type || scheme.purposeType || '').toUpperCase();
+        if (schemePurpose && schemePurpose !== currentPurpose) {
+          return false;
+        }
+
         // Origin filter
         if (originFilter === 'central' && !scheme.is_central && !scheme.eligible_states?.includes('All India')) return false;
         if (originFilter === 'state' && (scheme.is_central || scheme.eligible_states?.includes('All India'))) return false;
@@ -183,6 +195,7 @@ export default function SchemeResultsPage() {
               updatePurposeType('EDUCATION');
               setCategoryFilter('all');
               setSearchQuery('');
+              setEvaluation(null);
             }}
             className={`p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between ${
               currentPurpose === 'EDUCATION'
@@ -207,6 +220,7 @@ export default function SchemeResultsPage() {
               updatePurposeType('BUSINESS');
               setCategoryFilter('all');
               setSearchQuery('');
+              setEvaluation(null);
             }}
             className={`p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between ${
               currentPurpose === 'BUSINESS'
@@ -231,6 +245,7 @@ export default function SchemeResultsPage() {
               updatePurposeType('SELF_EMPLOYMENT');
               setCategoryFilter('all');
               setSearchQuery('');
+              setEvaluation(null);
             }}
             className={`p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between ${
               currentPurpose === 'SELF_EMPLOYMENT'
@@ -434,7 +449,11 @@ export default function SchemeResultsPage() {
           {filteredEligible.map((rawScheme, idx) => {
             const scheme = translateScheme(rawScheme);
             const matchScore = Math.round(scheme.match_score || 95);
-            const isSelected = selectedScheme?.scheme_id === scheme.scheme_id || selectedScheme?.scheme_code === scheme.scheme_code;
+            const isSelected = Boolean(
+              selectedScheme &&
+              ((selectedScheme.purpose_type || '').toUpperCase() === currentPurpose) &&
+              (String(selectedScheme.scheme_id) === String(scheme.scheme_id) || String(selectedScheme.scheme_code || selectedScheme.code) === String(scheme.scheme_code || scheme.code))
+            );
             const isCentral = scheme.is_central || scheme.eligible_states?.includes('All India');
             const portalUrl = scheme.official_portal_url || 'https://www.myscheme.gov.in';
 
@@ -602,64 +621,111 @@ export default function SchemeResultsPage() {
         </div>
       )}
 
-      {/* TAB 2: AVAILABLE & INELIGIBLE SCHEMES (RULE EXPLAINABILITY) */}
+      {/* TAB 2: AVAILABLE & UNMATCHED SCHEMES (RULE EXPLAINABILITY) */}
       {activeTab === 'available' && (
         <div className="space-y-4">
           <div className="p-4 bg-slate-100 rounded-2xl border border-slate-200 text-xs text-slate-600 flex items-center gap-2">
             <Info className="w-4 h-4 text-slate-500 shrink-0" />
-            <span>{t('These schemes are currently operating under Central / State mandates. Transparent gazette reasons for exclusion are displayed below.')}</span>
+            <span>{t('These schemes belong to your selected loan category. Transparent gazette reasons for exclusion are displayed below.')}</span>
           </div>
 
           {filteredAvailable.map((rawScheme, idx) => {
             const scheme = translateScheme(rawScheme);
+            const isSchemeEligible = scheme.eligible === true || (scheme.match_score && scheme.match_score >= 50 && (!scheme.failed_rules || scheme.failed_rules.length === 0));
+            const isCentral = scheme.is_central || scheme.eligible_states?.includes('All India');
+            const failedConditions = scheme.failed_rules || scheme.explainability?.limiting_factors || [];
+
             return (
-            <div
-              key={idx}
-              className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6"
-            >
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-700 px-2 py-0.5 bg-slate-100 rounded font-mono">
-                    {scheme.scheme_code || scheme.code}
-                  </span>
-                  <span className="text-xs font-extrabold text-slate-900">{scheme.scheme_name || scheme.name}</span>
-                </div>
-                <p className="text-xs text-slate-600 line-clamp-2">{scheme.scheme_description || scheme.description}</p>
-
-                {/* Failed Rules Box */}
-                <div className="p-3 bg-red-50/70 border border-red-200 rounded-xl text-xs space-y-1">
-                  <div className="flex items-center gap-1.5 text-red-800 font-bold">
-                    <XCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                    <span>{t('Failed Gazette Condition(s):')}</span>
+              <div
+                key={scheme.scheme_id || idx}
+                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:border-slate-300 transition-all"
+              >
+                <div className="space-y-3 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold text-slate-700 px-2.5 py-0.5 bg-slate-100 rounded font-mono">
+                      {scheme.scheme_code || scheme.code}
+                    </span>
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                      isSchemeEligible
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : 'bg-rose-100 text-rose-800 border border-rose-300'
+                    }`}>
+                      {isSchemeEligible ? t('Alternative Scheme') : t('Why Unmatched? / Not Eligible')}
+                    </span>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                      isCentral ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-purple-50 text-purple-700 border border-purple-200'
+                    }`}>
+                      {isCentral ? t('Central Scheme') : t('State Scheme')}
+                    </span>
                   </div>
-                  <p className="text-red-700 text-[11px]">
-                    {scheme.failed_rules?.map(r => t(r)).join('; ') || t('Criteria mismatch with applicant profile or required loan ceiling exceeded.')}
-                  </p>
+
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">{t(scheme.scheme_name || scheme.name)}</h3>
+                    <p className="text-xs text-slate-600 line-clamp-2 mt-0.5">{t(scheme.scheme_description || scheme.description)}</p>
+                  </div>
+
+                  {/* Why Unmatched / Failed Conditions Box */}
+                  {!isSchemeEligible ? (
+                    <div className="p-3.5 bg-rose-50/80 border border-rose-200 rounded-2xl text-xs space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-rose-900 font-bold">
+                        <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>{t('Why Unmatched? / Why Not Eligible?')}</span>
+                      </div>
+                      {failedConditions.length > 0 ? (
+                        <ul className="list-disc list-inside text-rose-800 text-[11px] space-y-1 pl-1">
+                          {failedConditions.map((rule, rIdx) => (
+                            <li key={rIdx} className="leading-relaxed">
+                              {typeof rule === 'string' ? t(rule) : t(rule.reason || rule.detail || rule.rule_name || JSON.stringify(rule))}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-rose-700 text-[11px] pl-1">
+                          {t('Criteria mismatch with applicant profile or requested loan ceiling exceeded for this scheme.')}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    scheme.explainability?.positive_factors && scheme.explainability.positive_factors.length > 0 && (
+                      <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-2xl text-xs space-y-1">
+                        <span className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          {t('Alternative Fit Factors:')}
+                        </span>
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          {scheme.explainability.positive_factors.map((factor, fIdx) => (
+                            <span key={fIdx} className="text-[11px] text-emerald-700 font-medium">
+                              &bull; {t(factor)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+
+                <div className="lg:w-64 shrink-0 flex flex-col justify-between space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <div className="text-xs space-y-1">
+                    <span className="text-slate-500 block">{t('Max Limit:')}</span>
+                    <span className="font-extrabold text-slate-900">
+                      ₹{((scheme.max_loan_amount || 1000000) / 100000).toLocaleString('en-IN')} {t('Lakhs')}
+                    </span>
+                  </div>
+
+                  <Link
+                    to={`/scheme/${scheme.scheme_id || scheme.scheme_code || scheme.code}`}
+                    className="w-full py-2 px-3 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl text-center block shadow-sm transition-all"
+                  >
+                    {t('View Scheme Guidelines')}
+                  </Link>
                 </div>
               </div>
-
-              <div className="lg:w-60 shrink-0 flex flex-col justify-between space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div className="text-xs space-y-1">
-                  <span className="text-slate-500 block">{t('Max Limit:')}</span>
-                  <span className="font-extrabold text-slate-900">
-                    ₹{((scheme.max_loan_amount || 1000000) / 100000).toLocaleString('en-IN')} {t('Lakhs')}
-                  </span>
-                </div>
-
-                <Link
-                  to={`/scheme/${scheme.scheme_id}`}
-                  className="w-full py-2 px-3 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl text-center block"
-                >
-                  {t('View Scheme Guidelines')}
-                </Link>
-              </div>
-            </div>
             );
           })}
 
           {filteredAvailable.length === 0 && (
             <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 text-slate-500 text-xs">
-              {t('No additional available schemes found matching your search.')}
+              {t('No additional available schemes found matching your search in this category.')}
             </div>
           )}
         </div>

@@ -33,9 +33,9 @@ const getDocTypes = (pType) => {
     return [
       { key: 'docAadhaar', name: 'Aadhaar Card', label: 'docAadhaar', icon: Shield, tag: 'UIDAI Verhoeff Checksum' },
       { key: 'docPan', name: 'PAN Card', label: 'docPan', icon: FileText, tag: 'ITD Entity & Surname Check' },
-      { key: 'docCaste', name: 'Caste Certificate', label: 'docCaste', icon: Award, tag: 'State e-District Gateway' },
-      { key: 'docIncome', name: 'Income Certificate', label: 'docIncome', icon: Database, tag: 'Scheme Income Ceiling' },
       { key: 'docDpr', name: 'Detailed Project Report (DPR)', label: 'docDpr', icon: FileCode, tag: 'Loan + Margin = Cost Eq' },
+      { key: 'docIncome', name: 'Income Certificate', label: 'docIncome', icon: Database, tag: 'Scheme Income Ceiling' },
+      { key: 'docCaste', name: 'Caste Certificate', label: 'docCaste', icon: Award, tag: 'State e-District Gateway' },
       { key: 'docUdyam', name: 'Udyam Registration', label: 'docUdyam', icon: Cpu, tag: 'MSME National Portal' },
     ];
   }

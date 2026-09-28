@@ -123,6 +123,14 @@ class ExplainableRankingService:
         matching_factors = [m["detail"] for m in eligibility["matched_rules"]]
         missing_reqs = [f["reason"] for f in eligibility["failed_rules"]]
 
+        if not is_eligible and not missing_reqs:
+            if user_loan > scheme.max_loan_amount:
+                missing_reqs.append(f"Requested loan amount (₹{user_loan:,.0f}) exceeds the maximum scheme ceiling of ₹{scheme.max_loan_amount:,.0f}.")
+            if scheme.max_income_limit and user_inc > scheme.max_income_limit:
+                missing_reqs.append(f"Annual family income (₹{user_inc:,.0f}) exceeds the scheme ceiling of ₹{scheme.max_income_limit:,.0f}.")
+            if not missing_reqs:
+                missing_reqs.append("Applicant profile does not satisfy mandatory statutory eligibility criteria for this scheme.")
+
         if is_eligible and is_edu_scheme:
             matching_factors.append("Eligible for full 100% interest subvention / concessional education credit.")
         elif is_eligible and scheme.subsidy_percentage_special > 0:

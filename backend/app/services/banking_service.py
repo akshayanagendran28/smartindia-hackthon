@@ -663,20 +663,15 @@ class OfflineBankingService:
 
         cursor.execute(sql, params)
         rows = cursor.fetchall()
-        
-        # If specific state/district query had 0 matches, fallback gracefully to state or all branches
-        if not rows and (district or state):
-            fallback_sql = "SELECT * FROM ifsc_data"
-            fallback_params = []
-            if state and state.lower() != "all":
-                fallback_sql += " WHERE state LIKE ?"
-                fallback_params.append(f"%{state.strip()}%")
-            fallback_sql += " ORDER BY lead_bank_flag DESC LIMIT ?"
-            fallback_params.append(limit)
-            cursor.execute(fallback_sql, fallback_params)
+
+        # If district was queried and had 0 matches, but state was provided, search state-level
+        if not rows and district and state and state.lower() != "all":
+            fallback_sql = "SELECT * FROM ifsc_data WHERE state LIKE ? ORDER BY lead_bank_flag DESC LIMIT ?"
+            cursor.execute(fallback_sql, [f"%{state.strip()}%", limit])
             rows = cursor.fetchall()
 
-        if not rows:
+        # Only if no specific location filter was requested at all, fetch global branches up to limit
+        if not rows and not query and (not state or state.lower() == "all") and (not district or district.lower() == "all") and (not bank or bank.lower() == "all"):
             cursor.execute("SELECT * FROM ifsc_data ORDER BY lead_bank_flag DESC LIMIT ?", (limit,))
             rows = cursor.fetchall()
 
@@ -700,7 +695,7 @@ class OfflineBankingService:
         limit: int = 6
     ) -> List[Dict[str, Any]]:
         """
-        Calculates localized, high-suitability Channel Partner recommendations tailored to the customer's location.
+        Calculates localized, high-suitability Channel Partner recommendations tailored to the customer's actual location.
         """
         conn = cls.get_db()
         cursor = conn.cursor()
@@ -721,17 +716,22 @@ class OfflineBankingService:
                 schemes = []
             r["supported_schemes"] = schemes
 
+            is_district_match = bool(target_district and (
+                target_district.lower() in (r["district"] or "").lower() or 
+                target_district.lower() in (r["city"] or "").lower()
+            ))
+            is_state_match = bool(target_state and target_state.lower() in (r["state"] or "").lower())
+            is_lead = bool(r.get("lead_bank_flag"))
+
+            # If user provided location (state or district), only include branches in that location
+            if target_state or target_district:
+                if not (is_district_match or is_state_match):
+                    continue
+
             # Calculate match score
             score = 60
             distance_km = 4.5
             badge = "Commercial Bank"
-
-            is_district_match = target_district and (
-                target_district.lower() in (r["district"] or "").lower() or 
-                target_district.lower() in (r["city"] or "").lower()
-            )
-            is_state_match = target_state and target_state.lower() in (r["state"] or "").lower()
-            is_lead = bool(r.get("lead_bank_flag"))
 
             if is_district_match:
                 score += 25
@@ -750,7 +750,8 @@ class OfflineBankingService:
                 score += 10
             
             # Scheme match bonus
-            if target_scheme in [s.upper() for s in schemes] or "ALL_SCHEMES" in schemes:
+            is_scheme_match = target_scheme in [s.upper() for s in schemes] or "ALL_SCHEMES" in [s.upper() for s in schemes]
+            if is_scheme_match:
                 score += 5
 
             score = min(99, score)
@@ -761,9 +762,9 @@ class OfflineBankingService:
             elif distance_km <= 5.0:
                 distance_str = f"{distance_km:.1f} km (District Nodal Hub)"
 
-            match_reason = f"Designated official lending partner for {target_scheme} scheme appraisals and direct DBT subsidy disbursal in {r.get('district', 'your region')}."
+            match_reason = f"Designated official lending partner for {target_scheme} scheme appraisals and direct DBT subsidy disbursal in {r.get('district', target_district or 'your region')}."
             if is_lead:
-                match_reason = f"Lead District Bank for {r.get('district')}. Authorized for instant digital dossier evaluation and statutory credit clearance."
+                match_reason = f"Lead District Bank for {r.get('district', target_district or 'your area')}. Authorized for instant digital dossier evaluation and statutory credit clearance."
 
             suggestions.append({
                 **r,

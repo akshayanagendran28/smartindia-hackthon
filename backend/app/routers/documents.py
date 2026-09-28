@@ -889,7 +889,7 @@ def get_dynamic_required_checklist(
             })
 
     else:
-        # Dynamic Business Requirements
+        # Canonical Business Requirements - Exactly 6 statutory documents
         req_docs.append({
             "doc_key": "docAadhaar",
             "document_name": "Aadhaar Card",
@@ -904,14 +904,13 @@ def get_dynamic_required_checklist(
             "is_mandatory": True,
             "reason": "Required for credit sanction, tax compliance, and entity identification."
         })
-        if eff_category.upper() in ["SC", "ST", "MINORITY", "OBC"]:
-            req_docs.append({
-                "doc_key": "docCaste",
-                "document_name": f"{eff_category.upper()} Community / Caste Certificate",
-                "document_type": "Caste Certificate",
-                "is_mandatory": True,
-                "reason": f"Required to unlock 25%-35% special capital subsidy and concessional terms under {eff_category.upper()} quota."
-            })
+        req_docs.append({
+            "doc_key": "docDpr",
+            "document_name": "Detailed Project Report (DPR)",
+            "document_type": "Detailed Project Report",
+            "is_mandatory": True,
+            "reason": "Project financial summary verifying Project Cost, Promoter Margin (5%-10%), and Bank Loan."
+        })
         req_docs.append({
             "doc_key": "docIncome",
             "document_name": "Annual Income Certificate",
@@ -920,20 +919,19 @@ def get_dynamic_required_checklist(
             "reason": "Required to verify family income compliance with statutory subsidy caps."
         })
         req_docs.append({
-            "doc_key": "docDpr",
-            "document_name": "Detailed Project Report (DPR)",
-            "document_type": "Detailed Project Report",
+            "doc_key": "docCaste",
+            "document_name": f"{eff_category.upper() if eff_category else 'SC'} Community / Caste Certificate",
+            "document_type": "Caste Certificate",
             "is_mandatory": True,
-            "reason": "Project financial summary verifying Project Cost, Promoter Margin (5%-10%), and Bank Loan."
+            "reason": f"Required to unlock 25%-35% special capital subsidy and concessional terms under {eff_category.upper() if eff_category else 'SC'} quota."
         })
-        if eff_biz.lower() in ["manufacturing", "service", "trading"] or "expand" in eff_purpose.lower():
-            req_docs.append({
-                "doc_key": "docUdyam",
-                "document_name": "Udyam MSME Registration Certificate",
-                "document_type": "Udyam Registration",
-                "is_mandatory": False,
-                "reason": "Provides priority lending status and exemption from processing fees under MSME Act."
-            })
+        req_docs.append({
+            "doc_key": "docUdyam",
+            "document_name": "Udyam MSME Registration Certificate",
+            "document_type": "Udyam Registration",
+            "is_mandatory": True,
+            "reason": "Provides official MSME recognition, priority lending status, and statutory credit guarantee under MSME Act."
+        })
 
     user_docs = db.query(UserDocument).filter(UserDocument.user_id == current_user.id).all() if current_user else []
     user_doc_map = {}

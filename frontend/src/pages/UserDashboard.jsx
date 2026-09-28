@@ -62,21 +62,21 @@ export default function UserDashboard() {
         age: application.age || profile?.age || 28
       };
 
-      const [profRes, matchRes, branchRes, myAppsRes] = await Promise.allSettled([
+      const [profRes, branchRes, myAppsRes] = await Promise.allSettled([
         api.get('/profile/me'),
-        matchingAPI.evaluate(evalPayload),
         api.get('/banking/branches', { 
           params: { 
-            state: application.state || user?.state || 'Maharashtra', 
-            district: application.district || user?.district || 'Mumbai', 
+            state: application.state || user?.state || '', 
+            district: application.district || user?.district || '', 
             limit: 100 
           } 
         }),
         api.get('/applications/my-applications')
       ]);
 
-      if (profRes.status === 'fulfilled' && profRes.value.data) {
-        setProfile(profRes.value.data);
+      const profData = profRes.status === 'fulfilled' ? profRes.value.data : null;
+      if (profData) {
+        setProfile(profData);
       }
 
       if (myAppsRes.status === 'fulfilled' && myAppsRes.value.data) {
@@ -85,22 +85,51 @@ export default function UserDashboard() {
 
       let eligibleSchemesList = [];
       let totalAvail = 0;
-      let maxSubsidyVal = '35%';
-      let subsidyLabel = 'PMEGP Special Category';
+      let maxSubsidyVal = '0%';
+      let subsidyLabel = 'Complete profile to calculate subsidy';
 
-      if (matchRes.status === 'fulfilled' && matchRes.value.data) {
-        const evalData = matchRes.value.data;
-        eligibleSchemesList = evalData.eligible_schemes || [];
-        totalAvail = evalData.total_evaluated || evalData.available_schemes?.length || 0;
-        setMatches(eligibleSchemesList);
-        setAvailableCount(totalAvail);
+      const userAge = application.age || profData?.age;
+      const userState = application.state || profData?.state || user?.state;
+      const userLoan = application.loanAmount || loanAmount || application.required_loan || profData?.required_loan;
 
-        if (eligibleSchemesList.length > 0) {
-          const maxNum = Math.max(...eligibleSchemesList.map(s => s.subsidy_percentage_special || s.subsidy_percentage_general || 0));
-          if (maxNum > 0) {
-            maxSubsidyVal = `${maxNum}%`;
+      if (userAge && userState && userLoan) {
+        const evalPayload = {
+          ...application,
+          purpose_type: activePurpose,
+          loan_amount: Number(userLoan) || 0,
+          required_loan: Number(userLoan) || 0,
+          annual_income: application.annual_family_income || application.annual_income || profData?.annual_family_income || 0,
+          state: userState,
+          district: application.district || profData?.district || user?.district || '',
+          social_category: application.social_category || application.category || profData?.social_category || 'SC',
+          gender: application.gender || profData?.gender || 'female',
+          age: Number(userAge) || 0,
+          bypass_doc_gate: true
+        };
+
+        try {
+          const matchRes = await matchingAPI.evaluate(evalPayload);
+          if (matchRes.data) {
+            const evalData = matchRes.data;
+            eligibleSchemesList = evalData.eligible_schemes || [];
+            totalAvail = evalData.total_evaluated || evalData.available_schemes?.length || 0;
+            setMatches(eligibleSchemesList);
+            setAvailableCount(totalAvail);
+
+            if (eligibleSchemesList.length > 0) {
+              const maxNum = Math.max(...eligibleSchemesList.map(s => s.subsidy_percentage_special || s.subsidy_percentage_general || 0));
+              if (maxNum > 0) {
+                maxSubsidyVal = `${maxNum}%`;
+                subsidyLabel = 'Maximum eligible subsidy';
+              }
+            }
           }
+        } catch (err) {
+          console.warn('Dashboard matching evaluation failed:', err);
         }
+      } else {
+        setMatches([]);
+        setAvailableCount(0);
       }
 
       // 1. Dynamic Subsidy calculation
@@ -134,9 +163,9 @@ export default function UserDashboard() {
 
       // 2. Dynamic Readiness score
       const verifiedCount = (verifiedDocKeys || []).length;
-      let totalRequired = 5;
-      if (activePurpose === 'EDUCATION') totalRequired = 4;
-      if (activePurpose === 'SELF_EMPLOYMENT') totalRequired = 3;
+      let totalRequired = 6;
+      if (activePurpose === 'EDUCATION') totalRequired = 6;
+      if (activePurpose === 'SELF_EMPLOYMENT') totalRequired = 4;
 
       let score = 0;
       let readinessSub = 'No documents uploaded';
@@ -640,7 +669,7 @@ export default function UserDashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-emerald-300 transition-all">
           <div className="space-y-1">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('eligible schemes')}</p>
-            <h3 className="text-2xl font-black text-slate-900">{kpiMetrics.eligibleCount}+</h3>
+            <h3 className="text-2xl font-black text-slate-900">{kpiMetrics.eligibleCount > 0 ? kpiMetrics.eligibleCount : 0}</h3>
             <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> {t('100% rule verified')}
             </span>

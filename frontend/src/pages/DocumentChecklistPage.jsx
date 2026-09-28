@@ -125,53 +125,46 @@ export default function DocumentChecklistPage() {
     } else {
       return [
         { 
-          key: 'aadhaar', 
+          key: 'docAadhaar', 
           name: t('docAadhaar', 'Aadhaar Card'), 
           mandatory: true, 
-          desc: t('Identity & Address proof with mobile OTP linkage', 'Identity & Address proof with mobile OTP linkage'),
+          desc: t('Identity & Address proof with mobile OTP linkage and UIDAI Verhoeff checksum validation', 'Identity & Address proof with mobile OTP linkage and UIDAI Verhoeff checksum validation'),
           authority: 'UIDAI'
         },
         { 
-          key: 'pan', 
+          key: 'docPan', 
           name: t('docPan', 'PAN Card'), 
           mandatory: true, 
-          desc: t('Tax identification required for commercial bank loan sanction', 'Tax identification required for commercial bank loan sanction'),
-          authority: 'Income Tax Dept'
+          desc: t('Permanent Account Number required for commercial bank loan sanction and financial KYC compliance', 'Permanent Account Number required for commercial bank loan sanction and financial KYC compliance'),
+          authority: 'Income Tax Department (ITD)'
         },
         { 
-          key: 'caste', 
-          name: t('docCaste', 'Caste / Category Certificate'), 
-          mandatory: application.category !== 'General', 
-          desc: t('Required for 35% Special Category Subsidy under PMEGP & Stand-Up India', 'Required for 35% Special Category Subsidy under PMEGP & Stand-Up India'),
-          authority: 'State e-District Portal'
-        },
-        { 
-          key: 'dpr', 
+          key: 'docDpr', 
           name: t('docDpr', 'Detailed Project Report (DPR)'), 
           mandatory: true, 
-          desc: t('Project cost breakdown, machinery list, and 3-year revenue model', 'Project cost breakdown, machinery list, and 3-year revenue model'),
+          desc: t('Project cost breakdown, machinery quotation, and 3-year financial viability model', 'Project cost breakdown, machinery quotation, and 3-year financial viability model'),
           authority: 'Chartered Engineer / DIC'
         },
         { 
-          key: 'udyam', 
+          key: 'docIncome', 
+          name: t('docIncome', 'Annual Family Income Certificate'), 
+          mandatory: true, 
+          desc: t('Official revenue proof to verify family income compliance with statutory subsidy caps', 'Official revenue proof to verify family income compliance with statutory subsidy caps'),
+          authority: 'Tahsildar / Revenue Authority'
+        },
+        { 
+          key: 'docCaste', 
+          name: t('docCaste', 'Caste / Category Certificate'), 
+          mandatory: true, 
+          desc: t('Required for 25%-35% Special Category Subsidy under PMEGP & Stand-Up India', 'Required for 25%-35% Special Category Subsidy under PMEGP & Stand-Up India'),
+          authority: 'State e-District Portal'
+        },
+        { 
+          key: 'docUdyam', 
           name: t('docUdyam', 'Udyam MSME Registration Certificate'), 
           mandatory: true, 
           desc: t('Official Government of India MSME recognition and priority sector status', 'Official Government of India MSME recognition and priority sector status'),
           authority: 'Ministry of MSME'
-        },
-        { 
-          key: 'bank', 
-          name: t('docBank', 'Bank Statement (Last 6 Months)'), 
-          mandatory: true, 
-          desc: t('Financial transaction history & credit assessment', 'Financial transaction history & credit assessment'),
-          authority: 'Operating Bank'
-        },
-        { 
-          key: 'edp', 
-          name: t('docEdp', 'EDP Skill Training Certificate'), 
-          mandatory: false, 
-          desc: t('2-week Entrepreneurship Development Training (Adds +15% preference)', '2-week Entrepreneurship Development Training (Adds +15% preference)'),
-          authority: 'RSETI / KVIC / NIESBUD'
         }
       ];
     }
@@ -181,7 +174,11 @@ export default function DocumentChecklistPage() {
   
   // Calculate real verified vs pending count
   const isDocVerified = (docKey) => {
-    return userVerifiedDocs.some(vk => vk.includes(docKey.toLowerCase()));
+    const k = docKey.toLowerCase().replace(/^doc/, '');
+    return userVerifiedDocs.some(vk => {
+      const v = String(vk).toLowerCase().replace(/^doc/, '');
+      return v.includes(k) || k.includes(v);
+    });
   };
 
   const verifiedCount = requirements.filter(r => isDocVerified(r.key)).length;

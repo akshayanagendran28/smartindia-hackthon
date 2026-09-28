@@ -8,6 +8,7 @@ import { ApplicationProvider } from './context/ApplicationContext';
 import Navbar from './layouts/Navbar';
 import Footer from './layouts/Footer';
 import DashboardLayout from './layouts/DashboardLayout';
+import FloatingChatbot from './components/FloatingChatbot';
 
 // Public & User Pages
 import LandingPage from './pages/LandingPage';
@@ -183,6 +184,7 @@ export default function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
+            <FloatingChatbot />
             <Footer />
           </div>
         </BrowserRouter>

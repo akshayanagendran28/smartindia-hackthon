@@ -6,10 +6,14 @@ import {
   Calculator, FileCheck, MapPin, Search
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { useApplication } from '../context/ApplicationContext';
 import api from '../services/api';
 
 export default function ChatAssistantPage() {
   const { currentLanguage, setLanguage, languages, t } = useLanguage();
+  const { user } = useAuth();
+  const { application } = useApplication();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +26,7 @@ export default function ChatAssistantPage() {
         sender: 'assistant',
         text: t('chatWelcome'),
         language: currentLanguage,
-        model_used: 'Qwen via Ollama',
+        model_used: 'Scheme Sathi Grounded Assistant',
         options: [
           { label: t('Find Scheme', 'Find Scheme'), path: '/find-scheme' },
           { label: t('EMI Calculator', 'EMI Calculator'), path: '/calculator' },
@@ -60,7 +64,10 @@ export default function ChatAssistantPage() {
     try {
       const res = await api.post('/chat/message', {
         message: currentInput,
-        language: currentLanguage
+        language: currentLanguage,
+        purpose_type: application?.purpose_type || 'BUSINESS',
+        scheme_code: application?.selectedScheme?.code || null,
+        scheme_id: application?.selectedScheme?.id || null
       });
 
       const replyText = res.data.reply || res.data.response || 'I have analyzed your request against the official gazetted scheme rules.';

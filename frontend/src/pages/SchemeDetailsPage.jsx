@@ -16,27 +16,44 @@ export default function SchemeDetailsPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!id || id === 'undefined' || id === 'null') {
+      setError('No scheme has been selected yet.');
+      setLoading(false);
+      return;
+    }
     api.get(`/schemes/${id}`)
       .then(res => setScheme(res.data))
       .catch(err => {
         console.error(err);
-        setError('Scheme not found in database.');
+        if (err.response?.status === 404) {
+          setError('No scheme available yet.');
+        } else {
+          setError('Unable to load scheme details. Please try again.');
+        }
       })
       .finally(() => setLoading(false));
   }, [id]);
 
   if (loading) {
-    return <div className="p-12 text-center text-slate-500 font-semibold">Loading statutory gazette scheme details from myScheme.gov.in records...</div>;
+    return <div className="p-12 text-center text-slate-500 font-semibold">{t('loading')}</div>;
   }
 
   if (error || !scheme) {
     return (
       <div className="max-w-2xl mx-auto py-12 text-center space-y-4">
-        <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
-        <h2 className="text-xl font-bold text-slate-900">{error || 'Scheme Not Found'}</h2>
-        <Link to="/results" className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600">
-          <ArrowLeft className="w-4 h-4" /> Back to Scheme Results
-        </Link>
+        <AlertCircle className="w-10 h-10 text-amber-500 mx-auto" />
+        <h2 className="text-xl font-bold text-slate-900">{t(error || 'No scheme has been selected yet.')}</h2>
+        <p className="text-xs text-slate-500">
+          {t('Explore available government schemes or complete your evaluation questionnaire to view eligible schemes.')}
+        </p>
+        <div className="flex items-center justify-center gap-4 pt-2">
+          <Link to="/results" className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 hover:text-emerald-700">
+            <ArrowLeft className="w-4 h-4" /> {t('Matching Schemes')}
+          </Link>
+          <Link to="/find-scheme" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+            {t('Find Schemes')}
+          </Link>
+        </div>
       </div>
     );
   }
@@ -284,12 +301,12 @@ export default function SchemeDetailsPage() {
                 'Caste Certificate (if claiming quota subvention)'
               ];
               const defaultBizDocs = [
-                'Aadhaar Card (Mobile Linked)',
-                'PAN Card',
-                'Caste Certificate (SC/ST/OBC)',
+                'Aadhaar Card (UIDAI Linked)',
+                'PAN Card (ITD Verified)',
                 'Detailed Project Report (DPR)',
-                'Bank Account Passbook / 6 Months Statement',
-                'EDP Training Certificate (if available)'
+                'Annual Family Income Certificate',
+                'Caste / Category Certificate',
+                'Udyam MSME Registration Certificate'
               ];
               const docList = isEdu ? defaultEduDocs : (scheme.required_documents || defaultBizDocs);
               return docList.map((doc, dIdx) => (
