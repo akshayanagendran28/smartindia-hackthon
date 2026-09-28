@@ -27,9 +27,16 @@ def list_schemes(
         )
     return query.all()
 
-@router.get("/{scheme_id}", response_model=SchemeOut)
-def get_scheme_details(scheme_id: int, db: Session = Depends(get_db)):
-    scheme = db.query(Scheme).filter(Scheme.id == scheme_id).first()
+@router.get("/{scheme_id_or_code}", response_model=SchemeOut)
+def get_scheme_details(scheme_id_or_code: str, db: Session = Depends(get_db)):
+    scheme = None
+    if scheme_id_or_code.isdigit():
+        scheme = db.query(Scheme).filter(Scheme.id == int(scheme_id_or_code)).first()
     if not scheme:
-        raise HTTPException(status_code=404, detail="Scheme not found.")
+        scheme = db.query(Scheme).filter(
+            (Scheme.code.ilike(scheme_id_or_code)) | 
+            (Scheme.name.ilike(scheme_id_or_code))
+        ).first()
+    if not scheme:
+        raise HTTPException(status_code=404, detail="Scheme not found in database.")
     return scheme

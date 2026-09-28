@@ -157,27 +157,11 @@ export default function DocumentAssistantPage() {
     if (targetScheme) formData.append('scheme_code', targetScheme);
 
     try {
-      let apiRes;
-      try {
-        const [res] = await Promise.all([
-          documentsAPI.upload(formData),
-          runSimulatedPipelineSteps()
-        ]);
-        apiRes = res;
-      } catch (uploadErr) {
-        if (uploadErr.response?.status === 401) {
-          const loginRes = await authAPI.login({ email: 'rajesh.kumar@example.com', password: 'password123' });
-          if (loginRes.data?.access_token) {
-            localStorage.setItem('scheme_sathi_token', loginRes.data.access_token);
-            const retryRes = await documentsAPI.upload(formData);
-            apiRes = retryRes;
-          } else {
-            throw uploadErr;
-          }
-        } else {
-          throw uploadErr;
-        }
-      }
+      const [res] = await Promise.all([
+        documentsAPI.upload(formData),
+        runSimulatedPipelineSteps()
+      ]);
+      const apiRes = res;
 
       setResult(apiRes.data);
       recordDocumentVerified(selectedDocKey);
@@ -199,27 +183,11 @@ export default function DocumentAssistantPage() {
     setSelectedDocKey(docKey);
 
     try {
-      let apiRes;
-      try {
-        const [res] = await Promise.all([
-          documentsAPI.loadSyntheticSample(docKey, targetScheme),
-          runSimulatedPipelineSteps()
-        ]);
-        apiRes = res;
-      } catch (synthErr) {
-        if (synthErr.response?.status === 401) {
-          const loginRes = await authAPI.login({ email: 'rajesh.kumar@example.com', password: 'password123' });
-          if (loginRes.data?.access_token) {
-            localStorage.setItem('scheme_sathi_token', loginRes.data.access_token);
-            const retryRes = await documentsAPI.loadSyntheticSample(docKey, targetScheme);
-            apiRes = retryRes;
-          } else {
-            throw synthErr;
-          }
-        } else {
-          throw synthErr;
-        }
-      }
+      const [res] = await Promise.all([
+        documentsAPI.loadSyntheticSample(docKey, targetScheme),
+        runSimulatedPipelineSteps()
+      ]);
+      const apiRes = res;
 
       setResult(apiRes.data);
       recordDocumentVerified(docKey);

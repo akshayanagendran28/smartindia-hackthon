@@ -37,12 +37,12 @@ export default function UserDashboard() {
   const [kpiMetrics, setKpiMetrics] = useState({
     eligibleCount: 0,
     availableCount: 0,
-    maxSubsidy: '35%',
-    subsidySubtitle: 'PMEGP Special Category',
-    readinessScore: 68,
-    readinessSubtitle: '2 documents pending',
-    partnerBanksCount: 13,
-    partnerSubtitle: 'Within district jurisdiction'
+    maxSubsidy: '0%',
+    subsidySubtitle: 'Scheme matching pending',
+    readinessScore: 0,
+    readinessSubtitle: 'No documents uploaded',
+    partnerBanksCount: 0,
+    partnerSubtitle: 'Local branches'
   });
 
   const loadDashboardData = async (isManual = false) => {
@@ -138,26 +138,29 @@ export default function UserDashboard() {
       if (activePurpose === 'EDUCATION') totalRequired = 4;
       if (activePurpose === 'SELF_EMPLOYMENT') totalRequired = 3;
 
-      let score = Math.round((verifiedCount / totalRequired) * 100);
-      if (allDocumentsVerified) score = 100;
-      if (score > 100) score = 100;
-
-      let readinessSub = `${totalRequired - verifiedCount} documents pending`;
-      if (score === 100) {
+      let score = 0;
+      let readinessSub = 'No documents uploaded';
+      if (verifiedCount > 0) {
+        score = Math.round((verifiedCount / totalRequired) * 100);
+        if (score > 100) score = 100;
+        readinessSub = `${totalRequired - verifiedCount} documents pending`;
+      }
+      if (allDocumentsVerified) {
+        score = 100;
         readinessSub = '100% Ready for Bank Sanction';
       } else if (score >= 70) {
         readinessSub = 'Mandatory KYC complete';
       }
 
       // 3. Dynamic Nearby Partner Bank Desks
-      let nearbyCount = 13;
+      let nearbyCount = 0;
       if (branchRes.status === 'fulfilled' && branchRes.value.data) {
-        nearbyCount = branchRes.value.data.total_branches || branchRes.value.data.branches?.length || 13;
+        nearbyCount = branchRes.value.data.total_branches ?? branchRes.value.data.total ?? (branchRes.value.data.branches?.length || 0);
       }
 
       setKpiMetrics({
-        eligibleCount: eligibleSchemesList.length || 3,
-        availableCount: totalAvail || 6,
+        eligibleCount: eligibleSchemesList.length,
+        availableCount: totalAvail,
         maxSubsidy: maxSubsidyVal,
         subsidySubtitle: subsidyLabel,
         readinessScore: score,

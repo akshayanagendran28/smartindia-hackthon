@@ -45,18 +45,9 @@ export const AuthProvider = ({ children }) => {
       setProfile(profRes.data);
       return { success: true, user: loggedUser, profile: profRes.data };
     } catch (err) {
-      // Offline fallback login based on email
-      let fallbackUser = { id: 3, full_name: 'Rajesh Kumar', email: email, role: 'entrepreneur', state: 'Maharashtra', district: 'Mumbai' };
-      if (email.includes('renu')) {
-        fallbackUser = { id: 4, full_name: 'Renu Sharma', email: email, role: 'entrepreneur', state: 'Tamil Nadu', district: 'Chennai' };
-      } else if (email.includes('priya')) {
-        fallbackUser = { id: 5, full_name: 'Priya Sharma', email: email, role: 'entrepreneur', state: 'Tamil Nadu', district: 'Tiruvallur' };
-      } else if (email.includes('admin')) {
-        fallbackUser = { id: 1, full_name: 'National Portal Admin', email: email, role: 'admin', state: 'Delhi', district: 'New Delhi' };
-      }
-      setUser(fallbackUser);
-      localStorage.setItem('scheme_sathi_user', JSON.stringify(fallbackUser));
-      return { success: true, user: fallbackUser };
+      console.error('Login failed:', err);
+      const errorMsg = err.response?.data?.detail || 'Invalid credentials or connection error';
+      return { success: false, error: errorMsg };
     }
   };
 
@@ -69,21 +60,17 @@ export const AuthProvider = ({ children }) => {
       setToken(access_token);
       setUser(newUser);
       
-      const profRes = await profileAPI.getProfile();
-      setProfile(profRes.data);
+      try {
+        const profRes = await profileAPI.getProfile();
+        setProfile(profRes.data);
+      } catch (pErr) {
+        console.warn('Profile fetch after registration:', pErr);
+      }
       return { success: true, user: newUser };
     } catch (err) {
-      const fallbackUser = { 
-        id: Math.floor(1000 + Math.random() * 9000), 
-        full_name: userData.full_name, 
-        email: userData.email, 
-        role: userData.role || 'entrepreneur', 
-        state: userData.state || 'Tamil Nadu', 
-        district: userData.district || 'Chennai' 
-      };
-      setUser(fallbackUser);
-      localStorage.setItem('scheme_sathi_user', JSON.stringify(fallbackUser));
-      return { success: true, user: fallbackUser };
+      console.error('Registration failed:', err);
+      const errorMsg = err.response?.data?.detail || 'Registration failed. Please verify your details.';
+      return { success: false, error: errorMsg };
     }
   };
 

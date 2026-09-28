@@ -31,7 +31,7 @@ const Navbar = () => {
                 <span className="font-extrabold text-xl text-gov-darkblue tracking-tight">SCHEME</span>
                 <span className="font-extrabold text-xl text-gov-accent tracking-tight">SATHI</span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium hidden sm:block">{t('tagline')}</p>
+              <p className="text-[11px] text-slate-500 font-medium hidden sm:block">{t('Statutory Scheme Matching & Subventions')}</p>
             </div>
           </Link>
 
@@ -85,8 +85,8 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link to="/login" className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-gov-blue">{t('navLogin')}</Link>
-                <Link to="/register" className="px-3.5 py-1.5 text-xs font-bold text-white bg-gov-blue hover:bg-gov-darkblue rounded-lg shadow-sm">{t('navRegister')}</Link>
+                <Link to="/login" className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-gov-blue">{t('Login')}</Link>
+                <Link to="/register" className="px-3.5 py-1.5 text-xs font-bold text-white bg-gov-blue hover:bg-gov-darkblue rounded-lg shadow-sm">{t('Register')}</Link>
               </div>
             )}
           </div>

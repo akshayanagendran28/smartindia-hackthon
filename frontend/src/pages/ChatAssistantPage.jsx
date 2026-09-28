@@ -24,10 +24,10 @@ export default function ChatAssistantPage() {
         language: currentLanguage,
         model_used: 'Qwen via Ollama',
         options: [
-          { label: t('chatBtnWizard'), path: '/find-scheme' },
-          { label: t('chatBtnEmi'), path: '/calculator' },
-          { label: t('chatBtnOcr'), path: '/documents' },
-          { label: t('chatBtnBank'), path: '/partners' }
+          { label: t('Find Scheme', 'Find Scheme'), path: '/find-scheme' },
+          { label: t('EMI Calculator', 'EMI Calculator'), path: '/calculator' },
+          { label: t('Document Assistant', 'Document Assistant'), path: '/documents' },
+          { label: t('Channel Partners', 'Channel Partners'), path: '/partners' }
         ]
       }
     ]);

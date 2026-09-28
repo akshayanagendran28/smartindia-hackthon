@@ -100,21 +100,37 @@ export default function EligibilityExplanationPage() {
         <div className="space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4" />
-            <span>{t('positive contributing factors (+ impact)')}</span>
+            <span>{t('positive contributing factors (+ impact)', 'Positive Contributing Factors (+ Impact)')}</span>
           </h3>
 
           <div className="space-y-2">
-            {(data?.explainability?.positive_factors || [
-              t('target demographic quota matched (SC/ST / Woman Entrepreneur privilege)'),
-              t('Project cost is well within the ceiling limit of ₹50 Lakh'),
-              t('Rural area classification grants maximum 35% capital subsidy'),
-              t('EDP Training certification adds +15% suitability bonus')
-            ]).map((factor, idx) => (
-              <div key={idx} className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-100 flex items-center justify-between text-xs text-slate-800">
-                <span className="font-medium leading-relaxed">{t(factor, factor)}</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px] shrink-0 ml-3">+High Match</span>
-              </div>
-            ))}
+            {(() => {
+              const isEdu = data?.loan_type === 'EDUCATION' || 
+                            data?.purpose_type === 'EDUCATION' || 
+                            ['CSIS', 'NSFDC-EDU', 'NBCFDC-EL'].includes((data?.scheme_code || '').toUpperCase());
+              const defaultEduFactors = [
+                '100% full interest subsidy during course duration + 1-year moratorium period (CSIS benefit)',
+                'Annual family income within statutory subvention ceiling (≤ ₹4.50 Lakh / year)',
+                'Concessional statutory interest rate structure (3.5% - 4.0% p.a.)',
+                'Collateral-free student credit guarantee scheme coverage up to ₹7.50 Lakh'
+              ];
+              const defaultBizFactors = [
+                'Target demographic quota matched (SC/ST / Woman Entrepreneur privilege)',
+                'Project cost is well within statutory ceiling limit',
+                'Area classification grants eligible capital subsidy',
+                'Skill & Entrepreneurship training credentials increase sanction readiness'
+              ];
+              const factorsList = data?.explainability?.positive_factors?.length > 0 
+                ? data.explainability.positive_factors 
+                : (isEdu ? defaultEduFactors : defaultBizFactors);
+
+              return factorsList.map((factor, idx) => (
+                <div key={idx} className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-100 flex items-center justify-between text-xs text-slate-800">
+                  <span className="font-medium leading-relaxed">{t(factor, factor)}</span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px] shrink-0 ml-3">+High Match</span>
+                </div>
+              ));
+            })()}
           </div>
         </div>
 
@@ -123,7 +139,7 @@ export default function EligibilityExplanationPage() {
           <div className="space-y-3 pt-4 border-t border-slate-100">
             <h3 className="text-xs font-bold uppercase tracking-wider text-red-700 flex items-center gap-1.5">
               <XCircle className="w-4 h-4" />
-              <span>{t('limiting / disqualifying factors (- impact)')}</span>
+              <span>{t('limiting / disqualifying factors (- impact)', 'Limiting / Disqualifying Factors (- Impact)')}</span>
             </h3>
 
             <div className="space-y-2">
@@ -141,8 +157,8 @@ export default function EligibilityExplanationPage() {
       {/* Next Step Guidance */}
       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h4 className="font-bold text-slate-900 text-sm">{t('ready to proceed with application?')}</h4>
-          <p className="text-xs text-slate-500">{t('calculate exact monthly emis after 35% subsidy or locate your nearest nodal bank.')}</p>
+          <h4 className="font-bold text-slate-900 text-sm">{t('ready to proceed with application?', 'Ready to Proceed with Application?')}</h4>
+          <p className="text-xs text-slate-500">{t('Calculate exact monthly EMIs after statutory subsidy/subvention or locate your nearest nodal bank.')}</p>
         </div>
         <div className="flex gap-2 shrink-0">
           <Link
@@ -151,7 +167,7 @@ export default function EligibilityExplanationPage() {
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5"
           >
             <Calculator className="w-4 h-4" />
-            <span>{t('navEmi')}</span>
+            <span>{t('EMI Calculator')}</span>
           </Link>
           <Link
             to="/partners"
@@ -159,7 +175,7 @@ export default function EligibilityExplanationPage() {
             className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5"
           >
             <MapPin className="w-4 h-4" />
-            <span>{t('navPartners')}</span>
+            <span>{t('Channel Partners')}</span>
           </Link>
         </div>
       </div>

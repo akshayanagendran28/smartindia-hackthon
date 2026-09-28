@@ -165,9 +165,13 @@ export default function EmiCalculatorPage() {
   const activeScheme = location.state?.selectedScheme || location.state?.scheme || selectedScheme;
   const isEducationScheme = (activeScheme?.purpose_type === 'EDUCATION') || (purposeType === 'EDUCATION');
 
-  // Single source of truth loan amount
+  // Single source of truth loan amount - initialized directly from customer requested loan
   const [loanAmount, setLoanAmount] = useState(
-    location.state?.loanAmount || application.loanAmount || (isEducationScheme ? 450000 : 1200000)
+    location.state?.loanAmount || 
+    application.loanAmount || 
+    application.required_loan || 
+    application.required_loan_amount || 
+    (isEducationScheme ? 450000 : 1200000)
   );
 
   // Determine fixed statutory interest rate based on scheme, caste/category, and gender
@@ -407,23 +411,20 @@ export default function EmiCalculatorPage() {
             </div>
           </div>
 
-          {/* Repayment Tenure */}
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                {t('Post-Moratorium Tenure (Years)')}
+          {/* Repayment Tenure (Fixed per Statutory Scheme Rules) */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-slate-400" />
+                <span>{t('Post-Moratorium Tenure (Years)', 'Post-Moratorium Tenure (Years)')}</span>
               </label>
-              <span className="font-bold text-slate-900 text-sm">{tenureYears} {t('Years')}</span>
+              <span className="font-black text-slate-900 text-sm px-2.5 py-0.5 bg-slate-200 rounded-lg">
+                {tenureYears} {t('Years', 'Years')} ({tenureYears * 12} {t('Months', 'Months')})
+              </span>
             </div>
-            <input
-              type="range"
-              min={1}
-              max={15}
-              step={1}
-              value={tenureYears}
-              onChange={(e) => setTenureYears(Number(e.target.value))}
-              className="w-full accent-emerald-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
-            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              * Statutory Repayment Term — Fixed by scheme rules ({activeScheme?.name || (isEducationScheme ? 'Education Loan' : 'Business Scheme')}).
+            </p>
           </div>
 
           {/* Moratorium / Subsidy Factor */}

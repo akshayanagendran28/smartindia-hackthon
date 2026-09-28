@@ -210,7 +210,7 @@ export default function DocumentChecklistPage() {
             className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>{t('btnPrintChecklist', 'Print Checklist')}</span>
+            <span>{t('Print Checklist', 'Print Checklist')}</span>
           </button>
         </div>
       </div>

@@ -75,7 +75,7 @@ export default function SchemeDetailsPage() {
       <div className="flex items-center justify-between">
         <Link to="/results" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800">
           <ArrowLeft className="w-4 h-4" />
-          <span>{t('btnPrevious')} / {t('resultsTitle')}</span>
+          <span>{t('Previous')} / {t('Matching Schemes')}</span>
         </Link>
         <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
           <Globe className="w-3.5 h-3.5 text-emerald-600" />
@@ -88,7 +88,7 @@ export default function SchemeDetailsPage() {
         <div className="space-y-3 relative z-10 max-w-3xl">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-400 text-slate-950 uppercase tracking-wide">
-              {t('targetMarginalized')}
+              {t('targetMarginalized', 'Target Beneficiaries')}
             </span>
             <span className="text-xs font-mono bg-white/10 px-2.5 py-1 rounded-md text-emerald-300">
               {localizedScheme.code || localizedScheme.scheme_code}
@@ -96,7 +96,7 @@ export default function SchemeDetailsPage() {
             <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md ${
               isCentral ? 'bg-blue-400/20 text-blue-200 border border-blue-400/30' : 'bg-purple-400/20 text-purple-200 border border-purple-400/30'
             }`}>
-              {isCentral ? t('filterCentral') : t('filterState')}
+              {isCentral ? t('filterCentral', 'Central Scheme') : t('filterState', 'State Scheme')}
             </span>
             <span className="text-xs text-slate-300">&bull; {localizedScheme.department || localizedScheme.ministry}</span>
           </div>
@@ -112,7 +112,7 @@ export default function SchemeDetailsPage() {
             className="px-5 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold rounded-xl text-xs shadow transition-all flex items-center gap-2"
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>{t('btnWhyEligible')}</span>
+            <span>{t('Why Eligible')}</span>
           </Link>
 
           <Link
@@ -121,7 +121,7 @@ export default function SchemeDetailsPage() {
             className="px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5"
           >
             <Calculator className="w-4 h-4 text-emerald-300" />
-            <span>{t('navEmi')}</span>
+            <span>{t('EMI Calculator')}</span>
           </Link>
 
           <Link
@@ -130,7 +130,7 @@ export default function SchemeDetailsPage() {
             className="px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5"
           >
             <MapPin className="w-4 h-4 text-teal-300" />
-            <span>{t('navPartners')}</span>
+            <span>{t('Channel Partners')}</span>
           </Link>
 
           <a
@@ -271,19 +271,34 @@ export default function SchemeDetailsPage() {
             <span>{t('Required Documents Checklist')}</span>
           </h3>
           <ul className="space-y-2 text-xs text-slate-600">
-            {(scheme.required_documents || [
-              'Aadhaar Card (Mobile Linked)',
-              'PAN Card',
-              'Caste Certificate (SC/ST/OBC)',
-              'Detailed Project Report (DPR)',
-              'Bank Account Passbook / 6 Months Statement',
-              'EDP Training Certificate (if available)'
-            ]).map((doc, dIdx) => (
-              <li key={dIdx} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                <span className="font-medium text-slate-800">{t(doc)}</span>
-                <Link to="/documents" className="text-emerald-700 font-bold hover:underline text-[11px]">{t('Verify OCR')}</Link>
-              </li>
-            ))}
+            {(() => {
+              const isEdu = scheme.loan_type === 'EDUCATION' || 
+                            scheme.purpose_type === 'EDUCATION' || 
+                            ['CSIS', 'NSFDC-EDU', 'NBCFDC-EL'].includes((scheme.code || '').toUpperCase());
+              const defaultEduDocs = [
+                '10th Standard Marksheet / Passing Certificate',
+                '12th Standard Marksheet / Passing Certificate',
+                'Aadhaar Card (UIDAI Linked)',
+                'PAN Card (Permanent Account Number)',
+                'Income Certificate / Revenue Authority Proof',
+                'Caste Certificate (if claiming quota subvention)'
+              ];
+              const defaultBizDocs = [
+                'Aadhaar Card (Mobile Linked)',
+                'PAN Card',
+                'Caste Certificate (SC/ST/OBC)',
+                'Detailed Project Report (DPR)',
+                'Bank Account Passbook / 6 Months Statement',
+                'EDP Training Certificate (if available)'
+              ];
+              const docList = isEdu ? defaultEduDocs : (scheme.required_documents || defaultBizDocs);
+              return docList.map((doc, dIdx) => (
+                <li key={dIdx} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                  <span className="font-medium text-slate-800">{t(doc)}</span>
+                  <Link to="/documents" className="text-emerald-700 font-bold hover:underline text-[11px]">{t('Verify OCR')}</Link>
+                </li>
+              ));
+            })()}
           </ul>
         </div>
       </div>

@@ -15,19 +15,19 @@ const DashboardLayout = ({ children, title, subtitle, isAdmin = false }) => {
   const navigate = useNavigate();
 
   const userNavItems = [
-    { label: "Dashboard Overview", key: "dashboardOverview", path: "/dashboard", icon: LayoutDashboard },
-    { label: "Find My Scheme", key: "navFindScheme", path: "/find-scheme", icon: Sparkles, highlight: true },
-    { label: "Requirement Questionnaire", key: "requirement questionnaire", path: "/questionnaire", icon: FileSearch },
-    { label: "Recommended Schemes", key: "recommended schemes", path: "/results", icon: Award },
-    { label: "Financial / EMI Calculator", key: "financial / emi calculator", path: "/calculator", icon: Calculator },
-    { label: "Document Assistant (OCR)", key: "document assistant (ocr)", path: "/documents", icon: FileCheck2 },
-    { label: "Document Checklist", key: "document checklist", path: "/checklist", icon: FileCheck2 },
-    { label: "Application Readiness", key: "application readiness assessment", path: "/readiness", icon: ShieldCheck },
-    { label: "Channel Partner Locator", key: "channel partner locator", path: "/partners", icon: MapPin },
-    { label: "Scheme Sathi AI Chat", key: "scheme sathi ai chat", path: "/chat", icon: MessageSquare },
-    { label: "Saved Schemes & History", key: "saved schemes & history", path: "/history", icon: History },
-    { label: "Notifications", key: "notifications", path: "/notifications", icon: Bell },
-    { label: "My Profile", key: "my profile", path: "/profile", icon: UserCircle }
+    { label: "Dashboard Overview", key: "Dashboard Overview", path: "/dashboard", icon: LayoutDashboard },
+    { label: "Find My Scheme", key: "Find My Scheme", path: "/find-scheme", icon: Sparkles, highlight: true },
+    { label: "Requirement Questionnaire", key: "Requirement Questionnaire", path: "/questionnaire", icon: FileSearch },
+    { label: "Recommended Schemes", key: "Recommended Schemes", path: "/results", icon: Award },
+    { label: "Financial / EMI Calculator", key: "Financial / EMI Calculator", path: "/calculator", icon: Calculator },
+    { label: "Document Assistant (OCR)", key: "Document Assistant (OCR)", path: "/documents", icon: FileCheck2 },
+    { label: "Document Checklist", key: "Document Checklist", path: "/checklist", icon: FileCheck2 },
+    { label: "Application Readiness", key: "Application Readiness Assessment", path: "/readiness", icon: ShieldCheck },
+    { label: "Channel Partner Locator", key: "Channel Partner Locator", path: "/partners", icon: MapPin },
+    { label: "Scheme Sathi AI Chat", key: "Scheme Sathi AI Chat", path: "/chat", icon: MessageSquare },
+    { label: "Saved Schemes & History", key: "Saved Schemes & History", path: "/history", icon: History },
+    { label: "Notifications", key: "Notifications", path: "/notifications", icon: Bell },
+    { label: "My Profile", key: "My Profile", path: "/profile", icon: UserCircle }
   ];
 
   const adminNavItems = [
@@ -50,7 +50,7 @@ const DashboardLayout = ({ children, title, subtitle, isAdmin = false }) => {
               {user?.full_name ? user.full_name[0].toUpperCase() : 'U'}
             </div>
             <div className="overflow-hidden">
-              <h3 className="font-bold text-sm text-slate-900 truncate">{user?.full_name || 'Prasanth A K'}</h3>
+              <h3 className="font-bold text-sm text-slate-900 truncate">{user?.full_name || 'Citizen Beneficiary'}</h3>
               <div className="flex items-center gap-1.5">
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-800'}`}>
                   {isAdmin ? t('Supervisor / Admin', 'Supervisor / Admin') : t(user?.role || 'Entrepreneur', user?.role || 'Entrepreneur')}

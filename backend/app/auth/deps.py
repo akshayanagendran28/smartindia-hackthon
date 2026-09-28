@@ -49,7 +49,7 @@ def get_current_user_optional(db: Session = Depends(get_db), token: Optional[str
 def get_current_user_flexible(db: Session = Depends(get_db), token: Optional[str] = Depends(oauth2_scheme_optional)) -> User:
     """
     Returns authenticated user if valid token provided;
-    Otherwise falls back to default active entrepreneur demo user for frictionless SIH demo testing.
+    Raises HTTP 401 if unauthenticated.
     """
     if token:
         try:
@@ -62,13 +62,11 @@ def get_current_user_flexible(db: Session = Depends(get_db), token: Optional[str
         except Exception:
             pass
 
-    # Fallback to demo entrepreneur user
-    demo_user = db.query(User).filter(User.email == "rajesh.kumar@example.com").first()
-    if not demo_user:
-        demo_user = db.query(User).filter(User.role == "entrepreneur").first()
-    if not demo_user:
-        demo_user = db.query(User).first()
-    return demo_user
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials or active session",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role not in ["admin", "supervisor"]:

@@ -551,7 +551,7 @@ GPS: https://www.google.com/maps/search/?api=1&query=${selectedBranch.latitude},
             </div>
           ) : suggestions.length === 0 ? (
             <div className="col-span-full text-center py-6 text-indigo-300 text-xs bg-slate-800/50 rounded-2xl p-4">
-              <span>{t('No direct matches found in district. Showing state-wide lead nodal banks.')}</span>
+              <span>{t('No suitable channel partner is currently available')}</span>
             </div>
           ) : (
             suggestions.map((sug) => {

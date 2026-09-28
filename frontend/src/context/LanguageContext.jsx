@@ -48333,20 +48333,84 @@ export const LanguageProvider = ({ children }) => {
     document.documentElement.lang = currentLanguage;
   }, [currentLanguage]);
 
+  const TECHNICAL_KEY_MAP = {
+    btnWhyEligible: 'Why Eligible',
+    btnwhyeligible: 'Why Eligible',
+    btnPrevious: 'Previous',
+    btnprevious: 'Previous',
+    btnFindScheme: 'Find My Scheme',
+    btnfindscheme: 'Find My Scheme',
+    btnChatAssistant: 'Chat with Scheme Sathi',
+    btnchatassistant: 'Chat with Scheme Sathi',
+    btnAnalyzeSchemes: 'Analyze Schemes',
+    btnanalyzeschemes: 'Analyze Schemes',
+    btnExploreSchemes: 'Explore All Schemes',
+    btnexploreschemes: 'Explore All Schemes',
+    btnPrintChecklist: 'Print Checklist',
+    btnprintchecklist: 'Print Checklist',
+    chatBtnWizard: 'Find Scheme',
+    chatBtnEmi: 'EMI Calculator',
+    chatBtnOcr: 'Document Assistant',
+    chatBtnBank: 'Channel Partners',
+    ctaTitle: 'Empowering Every Founder & Student',
+    ctatitle: 'Empowering Every Founder & Student',
+    ctaDesc: 'Discover statutory schemes, verify documents, and connect directly with partner banks.',
+    ctadesc: 'Discover statutory schemes, verify documents, and connect directly with partner banks.',
+    ctaButton: 'Get Started',
+    ctabutton: 'Get Started',
+    navFindScheme: 'Find My Scheme',
+    navfindscheme: 'Find My Scheme',
+    navEmi: 'EMI Calculator',
+    navemi: 'EMI Calculator',
+    navPartners: 'Channel Partners',
+    navpartners: 'Channel Partners',
+    navLogin: 'Login',
+    navlogin: 'Login',
+    navRegister: 'Register',
+    navregister: 'Register',
+    navAdmin: 'Admin',
+    navadmin: 'Admin',
+    ruralOption: 'Rural',
+    ruraloption: 'Rural',
+    urbanOption: 'Urban',
+    urbanoption: 'Urban'
+  };
+
+  const cleanTechnicalKey = (str) => {
+    if (!str || typeof str !== 'string') return '';
+    if (TECHNICAL_KEY_MAP[str]) return TECHNICAL_KEY_MAP[str];
+    const match = str.match(/^(?:btn|nav|cta|option)([A-Z].*)$/);
+    if (match) {
+      return match[1].replace(/([A-Z])/g, ' $1').trim();
+    }
+    return str;
+  };
+
   const normalizeKey = (str) => {
     if (!str || typeof str !== 'string') return '';
-    return str.trim().toLowerCase().replace(/[:.,?!]+$/, '');
+    const cleaned = cleanTechnicalKey(str);
+    return cleaned.trim().toLowerCase().replace(/[:.,?!]+$/, '');
   };
 
   const t = (key, fallback = '') => {
     if (!key && !fallback) return '';
-    const primaryKey = String(key || '').trim();
-    const fallbackKey = String(fallback || '').trim();
+    let primaryKey = String(key || '').trim();
+    let fallbackKey = String(fallback || '').trim();
+
+    if (TECHNICAL_KEY_MAP[primaryKey]) {
+      if (!fallbackKey) fallbackKey = TECHNICAL_KEY_MAP[primaryKey];
+      primaryKey = TECHNICAL_KEY_MAP[primaryKey];
+    } else if (/^(?:btn|nav|cta|option)[A-Z]/.test(primaryKey)) {
+      const cleaned = cleanTechnicalKey(primaryKey);
+      if (!fallbackKey) fallbackKey = cleaned;
+      primaryKey = cleaned;
+    }
+
     const searchKey = primaryKey || fallbackKey;
     if (!searchKey) return '';
 
     if (currentLanguage === 'en') {
-      if (fallbackKey && fallbackKey !== primaryKey) {
+      if (fallbackKey && fallbackKey !== primaryKey && !/^(?:btn|nav|cta|option)[A-Z]/.test(fallbackKey)) {
         return fallbackKey;
       }
       if (primaryKey && PHRASE_MAP[primaryKey] && PHRASE_MAP[primaryKey]['en'] && PHRASE_MAP[primaryKey]['en'] !== primaryKey) {

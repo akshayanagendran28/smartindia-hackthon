@@ -44,42 +44,40 @@ def _get_user_profile_dict(db: Session, user_id: int) -> Dict[str, Any]:
         effective_name = profile.full_name
     elif user and user.full_name:
         effective_name = user.full_name
-    else:
-        effective_name = "Rajesh Kumar"
 
     if not profile:
         return {
             "full_name": effective_name,
-            "annual_family_income": 180000.0,
-            "annual_income": 180000.0,
-            "category": "SC",
-            "social_category": "SC",
-            "gender": "male",
-            "dob": "1995-08-15",
-            "project_cost": 1500000.0,
-            "required_loan_amount": 1200000.0,
-            "own_contribution": 300000.0,
-            "business_type": "manufacturing",
-            "state": "Maharashtra",
-            "district": "Mumbai"
+            "annual_family_income": 0.0,
+            "annual_income": 0.0,
+            "category": "",
+            "social_category": "",
+            "gender": "",
+            "dob": "",
+            "project_cost": 0.0,
+            "required_loan_amount": 0.0,
+            "own_contribution": 0.0,
+            "business_type": "",
+            "state": "",
+            "district": ""
         }
 
     return {
         "full_name": effective_name,
-        "annual_family_income": profile.annual_family_income or 180000.0,
-        "annual_income": profile.annual_income or profile.annual_family_income or 180000.0,
-        "category": profile.category or "SC",
-        "social_category": profile.social_category or profile.category or "SC",
-        "gender": profile.gender or "male",
-        "dob": getattr(profile, "dob", "1995-08-15"),
-        "gstin": profile.gstin,
-        "project_cost": profile.project_cost or 1500000.0,
-        "required_loan_amount": profile.required_loan_amount or 1200000.0,
-        "required_loan": profile.required_loan or 1200000.0,
-        "own_contribution": profile.own_contribution or 300000.0,
-        "business_type": profile.business_type or "manufacturing",
-        "state": profile.state or profile.location_state or "Maharashtra",
-        "district": profile.district or profile.location_district or "Mumbai"
+        "annual_family_income": profile.annual_family_income or 0.0,
+        "annual_income": profile.annual_income or profile.annual_family_income or 0.0,
+        "category": profile.category or profile.social_category or "",
+        "social_category": profile.social_category or profile.category or "",
+        "gender": profile.gender or "",
+        "dob": getattr(profile, "dob", "") or "",
+        "gstin": profile.gstin or "",
+        "project_cost": profile.project_cost or 0.0,
+        "required_loan_amount": profile.required_loan_amount or profile.required_loan or 0.0,
+        "required_loan": profile.required_loan or profile.required_loan_amount or 0.0,
+        "own_contribution": profile.own_contribution or 0.0,
+        "business_type": profile.business_type or "",
+        "state": profile.state or profile.location_state or "",
+        "district": profile.district or profile.location_district or ""
     }
 
 
@@ -332,13 +330,13 @@ def trigger_official_verification(
     if doc_type_norm == "Aadhaar":
         res = DigiLockerUidaiAdapter.verify_aadhaar(
             extracted.get("aadhaar_hash", "mock_hash"),
-            extracted.get("name", "Aarav Rajesh Sharma"),
+            extracted.get("name", current_user.full_name or ""),
             extracted.get("dob", "15/08/1995")
         )
     elif doc_type_norm == "PAN":
         res = NsdlPanAdapter.verify_pan(
             extracted.get("pan_number", "ABCPS1234F"),
-            extracted.get("name", "Aarav Rajesh Sharma"),
+            extracted.get("name", current_user.full_name or ""),
             extracted.get("dob", "15/08/1995")
         )
     elif doc_type_norm == "Caste Certificate":

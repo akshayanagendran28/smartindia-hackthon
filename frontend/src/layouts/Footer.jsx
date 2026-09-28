@@ -26,13 +26,13 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">{t('navFeatures')}</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">{t('Features')}</h4>
             <ul className="space-y-2 text-xs text-slate-300">
-              <li><Link to="/find-scheme" className="hover:text-gov-accent transition-colors">✨ {t('navFindScheme')}</Link></li>
-              <li><Link to="/schemes" className="hover:text-gov-accent transition-colors">🏛 {t('navSchemes')}</Link></li>
-              <li><Link to="/calculator" className="hover:text-gov-accent transition-colors">📊 {t('navEmi')}</Link></li>
-              <li><Link to="/documents" className="hover:text-gov-accent transition-colors">📑 {t('navDocAssistant')}</Link></li>
-              <li><Link to="/partners" className="hover:text-gov-accent transition-colors">📍 {t('navPartners')}</Link></li>
+              <li><Link to="/find-scheme" className="hover:text-gov-accent transition-colors">✨ {t('Find My Scheme')}</Link></li>
+              <li><Link to="/schemes" className="hover:text-gov-accent transition-colors">🏛 {t('Schemes')}</Link></li>
+              <li><Link to="/calculator" className="hover:text-gov-accent transition-colors">📊 {t('EMI Calculator')}</Link></li>
+              <li><Link to="/documents" className="hover:text-gov-accent transition-colors">📑 {t('Document Assistant')}</Link></li>
+              <li><Link to="/partners" className="hover:text-gov-accent transition-colors">📍 {t('Channel Partners')}</Link></li>
             </ul>
           </div>
 
@@ -68,11 +68,11 @@ const Footer = () => {
         </div>
 
         <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
-          <p>© 2026 {t('appName')}. {t('sihSubtext')}</p>
+          <p>© 2026 {t('appName')}. {t('All Rights Reserved • Ministry of MSME & Higher Education Guidelines')}</p>
           <div className="flex items-center gap-4 text-slate-400 text-xs">
-            <span>{t('Prototype Demo Environment', 'Prototype Demo Environment')}</span>
+            <span>{t('National Statutory Scheme Registry', 'National Statutory Scheme Registry')}</span>
             <span>•</span>
-            <Link to="/admin" className="hover:text-amber-300 transition-colors">{t('navAdmin')}</Link>
+            <Link to="/admin" className="hover:text-amber-300 transition-colors">{t('Admin')}</Link>
           </div>
         </div>
       </div>

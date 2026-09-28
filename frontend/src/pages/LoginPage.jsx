@@ -55,8 +55,8 @@ export default function LoginPage() {
           <div className="inline-flex p-3 rounded-2xl bg-emerald-100 text-emerald-800 mb-3">
             <ShieldCheck className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-900">{t('navLogin')} — SCHEME SATHI</h2>
-          <p className="text-xs text-slate-500 mt-1">{t('applicant profile & demographics')}</p>
+          <h2 className="text-2xl font-extrabold text-slate-900">{t('Login')} — SCHEME SATHI</h2>
+          <p className="text-xs text-slate-500 mt-1">{t('Applicant Profile & Demographics')}</p>
         </div>
 
         {error && (

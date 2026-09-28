@@ -36,12 +36,12 @@ export default function UserProfilePage() {
   const [dynamicKpis, setDynamicKpis] = useState({
     eligibleCount: 0,
     availableCount: 0,
-    maxSubsidy: '35%',
-    subsidySubtitle: 'PMEGP Special Category',
-    readinessScore: 68,
-    readinessSubtitle: '2 documents pending',
-    partnerBanksCount: 12,
-    partnerSubtitle: 'Within district radius',
+    maxSubsidy: '0%',
+    subsidySubtitle: 'Evaluate to calculate subsidy',
+    readinessScore: 0,
+    readinessSubtitle: 'No documents uploaded',
+    partnerBanksCount: 0,
+    partnerSubtitle: 'Branches in district',
     loadingKpis: false
   });
 
@@ -227,24 +227,24 @@ export default function UserProfilePage() {
         }
 
         const mandatoryDocsCount = effPurpose === 'EDUCATION' ? 5 : (effPurpose === 'SELF_EMPLOYMENT' ? 3 : 4);
-        const verifiedCount = verifiedDocKeys ? Object.keys(verifiedDocKeys).length : 0;
+        const verifiedCount = verifiedDocKeys ? (Array.isArray(verifiedDocKeys) ? verifiedDocKeys.length : Object.keys(verifiedDocKeys).length) : 0;
         const missingCount = Math.max(0, mandatoryDocsCount - verifiedCount);
         
-        let readinessScore = 50;
-        let readinessSubtitle = 'Profile under review';
-        if (allDocumentsVerified || missingCount === 0) {
+        let readinessScore = 0;
+        let readinessSubtitle = 'No documents uploaded';
+        if (allDocumentsVerified || (verifiedCount > 0 && missingCount === 0)) {
           readinessScore = 100;
           readinessSubtitle = 'All mandatory documents verified';
-        } else {
-          readinessScore = Math.min(95, Math.round((verifiedCount / mandatoryDocsCount) * 50 + 40));
+        } else if (verifiedCount > 0) {
+          readinessScore = Math.round((verifiedCount / mandatoryDocsCount) * 100);
           readinessSubtitle = `${missingCount} document${missingCount > 1 ? 's' : ''} pending`;
         }
 
-        let partnerBanksCount = 12;
+        let partnerBanksCount = 0;
         let partnerSubtitle = `Within ${form.district} jurisdiction`;
         if (branchRes.status === 'fulfilled' && branchRes.value.data) {
           const branchData = branchRes.value.data;
-          partnerBanksCount = branchData.total || branchData.branches?.length || 12;
+          partnerBanksCount = branchData.total_branches ?? branchData.total ?? (branchData.branches?.length || 0);
           partnerSubtitle = `${partnerBanksCount} active branches in ${form.district}`;
         }
 
@@ -577,8 +577,8 @@ export default function UserProfilePage() {
                 onChange={handleChange}
                 className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium"
               >
-                <option value="rural">{t('ruralOption')}</option>
-                <option value="urban">{t('urbanOption')}</option>
+                <option value="rural">{t('Rural')}</option>
+                <option value="urban">{t('Urban')}</option>
               </select>
             </div>
           </div>

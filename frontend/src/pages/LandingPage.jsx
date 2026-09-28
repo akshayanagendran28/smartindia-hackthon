@@ -67,7 +67,7 @@ export default function LandingPage() {
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-lg shadow-lg shadow-emerald-500/25 transition-all transform hover:-translate-y-0.5"
               >
                 <Compass className="w-5 h-5" />
-                <span>{t('btnFindScheme', 'Find My Scheme')}</span>
+                <span>{t('Find My Scheme', 'Find My Scheme')}</span>
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
@@ -75,7 +75,7 @@ export default function LandingPage() {
                 className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-base transition-all"
               >
                 <MessageSquare className="w-5 h-5 text-emerald-400" />
-                <span>{t('btnChatAssistant', 'Chat with Scheme Sathi')}</span>
+                <span>{t('Chat with Scheme Sathi', 'Chat with Scheme Sathi')}</span>
               </Link>
             </div>
 
@@ -247,7 +247,7 @@ export default function LandingPage() {
                   className="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm mt-2 cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>{t('btnAnalyzeSchemes', 'Analyze Schemes')}</span>
+                  <span>{t('Analyze Schemes', 'Analyze Schemes')}</span>
                 </button>
               </form>
             </div>
@@ -339,7 +339,7 @@ export default function LandingPage() {
               <p className="text-slate-600 text-sm mt-1">{t('featuredSchemesSubtitle')}</p>
             </div>
             <Link to="/results" className="mt-4 md:mt-0 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700 hover:text-emerald-800">
-              <span>{t('btnExploreSchemes')}</span>
+              <span>{t('Explore All Schemes', 'Explore All Schemes')}</span>
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -388,7 +388,7 @@ export default function LandingPage() {
                         <Link
                           to="/find-scheme"
                           className="py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center"
-                          title={t('btnFindScheme')}
+                          title={t('Find My Scheme', 'Find My Scheme')}
                         >
                           <CheckCircle className="w-4 h-4" />
                         </Link>
@@ -424,9 +424,9 @@ export default function LandingPage() {
       {/* Call to Action Bar */}
       <section className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white py-12 px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-4xl mx-auto space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-extrabold">{t('ctaTitle')}</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold">{t('Empowering Every Founder & Student', 'Empowering Every Founder & Student')}</h2>
           <p className="text-slate-200 text-sm max-w-xl mx-auto">
-            {t('ctaDesc')}
+            {t('Discover statutory schemes, verify documents, and connect directly with partner banks.', 'Discover statutory schemes, verify documents, and connect directly with partner banks.')}
           </p>
           <div className="pt-2">
             <Link
@@ -434,7 +434,7 @@ export default function LandingPage() {
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-emerald-950 font-bold text-base hover:bg-slate-100 shadow-lg transition-all"
             >
               <Sparkles className="w-5 h-5 text-emerald-600" />
-              <span>{t('ctaButton')}</span>
+              <span>{t('Get Started', 'Get Started')}</span>
             </Link>
           </div>
         </div>
