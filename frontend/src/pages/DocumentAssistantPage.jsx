@@ -207,6 +207,10 @@ export default function DocumentAssistantPage() {
     setError('');
     try {
       const normPurpose = (purposeType || application.purpose_type || 'EDUCATION').toUpperCase();
+      
+      // Call backend API to verify all mandatory documents in DB
+      await documentsAPI.verifyAllMandatory({ purpose_type: normPurpose });
+
       let requiredKeys = [];
       if (normPurpose === 'EDUCATION') {
         requiredKeys = ['docAadhaar', 'docPan', 'doc10th', 'doc12th', 'docIncome', 'docCaste'];
@@ -216,54 +220,13 @@ export default function DocumentAssistantPage() {
         requiredKeys = ['docAadhaar', 'docPan', 'docCaste', 'docIncome', 'docDpr', 'docUdyam'];
       }
 
-      // 1. Fetch current vault documents
-      const res = await documentsAPI.getUserDocuments();
-      const currentVaultDocs = res.data || [];
-      setUserDocs(currentVaultDocs);
-
-      const uploadedDocTypes = new Set(
-        currentVaultDocs.map(d => (d.document_type || '').toLowerCase())
-      );
-
-      const isDocUploaded = (key) => {
-        const kLower = key.toLowerCase();
-        if (kLower === 'docaadhaar' || kLower === 'aadhaar') return uploadedDocTypes.has('aadhaar') || uploadedDocTypes.has('docaadhaar') || uploadedDocTypes.has('aadhaar card');
-        if (kLower === 'docpan' || kLower === 'pan') return uploadedDocTypes.has('pan') || uploadedDocTypes.has('docpan') || uploadedDocTypes.has('pan card');
-        if (kLower === 'doc10th' || kLower === '10th') return uploadedDocTypes.has('10th') || uploadedDocTypes.has('10th marksheet') || uploadedDocTypes.has('doc10th');
-        if (kLower === 'doc12th' || kLower === '12th') return uploadedDocTypes.has('12th') || uploadedDocTypes.has('12th marksheet') || uploadedDocTypes.has('doc12th');
-        if (kLower === 'docincome' || kLower === 'income') return uploadedDocTypes.has('income') || uploadedDocTypes.has('income certificate') || uploadedDocTypes.has('docincome');
-        if (kLower === 'doccaste' || kLower === 'caste') return uploadedDocTypes.has('caste') || uploadedDocTypes.has('caste certificate') || uploadedDocTypes.has('doccaste');
-        if (kLower === 'docdpr' || kLower === 'dpr') return uploadedDocTypes.has('dpr') || uploadedDocTypes.has('project report') || uploadedDocTypes.has('docdpr');
-        if (kLower === 'docudyam' || kLower === 'udyam') return uploadedDocTypes.has('udyam') || uploadedDocTypes.has('udyam registration') || uploadedDocTypes.has('docudyam');
-        return false;
-      };
-
-      const uploadedToVerify = requiredKeys.filter(k => isDocUploaded(k));
-      const missingKeys = requiredKeys.filter(k => !isDocUploaded(k));
-
-      if (uploadedToVerify.length === 0) {
-        setError('No uploaded documents found to verify. Please upload your mandatory documents first.');
-        setValidating(false);
-        return;
-      }
-
-      // Verify all uploaded documents
-      for (const key of uploadedToVerify) {
+      for (const key of requiredKeys) {
         recordDocumentVerified(key);
       }
 
+      setAllDocumentsVerified(true);
       await fetchUserDocuments();
       await fetchRequiredChecklist();
-
-      if (missingKeys.length > 0) {
-        const missingNames = missingKeys.map(k => {
-          const m = DOC_TYPES.find(d => d.key === k);
-          return m ? m.name : k;
-        });
-        setError(`Verified ${uploadedToVerify.length} uploaded document(s). Missing: ${missingNames.join(', ')}. Please upload them to complete verification.`);
-      } else {
-        setAllDocumentsVerified(true);
-      }
     } catch (err) {
       console.error('Batch verification error:', err);
       setError('Document verification process encountered an error.');

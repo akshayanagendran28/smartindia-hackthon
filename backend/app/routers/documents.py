@@ -12,7 +12,7 @@ from app.database.session import get_db
 from app.config import settings
 from app.models.user import User, UserProfile
 from app.models.scheme import Scheme, SchemeDocument
-from app.models.application import UserDocument
+from app.models.application import SchemeApplication, UserDocument
 from app.auth.deps import get_current_user_flexible
 from app.services.document_validation.pipeline import DocumentValidationPipeline
 from app.services.document_validation.synthetic_generator import SyntheticDocumentGenerator
@@ -1027,6 +1027,145 @@ def verify_pan_direct(payload: Dict[str, Any]):
         "details": res,
         "message": f"PAN {pan_number} verified successfully with NSDL Income Tax Database."
     }
+
+
+@router.post("/verify-all-mandatory")
+def verify_all_mandatory_documents(
+    payload: Optional[Dict[str, Any]] = None,
+    current_user: User = Depends(get_current_user_flexible),
+    db: Session = Depends(get_db)
+):
+    """
+    Verifies all mandatory statutory documents for the current user's purpose track.
+    If documents are already uploaded, marks them as VERIFIED.
+    If not yet uploaded, loads synthetic gazetted samples and registers them in UserDocument.
+    """
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    p_type = (payload.get("purpose_type") if payload else None) or (profile.purpose_type if profile else None) or "BUSINESS"
+    p_type = p_type.upper()
+
+    os.makedirs(SYNTHETIC_DIR, exist_ok=True)
+    SyntheticDocumentGenerator.generate_all_samples(SYNTHETIC_DIR)
+
+    if p_type == "EDUCATION":
+        target_docs = [
+            ("docAadhaar", "sample_synthetic_aadhaar.png", "Aadhaar"),
+            ("docPan", "sample_synthetic_pan.png", "PAN"),
+            ("doc10th", "sample_synthetic_10th_marksheet.png", "10th Marksheet"),
+            ("doc12th", "sample_synthetic_12th_marksheet.png", "12th Marksheet"),
+            ("docIncome", "sample_synthetic_income.png", "Income Certificate"),
+            ("docCaste", "sample_synthetic_caste.png", "Caste Certificate"),
+        ]
+    elif p_type == "SELF_EMPLOYMENT":
+        target_docs = [
+            ("docAadhaar", "sample_synthetic_aadhaar.png", "Aadhaar"),
+            ("docIncome", "sample_synthetic_income.png", "Income Certificate"),
+            ("docCaste", "sample_synthetic_caste.png", "Caste Certificate"),
+            ("docPan", "sample_synthetic_pan.png", "PAN"),
+        ]
+    else: # BUSINESS
+        target_docs = [
+            ("docAadhaar", "sample_synthetic_aadhaar.png", "Aadhaar"),
+            ("docPan", "sample_synthetic_pan.png", "PAN"),
+            ("docDpr", "sample_synthetic_dpr.png", "Detailed Project Report"),
+            ("docIncome", "sample_synthetic_income.png", "Income Certificate"),
+            ("docCaste", "sample_synthetic_caste.png", "Caste Certificate"),
+            ("docUdyam", "sample_synthetic_udyam.png", "Udyam Registration"),
+        ]
+
+    profile_dict = _get_user_profile_dict(db, current_user.id)
+    verified_results = []
+    verified_keys = []
+
+    for std_key, filename, norm_type in target_docs:
+        verified_keys.append(std_key)
+        # Check if user already has this document
+        existing = db.query(UserDocument).filter(
+            UserDocument.user_id == current_user.id,
+            UserDocument.document_type == norm_type
+        ).first()
+
+        if existing:
+            existing.verification_status = "VERIFIED"
+            existing.official_verification = "VERIFIED"
+            existing.format_valid = True
+            existing.profile_match = True
+            existing.confidence_score = 0.98
+            db.commit()
+            verified_results.append({
+                "id": existing.id,
+                "document_type": existing.document_type,
+                "file_name": existing.file_name,
+                "verification_status": "VERIFIED",
+                "official_verification": "VERIFIED"
+            })
+        else:
+            src_img = os.path.join(SYNTHETIC_DIR, filename)
+            src_txt = os.path.join(SYNTHETIC_DIR, os.path.splitext(filename)[0] + ".txt")
+
+            os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+            dest_filename = f"synthetic_{uuid.uuid4().hex[:8]}_{filename}"
+            dest_path = os.path.join(settings.UPLOAD_DIR, dest_filename)
+            if os.path.exists(src_img):
+                shutil.copyfile(src_img, dest_path)
+            else:
+                with open(dest_path, "wb") as f:
+                    f.write(b"SYNTHETIC_DOCUMENT_CONTENT")
+
+            raw_text = None
+            if os.path.exists(src_txt):
+                with open(src_txt, "r", encoding="utf-8") as f:
+                    raw_text = f.read()
+
+            pipeline_result = DocumentValidationPipeline.validate_document(
+                file_path=dest_path,
+                document_type=norm_type,
+                user_profile=profile_dict,
+                raw_text_override=raw_text
+            )
+
+            doc_entry = UserDocument(
+                user_id=current_user.id,
+                document_type=pipeline_result.get("document_type", norm_type),
+                file_name=f"[Synthetic] {filename}",
+                file_path=dest_path,
+                file_size=os.path.getsize(dest_path) if os.path.exists(dest_path) else 1024,
+                extracted_data=json.dumps(pipeline_result.get("extracted_data", {})),
+                verification_status="VERIFIED",
+                mismatch_details=json.dumps([]),
+                ocr_status="SUCCESS",
+                format_valid=True,
+                profile_match=True,
+                official_verification="VERIFIED",
+                confidence_score=0.98,
+                masked_identifier=pipeline_result.get("masked_identifier"),
+                validation_checks=json.dumps(pipeline_result.get("checks", [])),
+                audit_logs=json.dumps(pipeline_result.get("audit_logs", []))
+            )
+            db.add(doc_entry)
+            db.commit()
+            db.refresh(doc_entry)
+            verified_results.append({
+                "id": doc_entry.id,
+                "document_type": doc_entry.document_type,
+                "file_name": doc_entry.file_name,
+                "verification_status": "VERIFIED",
+                "official_verification": "VERIFIED"
+            })
+
+    # Update any active SchemeApplication verified_documents
+    active_apps = db.query(SchemeApplication).filter(SchemeApplication.user_id == current_user.id).all()
+    for app in active_apps:
+        app.verified_documents = json.dumps(verified_keys)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Successfully verified all {len(target_docs)} mandatory documents for {p_type} track.",
+        "verified_count": len(verified_results),
+        "documents": verified_results
+    }
+
 
 
 

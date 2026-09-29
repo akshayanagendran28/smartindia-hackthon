@@ -952,7 +952,7 @@ export default function AdminUserManagement() {
                               </div>
                             </div>
                             <span className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase ${
-                              (d.official_verification || d.verification_status) === 'verified'
+                              ['VERIFIED', 'SUCCESS', 'MOCK_VERIFIED'].includes(String(d.official_verification || d.verification_status || '').toUpperCase())
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : 'bg-amber-100 text-amber-800'
                             }`}>

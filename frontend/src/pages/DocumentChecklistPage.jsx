@@ -10,34 +10,51 @@ import { documentsAPI } from '../services/api';
 
 export default function DocumentChecklistPage() {
   const { t } = useLanguage();
-  const { application, purposeType, verifiedDocKeys } = useApplication();
+  const { application, purposeType, verifiedDocKeys, setAllDocumentsVerified } = useApplication();
   const [userVerifiedDocs, setUserVerifiedDocs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
 
   const effPurpose = (purposeType || application.purpose_type || 'EDUCATION').toUpperCase();
 
-  useEffect(() => {
-    async function loadUserDocs() {
-      try {
-        const res = await documentsAPI.getUserDocuments();
-        const docs = res.data || [];
-        const verifiedTypes = docs
-          .filter(d => strStatus(d.verification_status))
-          .map(d => (d.document_type || '').toLowerCase());
-        
-        // Merge with session verifiedDocKeys
-        const sessionKeys = (verifiedDocKeys || []).map(k => String(k).toLowerCase());
-        setUserVerifiedDocs([...new Set([...verifiedTypes, ...sessionKeys])]);
-      } catch (err) {
-        console.warn('Could not fetch user documents:', err);
-        const sessionKeys = (verifiedDocKeys || []).map(k => String(k).toLowerCase());
-        setUserVerifiedDocs(sessionKeys);
-      } finally {
-        setLoading(false);
-      }
+  const loadUserDocs = async () => {
+    try {
+      const res = await documentsAPI.getUserDocuments();
+      const docs = res.data || [];
+      const verifiedTypes = docs
+        .filter(d => strStatus(d.verification_status))
+        .map(d => (d.document_type || '').toLowerCase());
+      
+      // Merge with session verifiedDocKeys
+      const sessionKeys = (verifiedDocKeys || []).map(k => String(k).toLowerCase());
+      setUserVerifiedDocs([...new Set([...verifiedTypes, ...sessionKeys])]);
+    } catch (err) {
+      console.warn('Could not fetch user documents:', err);
+      const sessionKeys = (verifiedDocKeys || []).map(k => String(k).toLowerCase());
+      setUserVerifiedDocs(sessionKeys);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadUserDocs();
   }, [verifiedDocKeys]);
+
+  const handleAutoVerifyChecklist = async () => {
+    try {
+      setVerifying(true);
+      await documentsAPI.verifyAllMandatory({ purpose_type: effPurpose });
+      if (setAllDocumentsVerified) {
+        setAllDocumentsVerified(true);
+      }
+      await loadUserDocs();
+    } catch (err) {
+      console.error('Failed to auto-verify documents:', err);
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const strStatus = (st) => {
     const s = String(st || '').toUpperCase();
@@ -202,6 +219,14 @@ export default function DocumentChecklistPage() {
         </div>
 
         <div className="flex gap-2">
+          <button
+            onClick={handleAutoVerifyChecklist}
+            disabled={verifying}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>{verifying ? t('Verifying...') : t('1-Click Verify All')}</span>
+          </button>
           <button
             onClick={() => window.print()}
             className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer"

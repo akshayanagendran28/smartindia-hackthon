@@ -227,7 +227,13 @@ def list_customers(
         # Fetch latest application
         latest_app = db.query(SchemeApplication).filter(SchemeApplication.user_id == u.id).order_by(desc(SchemeApplication.created_at)).first()
         doc_count = db.query(UserDocument).filter(UserDocument.user_id == u.id).count()
-        verified_doc_count = db.query(UserDocument).filter(UserDocument.user_id == u.id, UserDocument.verification_status == "verified").count()
+        verified_doc_count = db.query(UserDocument).filter(
+            UserDocument.user_id == u.id,
+            or_(
+                UserDocument.verification_status.in_(["verified", "VERIFIED", "SUCCESS"]),
+                UserDocument.official_verification.in_(["verified", "VERIFIED", "MOCK_VERIFIED"])
+            )
+        ).count()
         
         # Exact category from DB profile
         db_cat = (u.profile.social_category or u.profile.category) if u.profile else None

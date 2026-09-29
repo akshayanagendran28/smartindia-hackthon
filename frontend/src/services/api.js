@@ -68,6 +68,7 @@ export const documentsAPI = {
   getSyntheticSamples: (params) => api.get('/documents/synthetic-samples', { params }),
   loadSyntheticSample: (docKey, schemeCode) => 
     api.post(`/documents/load-synthetic/${docKey}${schemeCode ? `?scheme_code=${schemeCode}` : ''}`),
+  verifyAllMandatory: (data) => api.post('/documents/verify-all-mandatory', data),
   getAuditLogs: (id) => api.get(`/documents/audit-logs/${id}`),
   deleteDocument: (id) => api.delete(`/documents/${id}`),
   runDirectPipeline: (formData) => api.post('/documents/pipeline', formData, {
